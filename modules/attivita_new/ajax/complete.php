@@ -14,6 +14,51 @@ $numero_documenti = 5;
 
 switch ($op) {
     case 'dettagli':
+        // Scadenze
+        $modulo_scadenze = Module::pool('Contratti');
+        if ($modulo_scadenze->permission != '-') {
+            // Contratti attivi per l'anagrafica
+            $contratti = Contratto::where('idanagrafica', '=', $id_anagrafica)
+                ->whereHas('stato', function ($query) {
+                    $query->where('is_pianificabile', '=', 1);
+                })
+                ->latest()->take($numero_documenti)->get();
+
+
+            echo '
+            <h4>Scadenze</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr style="background-color:#eeeeee">
+                        <th scope="col">#</th>
+                        <th scope="col">Descrizione</th>
+                        <!--<th scope="col">Data accettazione</th>-->
+                        <th scope="col">Data conclusione</th>
+                    </tr>
+                </thead>
+                <tbody>';
+                    if (!$contratti->isEmpty()) {
+                        foreach ($contratti as $contratto) {
+                            echo '
+                            <tr>
+                                <th scope="row">' . $contratto->getReference() . '</th>
+                                <td>' . $contratto->stato->descrizione . '</td>
+                                <!--<td>' . dateFormat($contratto->data_accettazione) . '</td>-->
+                                <td>' . dateFormat($contratto->data_conclusione) . '</td>
+                            </tr>';
+                        }
+                    } else {
+                        echo '
+                        <tr>
+                            <td colspan="2">'.tr('Nessun contratto attivo per questo cliente').'</td>
+                        </tr>';
+                    }
+
+                echo '
+                </tbody>
+            </table>';
+        }
+
         // Informazioni sui contratti
         $modulo_contratti = Module::pool('Contratti');
         if ($modulo_contratti->permission != '-') {
@@ -67,7 +112,7 @@ switch ($op) {
                 ->whereHas('stato', function ($query) {
                     $query->where('is_pianificabile', '=', 1);
                 })
-                ->latest()->take($numero_documenti)->get();
+                ->latest()->take($numero_documenti);
 
             echo '
             <h4>Preventivi</h4>
@@ -91,48 +136,6 @@ switch ($op) {
                         echo '
                         <tr>
                             <td colspan="2">'.tr('Nessun preventivo attivo per questo cliente').'</td>
-                        </tr>';
-                    }
-                echo '
-                </tbody>
-            </table>';
-        }
-
-        // Informazioni sui preventivi
-        $modulo_fatture_vendita = Module::pool('Fatture di vendita');
-        if ($modulo_fatture_vendita->permission != '-') {
-            // Fatture attive
-            $fatture = Fattura::where('idanagrafica', '=', $id_anagrafica)
-                ->whereHas('stato', function ($query) {
-                    $query->whereIn('descrizione', ['Emessa', 'Parzialmente pagato']);
-                })
-                ->latest()->take($numero_documenti)->get();
-
-            echo '
-            <h4>Fatture</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr style="background-color:#eeeeee">
-                        <th scope="col">#</th>
-                        <th scope="col">Da pagare</th>
-                    </tr>
-                </thead>
-                <tbody>';
-                    if (!$fatture->isEmpty()) {
-                        foreach ($fatture as $fattura) {
-                            $scadenze = $fattura->scadenze;
-                            $da_pagare = $scadenze->sum('da_pagare') - $scadenze->sum('pagato');
-
-                            echo '
-                            <tr>
-                                <th scope="row">' . $fattura->getReference() . '</th>
-                                <td>' . moneyFormat($da_pagare) . '</td>
-                            </tr>';
-                        }
-                    } else {
-                        echo '
-                        <tr>
-                            <td colspan="2">'.tr('Nessuna fattura attiva per questo cliente').'</td>
                         </tr>';
                     }
                 echo '

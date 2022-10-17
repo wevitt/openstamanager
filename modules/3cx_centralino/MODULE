@@ -1,0 +1,7 @@
+name = "Centralino 3CX"
+version = "1.0"
+directory = "3cx_centralino"
+options = "SELECT |select| FROM 3cx_chiamate LEFT JOIN an_anagrafiche ON 3cx_chiamate.id_anagrafica = an_anagrafiche.idanagrafica LEFT JOIN an_anagrafiche AS tecnico ON 3cx_chiamate.id_tecnico = tecnico.idanagrafica AND 1=1 HAVING 2=2"
+icon = "fa fa-phone"
+compatibility = "2.4.*"
+parent = "0"

@@ -1,0 +1,7 @@
+name = "Operatori 3CX"
+version = "1.0"
+directory = "3cx_operatori"
+options = "SELECT |select| FROM 3cx_operatori LEFT JOIN an_anagrafiche ON 3cx_operatori.id_anagrafica = an_anagrafiche.idanagrafica WHERE 3cx_operatori.deleted_at IS NULL AND 1=1 HAVING 2=2"
+icon = "fa fa-group"
+compatibility = "2.4.*"
+parent = "Centralino 3CX"
