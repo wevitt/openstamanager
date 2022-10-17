@@ -23,33 +23,40 @@ switch ($op) {
             ORDER BY co_scadenziario.scadenza DESC');
 
             echo '
-            <h4>'.tr('Scadenze').'</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr style="background-color:#eeeeee">
-                        <th scope="col">'.tr('Riferimento').'</th>
-                        <th scope="col">'.tr('Scadenza').'</th>
-                        <th scope="col">'.tr('Totale').'</th>
-                        <th scope="col">'.tr('Da pagare').'</th>
-                    </tr>
-                </thead>
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#collapseScadenze">' . tr('Scadenze') . ' </a>
+                </h4>
+            </div>
 
-                <tbody>';
-                    foreach ($scadenze as $info) {
-                        $scadenza = Scadenza::find($info['id']);
-                        $scaduta = $scadenza->scadenza->lessThan(new Carbon());
+            <div id="collapseScadenze" class="panel-collapse collapse">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr style="background-color:#eeeeee">
+                            <th scope="col">'.tr('Riferimento').'</th>
+                            <th scope="col">'.tr('Scadenza').'</th>
+                            <th scope="col">'.tr('Totale').'</th>
+                            <th scope="col">'.tr('Da pagare').'</th>
+                        </tr>
+                    </thead>
 
-                        echo '
-                        <tr class="'.($scaduta ? 'bg-red' : '').'">
-                            <td>'.reference($scadenza->documento).'</td>
-                            <td>'.dateFormat($scadenza->scadenza).'</td>
-                            <td class="text-right">'.moneyFormat($scadenza->da_pagare).'</td>
-                            <td class="text-right">'.moneyFormat($scadenza->da_pagare - $scadenza->pagato).'</td>
-                        </tr>';
-                    }
-                echo '
-                </tbody>
-            </table>';
+                    <tbody>';
+                        foreach ($scadenze as $info) {
+                            $scadenza = Scadenza::find($info['id']);
+                            $scaduta = $scadenza->scadenza->lessThan(new Carbon());
+
+                            echo '
+                            <tr class="'.($scaduta ? 'bg-red' : '').'">
+                                <td>'.reference($scadenza->documento).'</td>
+                                <td>'.dateFormat($scadenza->scadenza).'</td>
+                                <td class="text-right">'.moneyFormat($scadenza->da_pagare).'</td>
+                                <td class="text-right">'.moneyFormat($scadenza->da_pagare - $scadenza->pagato).'</td>
+                            </tr>';
+                        }
+                    echo '
+                    </tbody>
+                </table>
+            </div>';
         }
 
         // Informazioni sui contratti
@@ -64,37 +71,44 @@ switch ($op) {
 
 
             echo '
-            <h4>Contratti</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr style="background-color:#eeeeee">
-                        <th scope="col">#</th>
-                        <th scope="col">Descrizione</th>
-                        <!--<th scope="col">Data accettazione</th>-->
-                        <th scope="col">Data conclusione</th>
-                    </tr>
-                </thead>
-                <tbody>';
-                    if (!$contratti->isEmpty()) {
-                        foreach ($contratti as $contratto) {
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#collapseContratti">' . tr('Contratti') . '</a>
+                </h4>
+            </div>
+
+            <div id="collapseContratti" class="panel-collapse collapse">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr style="background-color:#eeeeee">
+                            <th scope="col">#</th>
+                            <th scope="col">' . tr('Descrizione') . '</th>
+                            <!--<th scope="col">' . tr('Data accettazione') . '</th>-->
+                            <th scope="col">' . tr('Data conclusione') . '</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+                        if (!$contratti->isEmpty()) {
+                            foreach ($contratti as $contratto) {
+                                echo '
+                                <tr>
+                                    <th scope="row">' . $contratto->getReference() . '</th>
+                                    <td>' . $contratto->stato->descrizione . '</td>
+                                    <!--<td>' . dateFormat($contratto->data_accettazione) . '</td>-->
+                                    <td>' . dateFormat($contratto->data_conclusione) . '</td>
+                                </tr>';
+                            }
+                        } else {
                             echo '
                             <tr>
-                                <th scope="row">' . $contratto->getReference() . '</th>
-                                <td>' . $contratto->stato->descrizione . '</td>
-                                <!--<td>' . dateFormat($contratto->data_accettazione) . '</td>-->
-                                <td>' . dateFormat($contratto->data_conclusione) . '</td>
+                                <td colspan="2">'.tr('Nessun contratto attivo per questo cliente').'</td>
                             </tr>';
                         }
-                    } else {
-                        echo '
-                        <tr>
-                            <td colspan="2">'.tr('Nessun contratto attivo per questo cliente').'</td>
-                        </tr>';
-                    }
 
-                echo '
-                </tbody>
-            </table>';
+                    echo '
+                    </tbody>
+                </table>
+            </div>';
         }
 
         // Informazioni sui preventivi
@@ -108,32 +122,39 @@ switch ($op) {
                 ->latest()->take($numero_documenti)->get();
 
             echo '
-            <h4>Preventivi</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr style="background-color:#eeeeee">
-                        <th scope="col">#</th>
-                        <th scope="col">Descrizione</th>
-                    </tr>
-                </thead>
-                <tbody>';
-                    if (!$preventivi->isEmpty()) {
-                        foreach ($preventivi as $preventivo) {
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#collapsePreventivi">' . tr('Preventivi') . '</a>
+                </h4>
+            </div>
+
+            <div id="collapsePreventivi" class="panel-collapse collapse">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr style="background-color:#eeeeee">
+                            <th scope="col">#</th>
+                            <th scope="col">' . tr('Descrizione') . '</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+                        if (!$preventivi->isEmpty()) {
+                            foreach ($preventivi as $preventivo) {
+                                echo '
+                                <tr>
+                                    <th scope="row">' . $preventivo->getReference() . '</th>
+                                    <td>' . $preventivo->stato->descrizione . '</td>
+                                </tr>';
+                            }
+                        } else {
                             echo '
                             <tr>
-                                <th scope="row">' . $preventivo->getReference() . '</th>
-                                <td>' . $preventivo->stato->descrizione . '</td>
+                                <td colspan="2">'.tr('Nessun preventivo attivo per questo cliente').'</td>
                             </tr>';
                         }
-                    } else {
-                        echo '
-                        <tr>
-                            <td colspan="2">'.tr('Nessun preventivo attivo per questo cliente').'</td>
-                        </tr>';
-                    }
-                echo '
-                </tbody>
-            </table>';
+                    echo '
+                    </tbody>
+                </table>
+            </div>';
         }
 
         // Note dell'anagrafica
@@ -141,51 +162,65 @@ switch ($op) {
         $note_anagrafica = $anagrafica->note;
 
         echo '
-        <h4>Note interne sul cliente</h4>
-        <table class="table table-bordered">
-            <tbody>';
-            if (!empty($note_anagrafica)) {
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapseNote">' . tr('Note interne sul cliente') . '</a>
+            </h4>
+        </div>
+
+        <div id="collapseNote" class="panel-collapse collapse">
+            <table class="table table-bordered">
+                <tbody>';
+                if (!empty($note_anagrafica)) {
+                    echo '
+                    <tr>
+                        <th scope="row">' . $note_anagrafica . '</th>
+                    </tr>';
+                } else {
+                    echo '
+                    <tr>
+                        <th scope="row">' . tr('Nessuna nota interna per questo cliente') . '</th>
+                    </tr>';
+                }
                 echo '
-                <tr>
-                    <th scope="row">' . $note_anagrafica . '</th>
-                </tr>';
-            } else {
-                echo '
-                <tr>
-                    <th scope="row">' . tr('Nessuna nota interna per questo cliente') . '</th>
-                </tr>';
-            }
-            echo '
-            </tbody>
-        </table>';
+                </tbody>
+            </table>
+        </div>';
 
         // Interventi collegati all'anagrafica
         $modulo_interventi = Module::pool('Interventi');
         if ($modulo_interventi->permission != '-') {
             $interventi = $anagrafica->interventi()->orderBy('data_richiesta', 'DESC')->take(20)->get();
             echo '
-            <h4>'.tr('Attività recenti').'</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr style="background-color:#eeeeee">
-                        <th scope="col">'.tr('Riferimento').'</th>
-                        <th scope="col">'.tr('Richiesta').'</th>
-                    </tr>
-                </thead>
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#collapseInterventi">' . tr('Attività recenti') . '</a>
+                </h4>
+            </div>
 
-                <tbody>';
+            <div id="collapseInterventi" class="panel-collapse collapse">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr style="background-color:#eeeeee">
+                            <th scope="col">'.tr('Riferimento').'</th>
+                            <th scope="col">'.tr('Richiesta').'</th>
+                        </tr>
+                    </thead>
 
-                foreach ($interventi as $intervento) {
+                    <tbody>';
+
+                    foreach ($interventi as $intervento) {
+                        echo '
+                        <tr>
+                            <td>'.reference($intervento).'</td>
+                            <td>'.$intervento->richiesta.'</td>
+                        </tr>';
+                    }
+
                     echo '
-                    <tr>
-                        <td>'.reference($intervento).'</td>
-                        <td>'.$intervento->richiesta.'</td>
-                    </tr>';
-                }
-
-                echo '
-                </tbody>
-            </table>';
+                    </tbody>
+                </table>
+            </div>';
         }
 
         break;
