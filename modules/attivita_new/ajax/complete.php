@@ -14,46 +14,39 @@ $numero_documenti = 5;
 
 switch ($op) {
     case 'dettagli':
-        // Scadenze
-        $modulo_scadenze = Module::pool('Contratti');
+        // Scadenze dell'anagrafica
+        $modulo_scadenze = Module::pool('Scadenziario');
         if ($modulo_scadenze->permission != '-') {
-            // Contratti attivi per l'anagrafica
-            $contratti = Contratto::where('idanagrafica', '=', $id_anagrafica)
-                ->whereHas('stato', function ($query) {
-                    $query->where('is_pianificabile', '=', 1);
-                })
-                ->latest()->take($numero_documenti)->get();
-
+            $scadenze = $database->fetchArray('SELECT co_scadenziario.id FROM co_scadenziario
+            INNER JOIN co_documenti ON co_scadenziario.iddocumento = co_documenti.id
+            WHERE co_scadenziario.iddocumento != 0 AND co_documenti.idanagrafica = '.prepare($chiamata->id_anagrafica).' AND co_scadenziario.da_pagare != co_scadenziario.pagato
+            ORDER BY co_scadenziario.scadenza DESC');
 
             echo '
-            <h4>Scadenze</h4>
+            <h4>'.tr('Scadenze').'</h4>
             <table class="table table-bordered">
                 <thead>
                     <tr style="background-color:#eeeeee">
-                        <th scope="col">#</th>
-                        <th scope="col">Descrizione</th>
-                        <!--<th scope="col">Data accettazione</th>-->
-                        <th scope="col">Data conclusione</th>
+                        <th scope="col">'.tr('Riferimento').'</th>
+                        <th scope="col">'.tr('Scadenza').'</th>
+                        <th scope="col">'.tr('Totale').'</th>
+                        <th scope="col">'.tr('Da pagare').'</th>
                     </tr>
                 </thead>
+
                 <tbody>';
-                    if (!$contratti->isEmpty()) {
-                        foreach ($contratti as $contratto) {
-                            echo '
-                            <tr>
-                                <th scope="row">' . $contratto->getReference() . '</th>
-                                <td>' . $contratto->stato->descrizione . '</td>
-                                <!--<td>' . dateFormat($contratto->data_accettazione) . '</td>-->
-                                <td>' . dateFormat($contratto->data_conclusione) . '</td>
-                            </tr>';
-                        }
-                    } else {
+                    foreach ($scadenze as $info) {
+                        $scadenza = Scadenza::find($info['id']);
+                        $scaduta = $scadenza->scadenza->lessThan(new Carbon());
+
                         echo '
-                        <tr>
-                            <td colspan="2">'.tr('Nessun contratto attivo per questo cliente').'</td>
+                        <tr class="'.($scaduta ? 'bg-red' : '').'">
+                            <td>'.reference($scadenza->documento).'</td>
+                            <td>'.dateFormat($scadenza->scadenza).'</td>
+                            <td class="text-right">'.moneyFormat($scadenza->da_pagare).'</td>
+                            <td class="text-right">'.moneyFormat($scadenza->da_pagare - $scadenza->pagato).'</td>
                         </tr>';
                     }
-
                 echo '
                 </tbody>
             </table>';
@@ -112,7 +105,7 @@ switch ($op) {
                 ->whereHas('stato', function ($query) {
                     $query->where('is_pianificabile', '=', 1);
                 })
-                ->latest()->take($numero_documenti);
+                ->latest()->take($numero_documenti)->get();
 
             echo '
             <h4>Preventivi</h4>
@@ -165,5 +158,35 @@ switch ($op) {
             echo '
             </tbody>
         </table>';
+
+        // Interventi collegati all'anagrafica
+        $modulo_interventi = Module::pool('Interventi');
+        if ($modulo_interventi->permission != '-') {
+            $interventi = $anagrafica->interventi()->orderBy('data_richiesta', 'DESC')->take(20)->get();
+            echo '
+            <h4>'.tr('Attività recenti').'</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr style="background-color:#eeeeee">
+                        <th scope="col">'.tr('Riferimento').'</th>
+                        <th scope="col">'.tr('Richiesta').'</th>
+                    </tr>
+                </thead>
+
+                <tbody>';
+
+                foreach ($interventi as $intervento) {
+                    echo '
+                    <tr>
+                        <td>'.reference($intervento).'</td>
+                        <td>'.$intervento->richiesta.'</td>
+                    </tr>';
+                }
+
+                echo '
+                </tbody>
+            </table>';
+        }
+
         break;
 }
