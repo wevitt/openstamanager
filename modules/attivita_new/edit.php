@@ -27,7 +27,9 @@ $module_anagrafiche = Modules::get('Anagrafiche');
 
 echo '
 <input type="hidden" class="id_module" value="' . $id_module . '">
-<input type="hidden" class="id_record" value="' . $id_record . '">';
+<input type="hidden" class="id_record" value="' . $id_record . '">
+<input type="hidden" class="url-sottoattivita" value="'.  $structure->fileurl('ajax_sottoattivita.php') . '">
+<input type="hidden" class="url-attivita" value="'.  $structure->fileurl('ajax_attivita.php') . '">';
 
 // Verifica aggiuntive sulla sequenzialità dei numeri
 $numero_previsto = verifica_numero_attivita($intervento);
@@ -289,34 +291,18 @@ echo '
                             ?>
 
 
-                            <div class="panel-heading" data-collapseid="0" onclick="openCollapse($(this), <?= $id_record ?>, 0)" style="cursor:pointer">
+                            <div class="panel-heading current-activity" data-collapseid="0" onclick="openCollapse($(this), <?= $id_record ?>, 0)" style="cursor:pointer">
                                 <h4 class="panel-title">
                                     <a data-toggle="collapse" href="collapse0"><?= tr('Attività ') . $id_record ?></a>
                                 </h4>
                             </div>
                             <div id="collapse0" class="panel-collapse collapse"></div>
 
-
-                            <!--<div class="panel-heading">
-                                <h4 class="panel-title">
-                                    <a data-toggle="collapse" href="#collapse0"><?= tr('Attività ') . $id_record ?></a>
-                                </h4>
-                            </div>
-
-                            <div id="collapse0" class="panel-collapse collapse">
-                                <?php foreach ($subactivities as $i => $activity) { ?>
-                                    <div class="panel-body" data-collapseid="<?= ($i+1) ?>" style="padding:10px 15px";>
-                                        <h4 class="panel-title">
-                                            <a data-toggle="collapse" onclick="openCollapse($(this), <?= $activity['id'] ?>, <?= $i+1 ?>)" href="<?= 'collapse' . ($i+1) ?>"><?= tr('Attività ') . $activity['id'] ?></a>
-                                        </h4>
-                                    </div>
-                                    <div id="<?= 'collapse' . ($i+1) ?>" class="panel-collapse collapse"></div>
-                                <?php } ?>
-                            </div>-->
-
-                            <input type="hidden" class="url-sottoattivita" value="<?= $structure->fileurl('ajax_sottoattivita.php') ?>">
-
                             <script>
+                                $(document).ready(function() {
+                                    //openCollapse($('current-activity'), $('[name="id_record"]').val() , 0);
+                                });
+
                                 function openCollapse($this, activity_id, i) {
                                     var id_module = $('.id_module').val();
                                     var id_record = $('.id_record').val();
@@ -383,9 +369,50 @@ echo '
                 </div>
 
                 <div class="col-md-4">
-                    {[ "type": "select", "label": "<?php echo tr('Stato'); ?>", "name": "idstatointervento", "required": 1, "values": "query=SELECT idstatointervento AS id, descrizione, colore AS _bgcolor_ FROM in_statiintervento WHERE deleted_at IS NULL ORDER BY descrizione", "value": "$idstatointervento$", "class": "unblockable" ]}
+                    {[ "type": "select", "label": "<?php echo tr('Stato'); ?>", "name": "idstatointervento", "required": 1, "values": "query=SELECT idstatointervento AS id, descrizione, colore AS _bgcolor_ FROM in_statiintervento WHERE deleted_at IS NULL ORDER BY descrizione", "value": "$idstatointervento$", "class": "unblockable change-state" ]}
                 </div>
             </div>
+
+            <script>
+                $(document).ready(function() {
+                    $('.change-state').on('change', function() {
+                        $('.is-invalid').removeClass('is-invalid');
+
+                        var $this = $(this);
+                        var url = $('.url-attivita').val();
+                        var id_module = $('.id_module').val();
+                        var id_record = $('.id_record').val();
+                        var newState = $this.val();
+
+                        console.log("newState", newState);
+
+                        if (newState == 7) {
+                            $.get(
+                                url + '?id_module=' + id_module + '&id_record=' + id_record
+                                    + '&new_state=' + newState,
+                                function(data) {
+                                                                            console.log(data);
+
+                                    if (data != "") {
+                                        data = JSON.parse(data);
+                                        console.log(data);
+
+                                        var oldState = data['id'];
+                                        var oldDescrizione = data['descrizione'];
+
+                                        $this.val(oldState);
+
+                                        $('#select2-idstatointervento-container').html($('#select2-idstatointervento-container').children());
+                                        $('#select2-idstatointervento-container').children().after(oldDescrizione);
+
+                                        $('#select2-idstatointervento-container').parent().parent().parent().addClass('is-invalid');
+                                    }
+                                }
+                            );
+                        }
+                    })
+                });
+            </script>
 
             <div class="row">
                 <?php
@@ -885,3 +912,9 @@ if (!empty($elementi)) {
 <a class="btn btn-danger ask" data-backto="record-list">
     <i class="fa fa-trash"></i> <?php echo tr('Elimina'); ?>
 </a>
+
+<style>
+    .is-invalid {
+        border: 1px solid #f00;
+    }
+</style>

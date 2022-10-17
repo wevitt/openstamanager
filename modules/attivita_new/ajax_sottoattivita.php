@@ -31,18 +31,19 @@ $query_subactivities = 'SELECT a.id, sa.codice
 
 $subactivities = $dbo->fetchArray($query_subactivities);
 
-$color = 'panel-footer';
+$colorNoSuccess = 'panel-footer';
 
 if (substr_count($j,"-")%2 == 0) { //caso pari
-    $color = 'panel-body';
+    $colorNoSuccess = 'panel-body';
 }
 
 $paddingLeft = 15 * (substr_count($j,"-") + 1);
-error_log($paddingLeft);
 
 foreach ($subactivities as $i => $activity) {
-    if ($activity['codice'] == 'OK') {
+    if ($activity['codice'] == 'DONE') {
         $color = 'bg-success';
+    } else {
+        $color = $colorNoSuccess;
     }
     echo '
     <div class="' . $color . '" data-collapseid="' .$j . '-' . ($i+1) . '" style="cursor:pointer;padding:10px 15px;"
@@ -51,7 +52,7 @@ foreach ($subactivities as $i => $activity) {
             <a data-toggle="collapse" style="padding-left:' . $paddingLeft . 'px">
                 <a href="' . $modulo . '?id_module=' . $id_module . '&id_record=' . $activity['id'] . '">' .tr('Attività ') . $activity['id'] . '</a>
             </a>';
-            if ($activity['codice'] == 'OK') {
+            if ($activity['codice'] == 'DONE') {
                 echo
                 '<i class="fa fa-check text-success"></i>';
             }
