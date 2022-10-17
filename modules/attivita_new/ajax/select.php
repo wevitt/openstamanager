@@ -45,6 +45,7 @@ switch ($resource) {
                 INNER JOIN (an_tipianagrafiche_anagrafiche INNER JOIN an_tipianagrafiche
                 ON an_tipianagrafiche_anagrafiche.idtipoanagrafica=an_tipianagrafiche.idtipoanagrafica)
                 ON an_anagrafiche.idanagrafica=an_tipianagrafiche_anagrafiche.idanagrafica
+                JOIN zz_users ON zz_users.idanagrafica = an_anagrafiche.idanagrafica
                 |where|";
 
 
