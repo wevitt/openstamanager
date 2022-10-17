@@ -183,7 +183,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
         <input type="hidden" name="id_intervento" value="<?= $id_intervento ?>">
     <?php } ?>
 
-    <div class="col-lg-8">
+    <div class="col-lg-7">
         <div class="row">
             <div class="col-md-4">
                 <label for="cliente" class="card-header">
@@ -368,7 +368,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
     </div>
 
     <!-- DETTAGLI CLIENTE -->
-    <div class="col-lg-4 div-dettaglio-utente" style="padding-right:30px; font-size:10px;">
+    <div class="col-lg-5 div-dettaglio-utente" style="padding-right:30px; font-size:10px;">
         <div class="">
             <h3><?= tr('Dettagli cliente') ?></h3>
         </div>
@@ -531,8 +531,8 @@ echo '
         plus_impianto = $(".modal #idimpianti").parent().find(".btn");
         plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
 
-        plus_contratto = $(".modal #idcontratto").parent().find(".btn");
-        plus_contratto.attr("onclick", plus_contratto.attr("onclick").replace(/idanagrafica=[0-9]*/, "idanagrafica=" + value));
+        //plus_contratto = $(".modal #idcontratto").parent().find(".btn");
+        //plus_contratto.attr("onclick", plus_contratto.attr("onclick").replace(/idanagrafica=[0-9]*/, "idanagrafica=" + value));
 
         plus_referente = $(".modal #idreferente").parent().find(".btn");
         plus_referente.attr("onclick", plus_referente.attr("onclick").replace(/id_parent=[0-9]*/, "id_parent=" + value));
