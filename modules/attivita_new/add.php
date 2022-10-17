@@ -183,7 +183,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
         <input type="hidden" name="id_intervento" value="<?= $id_intervento ?>">
     <?php } ?>
 
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="row">
             <div class="col-md-4">
                 <label for="cliente" class="card-header">
@@ -368,7 +368,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
     </div>
 
     <!-- DETTAGLI CLIENTE -->
-    <div class="col-lg-5 div-dettaglio-utente" style="padding-right:30px; font-size:10px;">
+    <div class="col-lg-4 div-dettaglio-utente" style="padding-right:30px;">
         <div class="">
             <h3><?= tr('Dettagli cliente') ?></h3>
         </div>
@@ -718,6 +718,8 @@ echo '
 
 <script>
     $(document).ready(function() {
+        $('.modal-lg').css({'width': '90%'});
+
         $('.modal-dettaglio-utente').on('click', function() {
             var url = $('.url').val();
             var base_path = $('.base_path').val();

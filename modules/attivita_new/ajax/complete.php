@@ -26,6 +26,9 @@ switch ($op) {
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <a data-toggle="collapse" href="#collapseScadenze">' . tr('Scadenze') . ' </a>
+                    <a data-toggle="collapse" class="pull-right" href="#collapseScadenze">
+                        <i class="fa fa-plus"></i>
+                    </a>
                 </h4>
             </div>
 
@@ -56,7 +59,8 @@ switch ($op) {
                     echo '
                     </tbody>
                 </table>
-            </div>';
+            </div>
+            <hr>';
         }
 
         // Informazioni sui contratti
@@ -74,6 +78,9 @@ switch ($op) {
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <a data-toggle="collapse" href="#collapseContratti">' . tr('Contratti') . '</a>
+                    <a data-toggle="collapse" class="pull-right" href="#collapseContratti">
+                        <i class="fa fa-plus"></i>
+                    </a>
                 </h4>
             </div>
 
@@ -108,7 +115,8 @@ switch ($op) {
                     echo '
                     </tbody>
                 </table>
-            </div>';
+            </div>
+            <hr>';
         }
 
         // Informazioni sui preventivi
@@ -125,6 +133,9 @@ switch ($op) {
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <a data-toggle="collapse" href="#collapsePreventivi">' . tr('Preventivi') . '</a>
+                    <a data-toggle="collapse" class="pull-right" href="#collapsePreventivi">
+                        <i class="fa fa-plus"></i>
+                    </a>
                 </h4>
             </div>
 
@@ -154,7 +165,8 @@ switch ($op) {
                     echo '
                     </tbody>
                 </table>
-            </div>';
+            </div>
+            <hr>';
         }
 
         // Note dell'anagrafica
@@ -165,6 +177,9 @@ switch ($op) {
         <div class="panel-heading">
             <h4 class="panel-title">
                 <a data-toggle="collapse" href="#collapseNote">' . tr('Note interne sul cliente') . '</a>
+                <a data-toggle="collapse" class="pull-right" href="#collapseNote">
+                    <i class="fa fa-plus"></i>
+                </a>
             </h4>
         </div>
 
@@ -185,7 +200,8 @@ switch ($op) {
                 echo '
                 </tbody>
             </table>
-        </div>';
+        </div>
+        <hr>';
 
         // Interventi collegati all'anagrafica
         $modulo_interventi = Module::pool('Interventi');
@@ -195,6 +211,9 @@ switch ($op) {
             <div class="panel-heading">
                 <h4 class="panel-title">
                     <a data-toggle="collapse" href="#collapseInterventi">' . tr('Attività recenti') . '</a>
+                    <a data-toggle="collapse" class="pull-right" href="#collapseInterventi">
+                        <i class="fa fa-plus"></i>
+                    </a>
                 </h4>
             </div>
 
