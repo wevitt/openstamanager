@@ -249,7 +249,7 @@ if (empty($google)) {
             $inputs.find('[name="colli[]"]').val('');
             $inputs.find('[name="ord[]"]').val('');
 
-            $body.append($template.html());
+            $body.find('tr:last').before($template.html());
             autocompleteIndirizzo();
         }
     }
@@ -273,19 +273,21 @@ if (empty($google)) {
         if (!indirizzo) {
             $row.find('.indirizzo input').addClass('is-invalid');
         } else {
+            console.log(indirizzo);
+
             var array = indirizzo.split(',');
-            if (array.length < 4) {
+            if (array.length < 3) {
                 $row.find('.indirizzo input').addClass('is-invalid');
             } else {
                 var i = 0
-                if (array.length == 5) { //è indicato anche il numero civico
+                if (array.length == 4) { //è indicato anche il numero civico
                     $row.find('.indirizzo').text(array[i] + ' ' + array[i+1]);
                     i++;
                 } else {
                     $row.find('.indirizzo').text(array[i]);
                 }
                 $row.find('.citta').text(array[i+1]);
-                $row.find('.cap').text(array[i+2]);
+                $row.find('.cap').text("");//array[i+2]);
                 $row.find('.provincia').text(array[i+2]);
                 $row.find('.azioni').html('<a class="btn" onclick="rimuoviTappa($(this))"><i class="fa fa-trash" aria-hidden="true"></i></a>');
 

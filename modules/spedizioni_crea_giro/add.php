@@ -133,49 +133,67 @@ $url_crea_percorso_ottimizzato = $modulo->fileurl('crea_percorso_ottimizzato.php
     }
 
     function autocompleteIndirizzo() {
-        /*const CONFIGURATION = {
-            "mapOptions": { "center": { "lat": 41.39, "lng": 12.48 }, "fullscreenControl": true, "mapTypeControl": false, "streetViewControl": false, "zoom": 5, "zoomControl": true, "maxZoom": 22 },
-            "mapsApiKey": "AIzaSyCYGCUb4fZaAm-RO_CcRXViXpxVBAecj8I",
-            "capabilities": { "addressAutocompleteControl": true, "mapDisplayControl": true }
-        };
-        const map = new google.maps.Map(document.getElementById("map"), {
-            zoom: CONFIGURATION.mapOptions.zoom,
-            center: { lat: 41.39, lng: 12.48 },
-            mapTypeControl: false,
-            fullscreenControl: CONFIGURATION.mapOptions.fullscreenControl,
-            zoomControl: CONFIGURATION.mapOptions.zoomControl,
-            streetViewControl: CONFIGURATION.mapOptions.streetViewControl
-        });
-        const marker = new google.maps.Marker({ map: map, draggable: false });*/
-
         const autocompleteInput = document.querySelector('[name=autocomplete-address]');
         const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
             fields: ["address_components", "geometry", "name"],
             types: [ "establishment", "geocode"],
         });
         autocomplete.addListener('place_changed', function () {
-            //marker.setVisible(false);
             const place = autocomplete.getPlace();
             if (!place.geometry) {
-                // User entered the name of a Place that was not suggested and
-                // pressed the Enter key, or the Place Details request failed.
                 window.alert('Indirizzo sconosciuto: \'' + place.name + '\'');
                 return;
             }
             //renderAddress(place);
-            //fillInAddress(place);
+            fillInAddress(place);
         });
 
-        /*function fillInAddress(place) {
-            var indirizzo = place.address_components[1].long_name;
-            indirizzo += ', ' + place.address_components[0].long_name;
-            indirizzo += ' - ' + place.address_components[7].long_name;
-            indirizzo += ' ' + place.address_components[2].long_name;
 
-            return indirizzo;
+        function fillInAddress(place) {
+            var street_number = '';
+            var route = '';
+            var postal_code = '';
+            var locality = '';
+
+            for (var i = 0; i < place.address_components.length; i++) {
+                var addressType = place.address_components[i].types[0];
+                if (addressType == 'street_number') {
+                    street_number = ', ' + place.address_components[i]['long_name'];
+                }
+                if (addressType == 'route') {
+                    route = place.address_components[i]['long_name'];
+                }
+                if (addressType == 'locality') {
+                    locality = place.address_components[i]['long_name'];
+                }
+                if (addressType == 'postal_code') {
+                    postal_code = place.address_components[i]['long_name'];
+                }
+                if (addressType == 'administrative_area_level_2') {
+                    provincia = place.address_components[i]['short_name'];
+                }
+                if (addressType == 'administrative_area_level_3') {
+                    administrative_area_level_3 = place.address_components[i]['long_name'];
+                }
+                if (addressType == 'country') {
+                    country = place.address_components[i]['long_name'];
+                }
+            }
+
+            if (route === '') {
+                route = place.name;
+            }
+            if (locality === '') {
+                locality = administrative_area_level_3;
+            }
+
+            var placeName = place.name || '';
+            var indirizzo = route + street_number + ", " + locality + ", " + provincia;
+
+            $('[name="autocomplete-address"]').val(indirizzo);
         }
 
-        function renderAddress(place) {
+        /*function renderAddress(place) {
             map.setZoom(15);
             map.setCenter(place.geometry.location);
             marker.setPosition(place.geometry.location);
