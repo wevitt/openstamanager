@@ -171,6 +171,44 @@ switch ($resource) {
 
         break;
 
+    case 'all_users':
+            $query =
+            "SELECT an_anagrafiche.idanagrafica AS id,
+            CONCAT(ragione_sociale, IF(citta IS NULL OR citta = '', '',
+            CONCAT(' (', citta, ')')),
+            IF(deleted_at IS NULL, '', ' (".tr('eliminata').")')) AS descrizione, idtipointervento_default
+            FROM an_anagrafiche INNER JOIN (an_tipianagrafiche_anagrafiche
+            INNER JOIN an_tipianagrafiche ON an_tipianagrafiche_anagrafiche.idtipoanagrafica=an_tipianagrafiche.idtipoanagrafica)
+            ON an_anagrafiche.idanagrafica=an_tipianagrafiche_anagrafiche.idanagrafica
+            JOIN zz_users ON zz_users.idanagrafica = an_anagrafiche.idanagrafica
+            |where| ORDER BY ragione_sociale";
+
+            foreach ($elements as $element) {
+                $filter[] = 'an_anagrafiche.idanagrafica='.prepare($element);
+            }
+
+            //$where[] = "descrizione='Tecnico'";
+            if (empty($filter)) {
+                $where[] = 'deleted_at IS NULL';
+
+                if (setting('Permetti inserimento sessioni degli altri tecnici')) {
+                } else {
+                    //come tecnico posso aprire attività solo a mio nome
+                    $user = Auth::user();
+                    if ($user['gruppo'] == 'Tecnici' && !empty($user['idanagrafica'])) {
+                        $where[] = 'an_anagrafiche.idanagrafica='.$user['idanagrafica'];
+                    }
+                }
+            }
+
+            if (!empty($search)) {
+                $search_fields[] = 'ragione_sociale LIKE '.prepare('%'.$search.'%');
+                $search_fields[] = 'citta LIKE '.prepare('%'.$search.'%');
+                $search_fields[] = 'provincia LIKE '.prepare('%'.$search.'%');
+            }
+
+            break;
+
     case 'clienti_fornitori':
         $query = "SELECT `an_anagrafiche`.`idanagrafica` AS id, CONCAT_WS('', ragione_sociale, IF(citta !='' OR provincia != '', CONCAT(' (', citta, IF(provincia!='', CONCAT(' ', provincia), ''), ')'), ''), IF(deleted_at IS NULL, '', ' (".tr('eliminata').")')) AS descrizione, `an_tipianagrafiche`.`descrizione` AS optgroup, idtipointervento_default, an_tipianagrafiche.idtipoanagrafica FROM `an_tipianagrafiche` INNER JOIN `an_tipianagrafiche_anagrafiche` ON `an_tipianagrafiche`.`idtipoanagrafica`=`an_tipianagrafiche_anagrafiche`.`idtipoanagrafica` INNER JOIN `an_anagrafiche` ON `an_anagrafiche`.`idanagrafica`=`an_tipianagrafiche_anagrafiche`.`idanagrafica` |where| ORDER BY `optgroup` ASC, ragione_sociale ASC";
 

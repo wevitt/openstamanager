@@ -29,7 +29,7 @@ include_once __DIR__.'/../../core.php';
 		</div>
 
         <div class="col-md-6">
-            {[ "type": "select", "label": "<?php echo tr('Operatore'); ?>", "name": "id_anagrafica", "ajax-source": "tecnici", "required": 1 ]}
+            {[ "type": "select", "label": "<?php echo tr('Operatore'); ?>", "name": "id_anagrafica", "ajax-source": "all_users", "required": 1 ]}
         </div>
 	</div>
 
