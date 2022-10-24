@@ -22,47 +22,21 @@ include_once __DIR__.'/../../core.php';
 
 // Individuazione dati selezionabili
 // Stati interventi
-/*$stati_intervento = $dbo->fetchArray('SELECT idstatointervento AS id, descrizione, colore FROM in_statiintervento WHERE deleted_at IS NULL ORDER BY descrizione ASC');
+$stati_intervento = $dbo->fetchArray('SELECT idstatointervento AS id, descrizione, colore FROM in_statiintervento WHERE deleted_at IS NULL ORDER BY descrizione ASC');
 
 // Tipi intervento
 $tipi_intervento = $dbo->fetchArray('SELECT idtipointervento AS id, descrizione FROM in_tipiintervento ORDER BY descrizione ASC');
 
 // Tecnici disponibili
-$tecnici_disponibili = $dbo->fetchArray(
-    "SELECT an_anagrafiche.idanagrafica AS id, ragione_sociale, colore FROM an_anagrafiche
-    INNER JOIN an_tipianagrafiche_anagrafiche ON an_anagrafiche.idanagrafica=an_tipianagrafiche_anagrafiche.idanagrafica
+$tecnici_disponibili = $dbo->fetchArray("SELECT an_anagrafiche.idanagrafica AS id, ragione_sociale, colore FROM an_anagrafiche
+    INNER JOIN
+    an_tipianagrafiche_anagrafiche ON an_anagrafiche.idanagrafica=an_tipianagrafiche_anagrafiche.idanagrafica
     INNER JOIN an_tipianagrafiche ON an_tipianagrafiche_anagrafiche.idtipoanagrafica=an_tipianagrafiche.idtipoanagrafica
     LEFT OUTER JOIN in_interventi_tecnici ON in_interventi_tecnici.idtecnico = an_anagrafiche.idanagrafica
     INNER JOIN in_interventi ON in_interventi_tecnici.idintervento=in_interventi.id
-    WHERE an_anagrafiche.deleted_at IS NULL
-    AND an_tipianagrafiche.descrizione='Tecnico' ".Modules::getAdditionalsQuery('Interventi', null, false).'
-    GROUP BY an_anagrafiche.idanagrafica
-    ORDER BY ragione_sociale ASC'
-);*/
-
-$stati_intervento = $dbo->fetchArray(
-    'SELECT idstatointervento AS id, descrizione, colore
-    FROM at_stati_attivita WHERE deleted_at IS NULL ORDER BY descrizione ASC'
-);
-
-// Tipi intervento
-$tipi_intervento = $dbo->fetchArray(
-    'SELECT idtipointervento AS id, descrizione
-    FROM at_tipiattivita ORDER BY descrizione ASC'
-);
-
-// Tecnici disponibili
-$tecnici_disponibili = $dbo->fetchArray(
-    "SELECT an_anagrafiche.idanagrafica AS id, ragione_sociale, colore FROM an_anagrafiche
-    INNER JOIN an_tipianagrafiche_anagrafiche ON an_anagrafiche.idanagrafica=an_tipianagrafiche_anagrafiche.idanagrafica
-    INNER JOIN an_tipianagrafiche ON an_tipianagrafiche_anagrafiche.idtipoanagrafica=an_tipianagrafiche.idtipoanagrafica
-    LEFT OUTER JOIN at_attivita_tecnici ON at_attivita_tecnici.idtecnico = an_anagrafiche.idanagrafica
-    INNER JOIN at_attivita ON at_attivita_tecnici.idintervento = at_attivita.id
-    WHERE an_anagrafiche.deleted_at IS NULL
-    AND an_tipianagrafiche.descrizione='Tecnico' ".Modules::getAdditionalsQuery('Interventi', null, false).'
-    GROUP BY an_anagrafiche.idanagrafica
-    ORDER BY ragione_sociale ASC'
-);
+WHERE an_anagrafiche.deleted_at IS NULL AND an_tipianagrafiche.descrizione='Tecnico' ".Modules::getAdditionalsQuery('Interventi', null, false).'
+GROUP BY an_anagrafiche.idanagrafica
+ORDER BY ragione_sociale ASC');
 
 // Zone
 $zone = $dbo->fetchArray(
@@ -107,8 +81,8 @@ if (!isset($_SESSION['dashboard']['idzone'])) {
     }
 }
 
-echo
-'<!-- Filtri -->
+echo '
+<!-- Filtri -->
 <div class="row">
 	<!-- STATI INTERVENTO -->
 	<div class="dropdown col-md-3" id="dashboard_stati">
@@ -118,141 +92,144 @@ echo
         </button>
 		<ul class="dropdown-menu" role="menu">';
 
-        // Stati intervento
-        $stati_sessione = session_get('dashboard.idstatiintervento', []);
-        foreach ($stati_intervento as $stato) {
-            $attr = '';
-            if (in_array("'".$stato['id']."'", $stati_sessione)) {
-                $attr = 'checked="checked"';
-            }
+// Stati intervento
+$stati_sessione = session_get('dashboard.idstatiintervento', []);
+foreach ($stati_intervento as $stato) {
+    $attr = '';
+    if (in_array("'".$stato['id']."'", $stati_sessione)) {
+        $attr = 'checked="checked"';
+    }
 
-            echo '
+    echo '
             <li>
                 <input type="checkbox" id="stato_'.$stato['id'].'" class="dashboard_stato" value="'.$stato['id'].'" '.$attr.'>
                 <label for="stato_'.$stato['id'].'">
                     '.$stato['descrizione'].'<span style="position:relative;right:-7px;bottom:-3px;width:15px;height:15px;display:inline-block;border-radius:50%;background-color:'.$stato['colore'].';"></span>
                 </label>
             </li>';
-        }
+}
 
-        echo '
-        <div class="btn-group float-right">
-            <button type="button" class="btn btn-primary btn-sm seleziona_tutto">
-                '.tr('Tutti').'
-            </button>
-            <button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
-                <i class="fa fa-times"></i>
-            </button>
-        </div>
-    </ul>
-</div>
+echo '
+			<div class="btn-group float-right">
+				<button type="button" class="btn btn-primary btn-sm seleziona_tutto">
+                    '.tr('Tutti').'
+                </button>
+				<button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
+                    <i class="fa fa-times"></i>
+                </button>
+			</div>
+		</ul>
+	</div>
 
-<!-- TIPI INTERVENTO -->
-<div class="dropdown col-md-3" id="dashboard_tipi">
-    <button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
-        <i class="fa fa-filter"></i> '.tr('Tipi attività').'
-        (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
-    </button>
-    <ul class="dropdown-menu" role="menu">';
-        // Tipi intervento
-        $tipi_sessione = session_get('dashboard.idtipiintervento', []);
-        foreach ($tipi_intervento as $tipo) {
-            $attr = '';
-            if (in_array("'".$tipo['id']."'", $tipi_sessione)) {
-                $attr = 'checked="checked"';
-            }
+	<!-- TIPI INTERVENTO -->
+	<div class="dropdown col-md-3" id="dashboard_tipi">
+		<button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
+            <i class="fa fa-filter"></i> '.tr('Tipi attività').'
+            (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
+        </button>
+		<ul class="dropdown-menu" role="menu">';
 
-            echo '
+// Tipi intervento
+$tipi_sessione = session_get('dashboard.idtipiintervento', []);
+foreach ($tipi_intervento as $tipo) {
+    $attr = '';
+    if (in_array("'".$tipo['id']."'", $tipi_sessione)) {
+        $attr = 'checked="checked"';
+    }
+
+    echo '
             <li>
                 <input type="checkbox" id="tipo_'.$tipo['id'].'" class="dashboard_tipo" value="'.$tipo['id'].'" '.$attr.'>
                 <label for="tipo_'.$tipo['id'].'">
                     '.$tipo['descrizione'].'
                 </label>
             </li>';
-        }
+}
 
-        echo '
-        <div class="btn-group float-right">
-            <button type="button" class="btn btn-primary btn-sm seleziona_tutto">
-                '.tr('Tutti').'
-            </button>
-            <button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
-                <i class="fa fa-times"></i>
-            </button>
-        </div>
-    </ul>
-</div>
+echo '
+			<div class="btn-group float-right">
+				<button type="button" class="btn btn-primary btn-sm seleziona_tutto">
+                    '.tr('Tutti').'
+                </button>
+				<button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
+                    <i class="fa fa-times"></i>
+                </button>
+			</div>
+		</ul>
+	</div>
 
-<!-- TECNICI -->
-<div class="dropdown col-md-3" id="dashboard_tecnici">
-    <button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
-        <i class="fa fa-filter"></i> '.tr('Tecnici').'
-        (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
-    </button>
-    <ul class="dropdown-menu" role="menu">';
-        $tecnici_sessione = session_get('dashboard.idtecnici', []);
-        foreach ($tecnici_disponibili as $tecnico) {
-            $attr = '';
-            if (in_array("'".$tecnico['id']."'", $tecnici_sessione)) {
-                $attr = 'checked="checked"';
-            }
+	<!-- TECNICI -->
+	<div class="dropdown col-md-3" id="dashboard_tecnici">
+		<button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
+            <i class="fa fa-filter"></i> '.tr('Tecnici').'
+            (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
+        </button>
+		<ul class="dropdown-menu" role="menu">';
 
-            echo '
+$tecnici_sessione = session_get('dashboard.idtecnici', []);
+foreach ($tecnici_disponibili as $tecnico) {
+    $attr = '';
+    if (in_array("'".$tecnico['id']."'", $tecnici_sessione)) {
+        $attr = 'checked="checked"';
+    }
+
+    echo '
             <li>
                 <input type="checkbox" id="tecnico_'.$tecnico['id'].'" class="dashboard_tecnico" value="'.$tecnico['id'].'" '.$attr.'>
                 <label for="tecnico_'.$tecnico['id'].'">
                     '.$tecnico['ragione_sociale'].'<span style="position:relative;right:-7px;bottom:-3px;width:15px;height:15px;display:inline-block;border-radius:50%;background-color:'.$tecnico['colore'].';"></span>
                 </label>
             </li>';
-        }
+}
 
-        echo '
-        <div class="btn-group float-right">
-            <button type="button" class="btn btn-primary btn-sm seleziona_tutto">
-                '.tr('Tutti').'
-            </button>
-            <button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
-                <i class="fa fa-times"></i>
-            </button>
-        </div>
-    </ul>
-</div>
+echo '
+			<div class="btn-group float-right">
+				<button type="button" class="btn btn-primary btn-sm seleziona_tutto">
+                    '.tr('Tutti').'
+                </button>
+				<button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
+                    <i class="fa fa-times"></i>
+                </button>
+			</div>
+		</ul>
+	</div>
 
-<!-- ZONE -->
-<div class="dropdown col-md-3" id="dashboard_zone">
-    <button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
-        <i class="fa fa-filter"></i> '.tr('Zone').'
-        (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
-    </button>
-    <ul class="dropdown-menu" role="menu">';
-        // Zone
-        $zone_sessione = session_get('dashboard.idzone', []);
-        foreach ($zone as $zona) {
-            $attr = '';
-            if (in_array("'".$zona['id']."'", $zone_sessione)) {
-                $attr = 'checked="checked"';
-            }
+	<!-- ZONE -->
+	<div class="dropdown col-md-3" id="dashboard_zone">
+		<button type="button" class="btn btn-block counter_object" data-toggle="dropdown">
+            <i class="fa fa-filter"></i> '.tr('Zone').'
+            (<span class="selected_counter"></span>/<span class="total_counter"></span>) <i class="caret"></i>
+        </button>
+		<ul class="dropdown-menu" role="menu">';
 
-            echo '
+// Zone
+$zone_sessione = session_get('dashboard.idzone', []);
+foreach ($zone as $zona) {
+    $attr = '';
+    if (in_array("'".$zona['id']."'", $zone_sessione)) {
+        $attr = 'checked="checked"';
+    }
+
+    echo '
             <li>
                 <input type="checkbox" id="zona_'.$zona['id'].'" class="dashboard_zona" value="'.$zona['id'].'" '.$attr.'>
                 <label for="zona_'.$zona['id'].'">
-                    '.$zona['descrizione'].'
+                   '.$zona['descrizione'].'
                 </label>
             </li>';
-        }
+}
 
-        echo '
-        <div class="btn-group float-right">
-            <button type="button" class="btn btn-primary btn-sm seleziona_tutto">
-                '.tr('Tutti').'
-            </button>
-            <button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
-                <i class="fa fa-times"></i>
-            </button>
-        </div>
-    </ul>
-</div>
+echo '
+			<div class="btn-group float-right">
+				<button type="button" class="btn btn-primary btn-sm seleziona_tutto">
+                    '.tr('Tutti').'
+                </button>
+				<button type="button" class="btn btn-danger btn-sm deseleziona_tutto">
+                    <i class="fa fa-times"></i>
+                </button>
+			</div>
+		</ul>
+	</div>
 </div>
 <br>';
 
@@ -262,54 +239,30 @@ if ($user['gruppo'] == 'Tecnici' && !empty($user['idanagrafica'])) {
     $id_tecnico = $user['idanagrafica'];
 }
 
-/*$query_da_programmare =
-    'SELECT data_richiesta AS data
-    FROM co_promemoria
+$query_da_programmare = 'SELECT data_richiesta AS data FROM co_promemoria
     INNER JOIN co_contratti ON co_promemoria.idcontratto = co_contratti.id
     INNER JOIN an_anagrafiche ON co_contratti.idanagrafica = an_anagrafiche.idanagrafica
-    WHERE idcontratto IN (SELECT id FROM co_contratti WHERE idstato IN (SELECT id FROM co_staticontratti WHERE is_pianificabile = 1))
+WHERE
+    idcontratto IN (SELECT id FROM co_contratti WHERE idstato IN (SELECT id FROM co_staticontratti WHERE is_pianificabile = 1))
     AND idintervento IS NULL
-    UNION
-    SELECT IF(data_scadenza IS NULL, data_richiesta, data_scadenza) AS data
-    FROM in_interventi
-    INNER JOIN an_anagrafiche ON in_interventi.idanagrafica = an_anagrafiche.idanagrafica';*/
 
-$query_da_programmare =
-    'SELECT data_richiesta AS data
-    FROM co_promemoria
-    INNER JOIN co_contratti ON co_promemoria.idcontratto = co_contratti.id
-    INNER JOIN an_anagrafiche ON co_contratti.idanagrafica = an_anagrafiche.idanagrafica
-    WHERE idcontratto IN (SELECT id FROM co_contratti WHERE idstato IN (SELECT id FROM co_staticontratti WHERE is_pianificabile = 1))
-    AND idintervento IS NULL
-    UNION
-    SELECT IF(data_scadenza IS NULL, data_richiesta, data_scadenza) AS data
-    FROM at_attivita
-    INNER JOIN an_anagrafiche ON at_attivita.idanagrafica = an_anagrafiche.idanagrafica';
-
+UNION SELECT IF(data_scadenza IS NULL, data_richiesta, data_scadenza) AS data FROM in_interventi
+    INNER JOIN an_anagrafiche ON in_interventi.idanagrafica = an_anagrafiche.idanagrafica';
 
 // Visualizzo solo promemoria del tecnico loggato
 if (!empty($id_tecnico) && !empty($solo_promemoria_assegnati)) {
-    /*$query_da_programmare .= '
-        INNER JOIN in_interventi_tecnici_assegnati ON in_interventi.id = in_interventi_tecnici_assegnati.id_intervento AND id_tecnico = '.prepare($id_tecnico);*/
-
     $query_da_programmare .= '
-        INNER JOIN at_attivita ON at_attivita.id = at_attivita_tecnici_assegnati.id_intervento
-        AND id_tecnico = '.prepare($id_tecnico);
+    INNER JOIN in_interventi_tecnici_assegnati ON in_interventi.id = in_interventi_tecnici_assegnati.id_intervento AND id_tecnico = '.prepare($id_tecnico);
 }
 
-/*$query_da_programmare .= '
-WHERE (SELECT COUNT(*) FROM in_interventi_tecnici WHERE in_interventi_tecnici.idintervento = in_interventi.id) = 0 AND in_interventi.idstatointervento IN(SELECT idstatointervento FROM in_statiintervento WHERE is_completato = 0)';*/
-$query_da_programmare .=
-    ' WHERE (SELECT COUNT(*) FROM at_attivita_tecnici WHERE at_attivita_tecnici.idintervento = at_attivita.id) = 0
-    AND at_attivita.idstatointervento IN(SELECT idstatointervento FROM at_stati_attivita WHERE is_completato = 0)';
-
+$query_da_programmare .= '
+WHERE (SELECT COUNT(*) FROM in_interventi_tecnici WHERE in_interventi_tecnici.idintervento = in_interventi.id) = 0 AND in_interventi.idstatointervento IN(SELECT idstatointervento FROM in_statiintervento WHERE is_completato = 0)';
 $risultati_da_programmare = $dbo->fetchArray($query_da_programmare);
-
 
 if (!empty($risultati_da_programmare)) {
     echo '
-    <div class="row">
-        <div class="col-md-10">';
+<div class="row">
+    <div class="col-md-10">';
 }
 
 echo '
@@ -324,44 +277,18 @@ if (!empty($risultati_da_programmare)) {
 
     // Controllo pianificazioni mesi precedenti
     // Promemoria contratti + promemoria interventi
-    /*$query_mesi_precenti =
-        'SELECT co_promemoria.id
-        FROM co_promemoria INNER JOIN co_contratti ON co_promemoria.idcontratto=co_contratti.id
-        WHERE idstato IN(SELECT id FROM co_staticontratti WHERE is_pianificabile = 1)
-        AND idintervento IS NULL
-        AND DATE_ADD(co_promemoria.data_richiesta, INTERVAL 1 DAY) <= NOW()
-        UNION
-        SELECT in_interventi.id
-        FROM in_interventi
-        INNER JOIN an_anagrafiche ON in_interventi.idanagrafica=an_anagrafiche.idanagrafica';*/
-
-    $query_mesi_precenti =
-        'SELECT co_promemoria.id
-        FROM co_promemoria INNER JOIN co_contratti ON co_promemoria.idcontratto=co_contratti.id
-        WHERE idstato IN(SELECT id FROM co_staticontratti WHERE is_pianificabile = 1)
-        AND idintervento IS NULL
-        AND DATE_ADD(co_promemoria.data_richiesta, INTERVAL 1 DAY) <= NOW()
-        UNION
-        SELECT at_attivita.id
-        FROM at_attivita
-        INNER JOIN an_anagrafiche ON at_attivita.idanagrafica=an_anagrafiche.idanagrafica';
+    $query_mesi_precenti = 'SELECT co_promemoria.id FROM co_promemoria INNER JOIN co_contratti ON co_promemoria.idcontratto=co_contratti.id WHERE idstato IN(SELECT id FROM co_staticontratti WHERE is_pianificabile = 1) AND idintervento IS NULL AND DATE_ADD(co_promemoria.data_richiesta, INTERVAL 1 DAY) <= NOW()
+    UNION SELECT in_interventi.id FROM in_interventi
+        INNER JOIN an_anagrafiche ON in_interventi.idanagrafica=an_anagrafiche.idanagrafica';
 
     // Visualizzo solo promemoria del tecnico loggato
     if (!empty($id_tecnico) && !empty($solo_promemoria_assegnati)) {
-        /*$query_mesi_precenti .= '
-            INNER JOIN in_interventi_tecnici_assegnati ON in_interventi.id = in_interventi_tecnici_assegnati.id_intervento AND id_tecnico = '.prepare($id_tecnico);*/
-
         $query_mesi_precenti .= '
-            INNER JOIN at_attivita_tecnici_assegnati ON at_attivita.id = at_attivita_tecnici_assegnati.id_intervento AND id_tecnico = '.prepare($id_tecnico);
+        INNER JOIN in_interventi_tecnici_assegnati ON in_interventi.id = in_interventi_tecnici_assegnati.id_intervento AND id_tecnico = '.prepare($id_tecnico);
     }
 
-    /*$query_mesi_precenti .= '
-        WHERE (SELECT COUNT(*) FROM in_interventi_tecnici WHERE in_interventi_tecnici.idintervento = in_interventi.id) = 0 AND in_interventi.idstatointervento IN(SELECT idstatointervento FROM in_statiintervento WHERE is_completato = 0) AND DATE_ADD(IF(in_interventi.data_scadenza IS NULL, in_interventi.data_richiesta, in_interventi.data_scadenza), INTERVAL 1 DAY) <= NOW()';*/
     $query_mesi_precenti .= '
-        WHERE (SELECT COUNT(*) FROM at_attivita_tecnici WHERE at_attivita_tecnici.idintervento = at_attivita.id) = 0
-        AND at_attivita.idstatointervento IN(SELECT idstatointervento FROM at_stati_attivita WHERE is_completato = 0)
-        AND DATE_ADD(IF(at_attivita.data_scadenza IS NULL, at_attivita.data_richiesta, at_attivita.data_scadenza), INTERVAL 1 DAY) <= NOW()';
-
+WHERE (SELECT COUNT(*) FROM in_interventi_tecnici WHERE in_interventi_tecnici.idintervento = in_interventi.id) = 0 AND in_interventi.idstatointervento IN(SELECT idstatointervento FROM in_statiintervento WHERE is_completato = 0) AND DATE_ADD(IF(in_interventi.data_scadenza IS NULL, in_interventi.data_richiesta, in_interventi.data_scadenza), INTERVAL 1 DAY) <= NOW()';
     $numero_mesi_precenti = $dbo->fetchNum($query_mesi_precenti);
 
     if ($numero_mesi_precenti > 0) {
@@ -391,9 +318,10 @@ if (!empty($risultati_da_programmare)) {
         $chiave = $data->format('mY');
         $testo = $data->formatLocalized('%B %Y');
 
-        if (checkdate($data->format('m'), $data->format('d'), $data->format('Y'))) {
-            echo '
-            <option value="'.$chiave.'">'. ucfirst($testo).'</option>';
+
+        if (checkdate($data->format('m'), $data->format('d'), $data->format('Y'))){
+    echo '
+            <option value="'.$chiave.'">'.ucfirst($testo).'</option>';
         }
     }
 
@@ -493,7 +421,6 @@ echo '
             op: "carica_interventi",
             mese: mese
         }).done(function (data) {
-
             $("#elenco-promemoria").html(data);
 
             $("#external-events .fc-event").each(function () {
@@ -799,6 +726,7 @@ echo '
         });
 
         //calendar.render();
+
         globals.dashboard.calendar = calendar;
     }
 </script>';
