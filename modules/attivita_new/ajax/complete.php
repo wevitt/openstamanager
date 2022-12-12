@@ -5,6 +5,9 @@ use Modules\Anagrafiche\Anagrafica;
 use Modules\Contratti\Contratto;
 use Modules\Fatture\Fattura;
 use Modules\Preventivi\Preventivo;
+use Modules\Scadenzario\Scadenza;
+use Carbon\Carbon;
+
 
 include_once __DIR__.'/../../core.php';
 
@@ -13,14 +16,18 @@ $op = get('op');
 $numero_documenti = 5;
 
 switch ($op) {
-    case 'dettagli':
+    case 'dettagliCliente':
         // Scadenze dell'anagrafica
         $modulo_scadenze = Module::pool('Scadenziario');
         if ($modulo_scadenze->permission != '-') {
-            $scadenze = $database->fetchArray('SELECT co_scadenziario.id FROM co_scadenziario
-            INNER JOIN co_documenti ON co_scadenziario.iddocumento = co_documenti.id
-            WHERE co_scadenziario.iddocumento != 0 AND co_documenti.idanagrafica = '.prepare($chiamata->id_anagrafica).' AND co_scadenziario.da_pagare != co_scadenziario.pagato
-            ORDER BY co_scadenziario.scadenza DESC');
+            $scadenze = $database->fetchArray(
+                'SELECT co_scadenziario.id FROM co_scadenziario
+                INNER JOIN co_documenti ON co_scadenziario.iddocumento = co_documenti.id
+                WHERE co_scadenziario.iddocumento != 0
+                AND co_documenti.idanagrafica = ' . prepare($id_anagrafica) . '
+                AND co_scadenziario.da_pagare != co_scadenziario.pagato
+                ORDER BY co_scadenziario.scadenza DESC'
+            );
 
             echo '
             <div class="panel-heading">
@@ -44,16 +51,23 @@ switch ($op) {
                     </thead>
 
                     <tbody>';
-                        foreach ($scadenze as $info) {
-                            $scadenza = Scadenza::find($info['id']);
-                            $scaduta = $scadenza->scadenza->lessThan(new Carbon());
+                        if (!empty($scadenze)) {
+                            foreach ($scadenze as $info) {
+                                $scadenza = Scadenza::find($info['id']);
+                                $scaduta = $scadenza->scadenza->lessThan(new Carbon());
 
+                                echo '
+                                <tr class="'.($scaduta ? 'bg-red' : '').'">
+                                    <td>'.reference($scadenza->documento).'</td>
+                                    <td>'.dateFormat($scadenza->scadenza).'</td>
+                                    <td class="text-right">'.moneyFormat($scadenza->da_pagare).'</td>
+                                    <td class="text-right">'.moneyFormat($scadenza->da_pagare - $scadenza->pagato).'</td>
+                                </tr>';
+                            }
+                        } else {
                             echo '
-                            <tr class="'.($scaduta ? 'bg-red' : '').'">
-                                <td>'.reference($scadenza->documento).'</td>
-                                <td>'.dateFormat($scadenza->scadenza).'</td>
-                                <td class="text-right">'.moneyFormat($scadenza->da_pagare).'</td>
-                                <td class="text-right">'.moneyFormat($scadenza->da_pagare - $scadenza->pagato).'</td>
+                            <tr>
+                                <td colspan="2">'.tr('Nessuna scadenza per questo cliente').'</td>
                             </tr>';
                         }
                     echo '
@@ -111,7 +125,6 @@ switch ($op) {
                                 <td colspan="2">'.tr('Nessun contratto attivo per questo cliente').'</td>
                             </tr>';
                         }
-
                     echo '
                     </tbody>
                 </table>

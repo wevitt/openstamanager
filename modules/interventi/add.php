@@ -150,7 +150,7 @@ echo '
 	<input type="hidden" name="op" value="add">
 	<input type="hidden" name="ref" value="'.get('ref').'">
 	<input type="hidden" name="backto" value="record-edit">
-    
+
     <!-- Fix creazione da Anagrafica -->
     <input type="hidden" name="id_record" value="">';
 
@@ -711,7 +711,7 @@ echo '
             input("data_fine_ricorrenza").enable();
             $("#data_fine_ricorrenza").attr("required", true);
             input("numero_ricorrenze").disable();
-            input("numero_ricorrenze").set("");  
+            input("numero_ricorrenze").set("");
         } else {
             input("numero_ricorrenze").enable();
             input("data_fine_ricorrenza").disable();

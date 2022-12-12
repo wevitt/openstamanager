@@ -29,6 +29,8 @@ $id_tipo = filter('id_tipo');
 
 $origine_dashboard = get('ref') !== null;
 $module_anagrafiche = Modules::get('Anagrafiche');
+
+error_log(Modules::get('Impianti'));
 $id_plugin_sedi = Plugins::get('Sedi')['id'];
 
 // Calcolo dell'orario di inizio e di fine sulla base delle informazioni fornite
@@ -373,7 +375,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
             <h3><?= tr('Dettagli cliente') ?></h3>
         </div>
 
-        <div class="box-body" id="dettagli_cliente">
+        <div class="box-body" id="attivita_new_dettagli_cliente">
             <?= tr('Seleziona prima un cliente') ?>...
         </div>
     </div>
@@ -518,11 +520,11 @@ echo '
 
         if (data !== undefined) {
             // Carico nel panel i dettagli del cliente
-            $.get("'.base_path().'/ajax_complete.php?module=Interventi&op=dettagli&id_anagrafica=" + value, function(data){
-                $("#dettagli_cliente").html(data);
+            $.get("'.base_path().'/ajax_complete.php?module=Attivita_new&op=dettagliCliente&id_anagrafica=" + value, function(data){
+                $("#attivita_new_dettagli_cliente").html(data);
             });
         } else {
-            $("#dettagli_cliente").html("'.tr('Seleziona prima un cliente').'...");
+            $("#attivita_new_dettagli_cliente").html("'.tr('Seleziona prima un cliente').'...");
         }
 
         plus_sede = $(".modal #idsede_destinazione").parent().find(".btn");
