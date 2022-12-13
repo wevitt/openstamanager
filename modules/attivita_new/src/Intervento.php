@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Anagrafiche\Anagrafica;
 use Modules\Contratti\Contratto;
 use Modules\Preventivi\Preventivo;
-use Modules\TipiIntervento\Tipo as TipoSessione;
+use Modules\TipiAttivita\Tipo as TipoSessione;
 use Traits\RecordTrait;
 use Traits\ReferenceTrait;
 use Util\Generator;

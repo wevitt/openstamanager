@@ -30,7 +30,7 @@ use Modules\Attivita\Components\Sconto;
 use Modules\Attivita\Components\Sessione;
 use Modules\Attivita\Intervento;
 use Modules\Attivita\Stato;
-use Modules\TipiIntervento\Tipo as TipoSessione;
+use Modules\TipiAttivita\Tipo as TipoSessione;
 use Plugins\ComponentiImpianti\Componente;
 use Plugins\PianificazioneInterventi\Promemoria;
 
