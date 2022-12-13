@@ -27,6 +27,8 @@ $id_sede = filter('idsede');
 $richiesta = filter('richiesta');
 $id_tipo = filter('id_tipo');
 
+$module_interventi = Modules::get('Impianti')['id'];
+
 $origine_dashboard = get('ref') !== null;
 $module_anagrafiche = Modules::get('Anagrafiche');
 
@@ -268,11 +270,11 @@ $_SESSION['current_tipo_intervento'][""] = 0;
                     </div>
 
                     <div class="col-md-4">
-                        <?php if (Modules::get('Impianti') != '') { ?>
-                            {[ "type": "select", "label": "<?= tr('Impianto') ?>", "multiple": 1, "name": "idimpianti[]", "value": "<?= $impianti_collegati ?>", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": <?= ($id_anagrafica ?: '""') ?>, "idsede_destinazione": <?= ($id_sede ?: '""') ?>} "icon-after": "add|<?= Modules::get('Impianti')['id'] ?>|id_anagrafica=<?= $id_anagrafica ?>" ]}
-                        <?php } else { ?>
+                        <!--<?php if ($module_interventi != '' && $id_anagrafica != '') { ?>
+                            {[ "type": "select", "label": "<?= tr('Impianto') ?>", "multiple": 1, "name": "idimpianti[]", "value": "<?= $impianti_collegati ?>", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": <?= ($id_anagrafica ?: '""') ?>, "idsede_destinazione": <?= ($id_sede ?: '""') ?>} "icon-after": "add|<?= $module_interventi ?>|id_anagrafica=<?= $id_anagrafica ?>" ]}
+                        <?php } else { ?>-->
                             {[ "type": "select", "label": "<?= tr('Impianto') ?>", "multiple": 1, "name": "idimpianti[]", "value": "<?= $impianti_collegati ?>", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": <?= ($id_anagrafica ?: '""') ?>, "idsede_destinazione": <?= ($id_sede ?: '""') ?>} ]}
-                        <?php } ?>
+                        <!--<?php } ?>-->
                     </div>
 
                     <div class="col-md-4">
@@ -533,10 +535,10 @@ echo '
         plus_sede = $(".modal #idsede_destinazione").parent().find(".btn");
         plus_sede.attr("onclick", plus_sede.attr("onclick").replace(/id_parent=[0-9]*/, "id_parent=" + value));
 
-        if ("' . Modules::get('Impianti') . '" != "") {
-            plus_impianto = $(".modal #idimpianti").parent().find(".btn");
-            plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
-        }
+        //if ("' . $module_interventi . '" != "") {
+        //    plus_impianto = $(".modal #idimpianti").parent().find(".btn");
+        //    plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
+        //}
 
         //plus_contratto = $(".modal #idcontratto").parent().find(".btn");
         //plus_contratto.attr("onclick", plus_contratto.attr("onclick").replace(/idanagrafica=[0-9]*/, "idanagrafica=" + value));
