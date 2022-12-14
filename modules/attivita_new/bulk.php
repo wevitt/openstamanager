@@ -22,7 +22,7 @@ include_once __DIR__.'/../../core.php';
 use Modules\Anagrafiche\Anagrafica;
 use Modules\Fatture\Fattura;
 use Modules\Fatture\Tipo;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Attivita\Stato;
 use Util\Zip;
 

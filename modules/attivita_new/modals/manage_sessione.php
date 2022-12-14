@@ -20,7 +20,7 @@
 include_once __DIR__.'/../../../core.php';
 include_once __DIR__.'/../../../../core.php';
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 $show_prezzi = true;
 // Limitazione delle azioni dei tecnici

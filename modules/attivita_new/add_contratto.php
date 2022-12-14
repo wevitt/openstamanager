@@ -20,7 +20,7 @@
 include_once __DIR__.'/../../core.php';
 
 use Modules\Contratti\Contratto;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 $documento_finale = Intervento::find($id_record);
 $dir = $documento_finale->direzione;

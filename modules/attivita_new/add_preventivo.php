@@ -19,7 +19,7 @@
 
 include_once __DIR__.'/../../core.php';
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Preventivi\Preventivo;
 
 $documento_finale = Intervento::find($id_record);

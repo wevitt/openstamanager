@@ -237,7 +237,8 @@ echo '
                 </div>
 
                 <div class="col-md-4">
-                    {[ "type": "select", "label": "'.tr('Impianto').'", "multiple": 1, "name": "idimpianti[]", "value": "'.$impianti_collegati.'", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": '.($id_anagrafica ?: '""').', "idsede_destinazione": '.($id_sede ?: '""').'}, "icon-after": "add|'.Modules::get('Impianti')['id'].'|id_anagrafica='.$id_anagrafica.'" ]}
+                    {[ "type": "select", "label": "'.tr('Impianto').'", "multiple": 1, "name": "idimpianti[]", "value": "'.$impianti_collegati.'", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": '.($id_anagrafica ?: '""').', "idsede_destinazione": '.($id_sede ?: '""').'} ]}'; /* "icon-after": "add|Modules::get('Impianti')['id']|id_anagrafica=$id_anagrafica" ]}*/
+                echo '
                 </div>
 
                 <div class="col-md-4">
@@ -537,8 +538,8 @@ echo '
         plus_sede = $(".modal #idsede_destinazione").parent().find(".btn");
         plus_sede.attr("onclick", plus_sede.attr("onclick").replace(/id_parent=[0-9]*/, "id_parent=" + value));
 
-        plus_impianto = $(".modal #idimpianti").parent().find(".btn");
-        plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
+        //plus_impianto = $(".modal #idimpianti").parent().find(".btn");
+        //plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
 
         plus_contratto = $(".modal #idcontratto").parent().find(".btn");
         plus_contratto.attr("onclick", plus_contratto.attr("onclick").replace(/idanagrafica=[0-9]*/, "idanagrafica=" + value));

@@ -21,7 +21,7 @@ include_once __DIR__.'/../../core.php';
 
 use Modules\DDT\DDT;
 use Modules\Fatture\Fattura;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Ordini\Ordine;
 
 $documento = Intervento::find($id_record);

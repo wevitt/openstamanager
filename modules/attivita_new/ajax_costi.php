@@ -19,7 +19,7 @@
 
 include_once __DIR__.'/../../core.php';
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 $intervento = Intervento::find($id_record);
 $sessioni = $intervento->sessioni;

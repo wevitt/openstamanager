@@ -27,13 +27,13 @@ use Modules\Fatture\Components\Descrizione;
 use Modules\Fatture\Components\Riga;
 use Modules\Fatture\Fattura;
 use Modules\Attivita\Components\Sessione;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Attivita\Components\Riga as RigaIntervento;
 use Util\Generator;
 use Util\Ini;
 
 /**
- * Recupera il totale delle ore spese per un intervento.
+ * Recupera il totale delle ore spese per un Attivita.
  *
  * @param int $id_intervento
  *
@@ -41,13 +41,13 @@ use Util\Ini;
  */
 function get_ore_attivita($id_intervento)
 {
-    $intervento = Intervento::find($id_intervento);
+    $intervento = Attivita::find($id_intervento);
 
     return $intervento->ore_totali;
 }
 
 /**
- * Funzione per collegare gli articoli, usati in un intervento, ai rispettivi impianti.
+ * Funzione per collegare gli articoli, usati in un Attivita, ai rispettivi impianti.
  *
  * @param int $id_intervento
  * @param int $id_impianto
@@ -63,7 +63,7 @@ function link_componente_to_articolo_attivita($id_intervento, $id_impianto, $id_
     }
 
     $dbo = database();
-    $intervento = Intervento::find($id_intervento);
+    $intervento = Attivita::find($id_intervento);
 
     // Data di inizio dell'intervento (data_richiesta in caso di assenza di sessioni)
     $data = $intervento->inizio ?: $intervento->data_richiesta;
@@ -92,15 +92,15 @@ function link_componente_to_articolo_attivita($id_intervento, $id_impianto, $id_
 
 function add_tecnico_attivita($id_intervento, $idtecnico, $inizio, $fine, $idcontratto = null)
 {
-    $intervento = Intervento::find($id_intervento);
+    $intervento = Attivita::find($id_intervento);
     $anagrafica = Anagrafica::find($idtecnico);
 
     $sessione = Sessione::build($intervento, $anagrafica, $inizio, $fine);
 
-    // Notifica nuovo intervento al tecnico
+    // Notifica nuovo Attivita al tecnico
     if (setting('Notifica al tecnico l\'aggiunta della sessione nell\'attività')) {
         if (!empty($anagrafica['email'])) {
-            $template = Template::pool('Notifica intervento');
+            $template = Template::pool('Notifica Attivita');
 
             if (!empty($template)) {
                 $mail = Mail::build(auth()->getUser(), $template, $id_intervento);
@@ -110,7 +110,7 @@ function add_tecnico_attivita($id_intervento, $idtecnico, $inizio, $fine, $idcon
         }
     }
 
-    //Inserisco le righe aggiuntive previste dal tipo di intervento
+    //Inserisco le righe aggiuntive previste dal tipo di Attivita
     $righe_aggiuntive = database()->fetchArray("SELECT * FROM at_righe_tipiattivita WHERE id_tipointervento=".prepare($sessione->idtipointervento));
 
     foreach($righe_aggiuntive as $riga_aggiuntiva){
@@ -158,7 +158,7 @@ function aggiungi_attivita_in_fattura($id_intervento, $id_fattura, $descrizione,
     $calcolo_ritenuta_acconto = $calcolo_ritenuta_acconto !== false ? $calcolo_ritenuta_acconto : setting("Metodologia calcolo ritenuta d'acconto predefinito");
 
     $fattura = Fattura::find($id_fattura);
-    $intervento = Intervento::find($id_intervento);
+    $intervento = Attivita::find($id_intervento);
 
     $data = $intervento->fine;
     $codice = $intervento->codice;
@@ -337,7 +337,7 @@ function verifica_numero_attivita(Intervento $intervento)
     }
 
     $data = $intervento->data_richiesta;
-    $documenti = Intervento::whereDate('data_richiesta', '=', $data->format('Y-m-d'))
+    $documenti = Attivita::whereDate('data_richiesta', '=', $data->format('Y-m-d'))
         ->get();
 
     // Recupero maschera per questo segmento

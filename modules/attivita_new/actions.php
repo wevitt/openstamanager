@@ -28,7 +28,7 @@ use Modules\Attivita\Components\Articolo;
 use Modules\Attivita\Components\Riga;
 use Modules\Attivita\Components\Sconto;
 use Modules\Attivita\Components\Sessione;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Attivita\Stato;
 use Modules\TipiAttivita\Tipo as TipoSessione;
 use Plugins\ComponentiImpianti\Componente;

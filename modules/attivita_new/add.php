@@ -17,7 +17,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 include_once __DIR__.'/../../core.php';
 
@@ -213,7 +213,7 @@ $_SESSION['current_tipo_intervento'][""] = 0;
             </div>
 
             <div class="col-md-4">
-                {[ "type": "select", "label": "<?= tr('Tipo') ?>", "name": "idtipointervento", "required": 1, "value": "<?= $id_tipo ?>", "ajax-source": "tipiintervento" ]}
+                {[ "type": "select", "label": "<?= tr('Tipo') ?>", "name": "idtipointervento", "required": 1, "value": "<?= $id_tipo ?>", "ajax-source": "tipiintervento-new" ]}
             </div>
 
             <div class="col-md-4">

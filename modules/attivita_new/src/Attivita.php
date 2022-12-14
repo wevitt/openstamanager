@@ -29,7 +29,7 @@ use Traits\RecordTrait;
 use Traits\ReferenceTrait;
 use Util\Generator;
 
-class Intervento extends Document
+class Attivita extends Document
 {
     use ReferenceTrait;
     //use SoftDeletes;

@@ -24,7 +24,7 @@ use API\Interfaces\RetrieveInterface;
 use API\Resource;
 use Modules\Articoli\Articolo as ArticoloOriginale;
 use Modules\Attivita\Components\Articolo;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 class Articoli extends Resource implements RetrieveInterface, CreateInterface
 {

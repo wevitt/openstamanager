@@ -17,7 +17,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 include_once __DIR__.'/../../../core.php';
 

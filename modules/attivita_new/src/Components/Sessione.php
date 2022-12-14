@@ -24,7 +24,7 @@ use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use Modules\Anagrafiche\Anagrafica;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 /*
  * Notazione: i costi sono rivolti all'azienda, i prezzi al cliente.
  *

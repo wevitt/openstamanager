@@ -26,7 +26,7 @@ use API\Resource;
 use Auth;
 use Modules;
 use Modules\Anagrafiche\Anagrafica;
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 use Modules\Attivita\Stato;
 use Modules\TipiAttivita\Tipo as TipoSessione;
 

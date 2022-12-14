@@ -19,7 +19,7 @@
 
 namespace Modules\Attivita\Components;
 
-use Modules\Attivita\Intervento;
+use Modules\Attivita\Attivita as Intervento;
 
 trait RelationTrait
 {
