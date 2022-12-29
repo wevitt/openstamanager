@@ -1,0 +1,7 @@
+name = "Reparti"
+version = "1.0"
+directory = "reparti"
+options = "SELECT |select| FROM vb_reparti WHERE deleted_at IS NULL AND 1=1 HAVING 2=2"
+icon = "fa fa-angle-right"
+compatibility = "2.*"
+parent = "Vendita al banco"

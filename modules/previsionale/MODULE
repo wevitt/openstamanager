@@ -1,0 +1,7 @@
+name = "Previsionale"
+version = "1.0"
+directory = "previsionale"
+options = 'custom'
+icon = "fa fa-angle-right"
+compatibility = "2.4.15"
+parent = "Budget"

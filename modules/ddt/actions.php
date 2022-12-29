@@ -43,11 +43,12 @@ switch (filter('op')) {
         $idanagrafica = post('idanagrafica');
         $data = post('data');
         $id_tipo = post('idtipoddt');
+        $id_segment = post('id_segment');
 
         $anagrafica = Anagrafica::find($idanagrafica);
         $tipo = Tipo::find($id_tipo);
 
-        $ddt = DDT::build($anagrafica, $tipo, $data);
+        $ddt = DDT::build($anagrafica, $tipo, $data, $id_segment);
         $id_record = $ddt->id;
 
         $ddt->idcausalet = post('idcausalet');
@@ -325,7 +326,7 @@ switch (filter('op')) {
         if (post('create_document') == 'on') {
             $tipo = Tipo::where('dir', $documento->direzione)->first();
 
-            $ddt = DDT::build($documento->anagrafica, $tipo, post('data'));
+            $ddt = DDT::build($documento->anagrafica, $tipo, post('data'), post('id_segment'));
             $ddt->idpagamento = $documento->idpagamento;
 
             $ddt->id_documento_fe = $documento->id_documento_fe;
@@ -351,12 +352,17 @@ switch (filter('op')) {
 
         $ddt->save();
 
+        $evadi_qta_parent = true;
+        if ($documento->tipo->descrizione=='Ddt in uscita' || $documento->tipo->descrizione=='Ddt in entrata') {
+            $evadi_qta_parent = false;
+        }
+
         $righe = $documento->getRighe();
         foreach ($righe as $riga) {
             if (post('evadere')[$riga->id] == 'on' and !empty(post('qta_da_evadere')[$riga->id])) {
                 $qta = post('qta_da_evadere')[$riga->id];
 
-                $copia = $riga->copiaIn($ddt, $qta);
+                $copia = $riga->copiaIn($ddt, $qta, $evadi_qta_parent);
 
                 // Aggiornamento seriali dalla riga dell'ordine
                 if ($copia->isArticolo()) {
@@ -478,7 +484,7 @@ switch (filter('op')) {
         $stato = Stato::where('descrizione', '=', 'Evaso')->first();
 
         // Duplicazione DDT
-        $copia = DDT::build($ddt->anagrafica, $tipo, $ddt->data);
+        $copia = DDT::build($ddt->anagrafica, $tipo, $ddt->data, post('id_segment'));
         $copia->stato()->associate($stato);
         $copia->id_ddt_trasporto_interno = $ddt->id;
         $copia->idaspettobeni = $ddt->idaspettobeni;
@@ -526,7 +532,7 @@ switch (filter('op')) {
     case 'copy':
         $new = $ddt->replicate();
         $new->numero = DDT::getNextNumero($new->data, $dir);
-        $new->numero_esterno = DDT::getNextNumeroSecondario($new->data, $dir);
+        $new->numero_esterno = DDT::getNextNumeroSecondario($new->data, $dir, $new->id_segment);
 
         $stato = Stato::where('descrizione', '=', 'Bozza')->first();
         $new->stato()->associate($stato);
@@ -555,7 +561,7 @@ switch (filter('op')) {
 
 // Aggiornamento stato degli ordini presenti in questa fattura in base alle quantità totali evase
 if (!empty($id_record) && setting('Cambia automaticamente stato ordini fatturati')) {
-    $rs = $dbo->fetchArray('SELECT idordine FROM dt_righe_ddt WHERE idddt='.prepare($id_record));
+    $rs = $dbo->fetchArray('SELECT idordine FROM dt_righe_ddt WHERE idddt='.prepare($id_record).' AND idordine!=0');
 
     for ($i = 0; $i < sizeof($rs); ++$i) {
         $dbo->query('UPDATE or_ordini SET idstatoordine=(SELECT id FROM or_statiordine WHERE descrizione="'.get_stato_ordine($rs[$i]['idordine']).'") WHERE id = '.prepare($rs[$i]['idordine']));

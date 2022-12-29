@@ -24,7 +24,7 @@ echo '
     <thead>
         <tr>
             <th>'.tr('Nome').'</th>
-            <th>'.tr('Posizione').'</th>
+            <th>'.tr('Ubicazione').'</th>
             <th>'.tr('Stato').'</th>
             <th>'.tr('Posizione').'</th>
         </tr>

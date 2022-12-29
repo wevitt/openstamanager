@@ -32,6 +32,7 @@ use Modules\Interventi\Intervento;
 use Modules\Interventi\Stato;
 use Modules\TipiIntervento\Tipo as TipoSessione;
 use Plugins\ComponentiImpianti\Componente;
+use Plugins\ListinoClienti\DettaglioPrezzo;
 use Plugins\PianificazioneInterventi\Promemoria;
 
 switch (post('op')) {
@@ -73,7 +74,7 @@ switch (post('op')) {
 
         $tecnici_assegnati = (array) post('tecnici_assegnati');
 
-
+        
         $tecnici_presenti_array = $dbo->select('in_interventi_tecnici_assegnati', 'id_tecnico', ['id_intervento' => $intervento->id]);
 
         foreach($tecnici_presenti_array as $tecnico_presente) {
@@ -136,10 +137,9 @@ switch (post('op')) {
             }
 
             if (!empty($stato['notifica_cliente'])) {
-                $mail_cliente = $dbo->selectOne('an_anagrafiche', '*', ['idanagrafica' => post('idanagrafica')]);
-                if (!empty($mail_cliente['email'])) {
+                if (!empty($intervento->anagrafica->email)) {
                     $mail = Mail::build(auth()->getUser(), $template, $id_record);
-                    $mail->addReceiver($mail_cliente['email']);
+                    $mail->addReceiver($intervento->anagrafica->email);
                     $mail->save();
                 }
             }
@@ -153,7 +153,7 @@ switch (post('op')) {
             if (!empty($stato['notifica_tecnico_assegnato'])) {
                 $tecnici_assegnati = $dbo->select('in_interventi_tecnici_assegnati', 'id_tecnico AS idtecnico', ['id_intervento' => $id_record]);
             }
-
+                
             $tecnici = array_unique(array_merge($tecnici_intervento, $tecnici_assegnati), SORT_REGULAR);
 
             foreach ($tecnici as $tecnico) {
@@ -177,12 +177,13 @@ switch (post('op')) {
             $idstatointervento = post('idstatointervento');
             $data_richiesta = post('data_richiesta');
             $data_scadenza = post('data_scadenza') ?: null;
+            $id_segment = post('id_segment');
 
             $anagrafica = Anagrafica::find($idanagrafica);
             $tipo = TipoSessione::find($idtipointervento);
             $stato = Stato::find($idstatointervento);
 
-            $intervento = Intervento::build($anagrafica, $tipo, $stato, $data_richiesta);
+            $intervento = Intervento::build($anagrafica, $tipo, $stato, $data_richiesta, $id_segment);
             $id_record = $intervento->id;
 
             flash()->info(tr('Aggiunto nuovo intervento!'));
@@ -322,7 +323,7 @@ switch (post('op')) {
                 $intervento = Intervento::find($id_record);
                 $new = $intervento->replicate();
                 // Calcolo il nuovo codice
-                $new->codice = Intervento::getNextCodice($data_ricorrenza);
+                $new->codice = Intervento::getNextCodice($data_ricorrenza, $new->id_segment);
                 $new->data_richiesta = $data_ricorrenza;
                 $new->idstatointervento = $stato->idstatointervento;
                 $new->save();
@@ -410,7 +411,7 @@ switch (post('op')) {
 
     case 'delete_riga':
         $id_righe = (array)post('righe');
-
+        
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Sconto::find($id_riga);
@@ -430,7 +431,7 @@ switch (post('op')) {
     // Duplicazione riga
     case 'copy_riga':
         $id_righe = (array)post('righe');
-
+        
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Sconto::find($id_riga);
@@ -614,7 +615,7 @@ switch (post('op')) {
 
             $anagrafica = post('idanagrafica') ? Anagrafica::find(post('idanagrafica')) : $documento->anagrafica;
 
-            $intervento = Intervento::build($anagrafica, $tipo, $stato, post('data'));
+            $intervento = Intervento::build($anagrafica, $tipo, $stato, post('data'), post('id_segment'));
             $intervento->idsede_destinazione = $id_sede;
 
             $intervento->id_documento_fe = $documento->id_documento_fe;
@@ -629,18 +630,39 @@ switch (post('op')) {
             $id_record = $intervento->id;
         }
 
+        // Evado le righe solo se il documento originale non è un Ordine fornitore
+        $evadi_qta_parent = true;
+        if (post('op') == 'add_intervento') {
+            $evadi_qta_parent = false;
+        }
+
         $righe = $documento->getRighe();
         foreach ($righe as $riga) {
             if (post('evadere')[$riga->id] == 'on' and !empty(post('qta_da_evadere')[$riga->id])) {
                 $qta = post('qta_da_evadere')[$riga->id];
 
-                $copia = $riga->copiaIn($intervento, $qta);
+                $copia = $riga->copiaIn($intervento, $qta, $evadi_qta_parent);
 
-                // Aggiornamento seriali
                 if ($copia->isArticolo()) {
+                    // Aggiornamento seriali
                     $serials = is_array(post('serial')[$riga->id]) ? post('serial')[$riga->id] : [];
-
                     $copia->serials = $serials;
+
+                    // Aggiornamento prezzi se il documento originale è un Ordine fornitore
+                    if (post('op') == 'add_intervento') {
+                        $articolo = $copia->articolo;
+
+                        $cliente = DettaglioPrezzo::dettagli($riga->idarticolo, $anagrafica->id, 'entrata', $qta)->first();
+                        if (empty($cliente)) {
+                            $cliente = DettaglioPrezzo::dettaglioPredefinito($riga->idarticolo, $anagrafica->id, 'entrata')->first();
+                        }
+
+                        $prezzo_unitario = $cliente->prezzo_unitario - ($cliente->prezzo_unitario * $cliente->percentuale / 100);
+
+                        $copia->setPrezzoUnitario($cliente ? $prezzo_unitario : $cliente->prezzo_vendita, $copia->aliquota->id);
+                        $copia->setSconto($cliente->sconto_percentuale ?: 0, 'PRC');
+                        $copia->costo_unitario = $riga->prezzo_unitario ?: 0;
+                    }
                 }
 
                 $copia->save();
@@ -689,13 +711,39 @@ switch (post('op')) {
                         $intervento->idstatointervento = $stato['idstatointervento'];
                         $intervento->save();
                     }
+
                     // Notifica chiusura intervento
-                    if (!empty($stato['notifica']) && !empty($stato['destinatari'])) {
+                    if (!empty($stato['notifica'])) {
                         $template = Template::find($stato['id_email']);
 
-                        $mail = Mail::build(auth()->getUser(), $template, $id_record);
-                        $mail->addReceiver($stato['destinatari']);
-                        $mail->save();
+                        if (!empty($stato['destinatari'])) {
+                            $mail = Mail::build(auth()->getUser(), $template, $id_record);
+                            $mail->addReceiver($stato['destinatari']);
+                            $mail->save();
+                        }
+
+                        if (!empty($stato['notifica_cliente'])) {
+                            if (!empty($intervento->anagrafica->email)) {
+                                $mail = Mail::build(auth()->getUser(), $template, $id_record);
+                                $mail->addReceiver($intervento->anagrafica->email);
+                                $mail->save();
+                            }
+                        }
+
+                        if (!empty($stato['notifica_tecnici'])) {
+                            $tecnici_intervento = $dbo->select('in_interventi_tecnici', 'idtecnico', ['idintervento' => $id_record]);
+                            $tecnici_assegnati = $dbo->select('in_interventi_tecnici_assegnati', 'id_tecnico AS idtecnico', ['id_intervento' => $id_record]);
+                            $tecnici = array_unique(array_merge($tecnici_intervento, $tecnici_assegnati), SORT_REGULAR);
+
+                            foreach ($tecnici as $tecnico) {
+                                $mail_tecnico = $dbo->selectOne('an_anagrafiche', '*', ['idanagrafica' => $tecnico]);
+                                if (!empty($mail_tecnico['email'])) {
+                                    $mail = Mail::build(auth()->getUser(), $template, $id_record);
+                                    $mail->addReceiver($mail_tecnico['email']);
+                                    $mail->save();
+                                }
+                            }
+                        }
                     }
                 } else {
                     flash()->error(tr('Errore durante il salvataggio della firma nel database!'));
@@ -780,12 +828,14 @@ switch (post('op')) {
         $data_richiesta = post('data_richiesta');
         $copia_sessioni = post('copia_sessioni');
         $copia_righe = post('copia_righe');
+        $copia_impianti = post('copia_impianti');
+        $copia_allegati = post('copia_allegati');
 
         $new = $intervento->replicate();
         $new->idstatointervento = $id_stato;
 
         // Calcolo del nuovo codice sulla base della data di richiesta
-        $new->codice = Intervento::getNextCodice($data_richiesta);
+        $new->codice = Intervento::getNextCodice($data_richiesta, $new->id_segment);
         $new->data_richiesta = $data_richiesta;
         $new->data_scadenza = post('data_scadenza');
         $new->firma_file = '';
@@ -837,6 +887,36 @@ switch (post('op')) {
 
                 ++$numero_sessione;
                 $inizio_old = $sessione->orario_inizio;
+            }
+        }
+
+        // Copia degli impianti
+        if (!empty($copia_impianti)) {
+            $impianti = $dbo->select('my_impianti_interventi', '*', ['idintervento' => $intervento->id]);
+            foreach ($impianti as $impianto) {
+                $dbo->insert('my_impianti_interventi', [
+                    'idintervento' => $id_record,
+                    'idimpianto' => $impianto['idimpianto']
+                ]);
+            }
+
+            $componenti = $dbo->select('my_componenti_interventi', '*', ['id_intervento' => $intervento->id]);
+            foreach ($componenti as $componente) {
+                $dbo->insert('my_componenti_interventi', [
+                    'id_intervento' => $id_record,
+                    'id_componente' => $componente['id_componente']
+                ]);
+            }
+        }
+
+        //copia allegati
+        if (!empty($copia_allegati)) {
+            $allegati = $intervento->uploads();
+            foreach ($allegati as $allegato) {
+                $allegato->copia([
+                    'id_module' => $new->getModule()->id,
+                    'id_record' => $new->id,
+                ]);
             }
         }
 

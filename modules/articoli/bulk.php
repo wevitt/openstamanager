@@ -28,6 +28,12 @@ use Plugins\ListinoClienti\DettaglioPrezzo;
 
 include_once __DIR__.'/../../core.php';
 
+$module_preventivi = 'Preventivi';
+
+// Segmenti
+$id_preventivi = Modules::get($module_preventivi)['id'];
+$id_segment = $_SESSION['module_'.$id_preventivi]['id_segment'];
+
 switch (post('op')) {
     case 'change-acquisto':
         foreach ($id_records as $id) {
@@ -103,7 +109,7 @@ switch (post('op')) {
             $coefficiente = post('coefficiente');
 
             $articolo->coefficiente = $coefficiente;
-            $articolo->prezzo_acquisto = $articolo->prezzo_acquisto;
+            $articolo->prezzo_vendita = $articolo->prezzo_acquisto*$coefficiente;
             $articolo->save();
         }
 
@@ -113,11 +119,17 @@ switch (post('op')) {
 
     case 'delete-bulk':
         foreach ($id_records as $id) {
-            $elementi = $dbo->fetchArray('SELECT `co_documenti`.`id`, `co_documenti`.`data`, `co_documenti`.`numero`, `co_documenti`.`numero_esterno`, `co_tipidocumento`.`descrizione` AS tipo_documento, `co_tipidocumento`.`dir` FROM `co_documenti` JOIN `co_tipidocumento` ON `co_tipidocumento`.`id` = `co_documenti`.`idtipodocumento` WHERE `co_documenti`.`id` IN (SELECT `iddocumento` FROM `co_righe_documenti` WHERE `idarticolo` = '.prepare($id).')
+            $elementi = $dbo->fetchArray('SELECT `co_documenti`.`id` FROM `co_documenti` JOIN `co_tipidocumento` ON `co_tipidocumento`.`id` = `co_documenti`.`idtipodocumento` WHERE `co_documenti`.`id` IN (SELECT `iddocumento` FROM `co_righe_documenti` WHERE `idarticolo` = '.prepare($id).')
 
-            UNION SELECT `dt_ddt`.`id`, `dt_ddt`.`data`, `dt_ddt`.`numero`, `dt_ddt`.`numero_esterno`, `dt_tipiddt`.`descrizione` AS tipo_documento, `dt_tipiddt`.`dir` FROM `dt_ddt` JOIN `dt_tipiddt` ON `dt_tipiddt`.`id` = `dt_ddt`.`idtipoddt` WHERE `dt_ddt`.`id` IN (SELECT `idddt` FROM `dt_righe_ddt` WHERE `idarticolo` = '.prepare($id).')
+            UNION SELECT `dt_ddt`.`id` FROM `dt_ddt` JOIN `dt_tipiddt` ON `dt_tipiddt`.`id` = `dt_ddt`.`idtipoddt` WHERE `dt_ddt`.`id` IN (SELECT `idddt` FROM `dt_righe_ddt` WHERE `idarticolo` = '.prepare($id).')
 
-            UNION SELECT `co_preventivi`.`id`, `co_preventivi`.`data_bozza`, `co_preventivi`.`numero`,  0 AS numero_esterno , "Preventivo" AS tipo_documento, 0 AS dir FROM `co_preventivi` WHERE `co_preventivi`.`id` IN (SELECT `idpreventivo` FROM `co_righe_preventivi` WHERE `idarticolo` = '.prepare($id).')  ORDER BY `data`');
+            UNION SELECT `or_ordini`.`id` FROM `or_ordini` WHERE `or_ordini`.`id` IN (SELECT `idordine` FROM `or_righe_ordini` WHERE `idarticolo` = '.prepare($id).')
+
+            UNION SELECT `co_contratti`.`id` FROM `co_contratti` WHERE `co_contratti`.`id` IN (SELECT `idcontratto` FROM `co_righe_contratti` WHERE `idarticolo` = '.prepare($id).')
+
+            UNION SELECT `co_preventivi`.`id` FROM `co_preventivi` WHERE `co_preventivi`.`id` IN (SELECT `idpreventivo` FROM `co_righe_preventivi` WHERE `idarticolo` = '.prepare($id).')
+
+            UNION SELECT `in_interventi`.`id` FROM `in_interventi` WHERE `in_interventi`.`id` IN (SELECT `idintervento` FROM `in_righe_interventi` WHERE `idarticolo` = '.prepare($id).')');
 
             if (!empty($elementi)) {
                 $dbo->query('UPDATE mg_articoli SET deleted_at = NOW() WHERE id = '.prepare($id).Modules::getAdditionalsQuery($id_module));
@@ -142,7 +154,6 @@ switch (post('op')) {
         redirect(base_path().'/pdfgen.php?id_print='.$id_print.'&id_record='.Articolo::where('codice', '!=', '')->first()->id);
         exit();
 
-        break;
 
     case 'change-qta':
         $descrizione = post('descrizione');
@@ -177,7 +188,7 @@ switch (post('op')) {
         $tipo = TipoSessione::find($id_tipo);
         $n_articoli = 0;
 
-        $preventivo = Preventivo::build($anagrafica, $tipo, $nome, $data, 0);
+        $preventivo = Preventivo::build($anagrafica, $tipo, $nome, $data, 0, post('id_segment'));
         $id_preventivo = $preventivo->id;
 
         foreach ($id_records as $id) {
@@ -208,7 +219,6 @@ switch (post('op')) {
         redirect(base_path().'/editor.php?id_module='.Modules::get('Preventivi')['id'].'&id_record='.$id_preventivo);
         exit();
 
-        break;
 
     case 'export-csv':
         $file = temp_file();
@@ -477,6 +487,7 @@ $operations['crea-preventivo'] = [
         'msg' => tr('Ogni articolo selezionato, verrà aggiunto al preventivo').'
         <br><br>{[ "type": "text", "label": "'.tr('Nome preventivo').'", "name": "nome", "required": 1 ]}
         {[ "type": "select", "label": "'.tr('Cliente').'", "name": "id_cliente", "ajax-source": "clienti", "required": 1 ]}
+        {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(["id_module" => $id_preventivi, 'is_sezionale' => 1]).', "value": "'.$id_segment.'" ]}
         {[ "type": "select", "label": "'.tr('Tipo di attività').'", "name": "id_tipo", "values": "query=SELECT idtipointervento AS id, descrizione FROM in_tipiintervento", "required": 1 ]}
         {[ "type": "date", "label": "'.tr('Data').'", "name": "data", "required": 1, "value": "-now-" ]}',
         'button' => tr('Procedi'),

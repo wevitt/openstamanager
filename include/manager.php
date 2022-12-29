@@ -74,7 +74,7 @@ if (!empty($type) && $type != 'menu' && $type != 'custom') {
         echo '
     <div class="row">
     	<div class="col-md-4 pull-right">
-    		{[ "type": "select", "name": "id_segment_", "required": 0, "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module = '.prepare($id_module).'", "value": "'.$_SESSION['module_'.$id_module]['id_segment'].'" ]}
+    		{[ "type": "select", "name": "id_segment_", "required": 0, "ajax-source": "segmenti", "select-options": '.json_encode(['id_module' => $id_module]).', "value": "'.$_SESSION['module_'.$id_module]['id_segment'].'" ]}
     	</div>
     </div>
     <br>';
@@ -176,7 +176,7 @@ if (!empty($type) && $type != 'menu' && $type != 'custom') {
 
         <div class="col-md-2 dropdown">';
 
-    if (!empty($bulk) && $structure->permission == 'rw') {
+    if (!empty($bulk) && $structure->permission == 'rw' && empty($id_plugin)) {
         echo '
             <button class="btn btn-primary btn-block dropdown-toggle actions-container disabled" type="button" data-toggle="dropdown" disabled>'.tr('Azioni di gruppo').' <span class="caret"></span></button>
             <ul class="dropdown-menu" data-target="'.$table_id.'" role="menu">';

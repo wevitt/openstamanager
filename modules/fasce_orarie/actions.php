@@ -33,7 +33,7 @@ switch (post('op')) {
             if (!empty($is_predefined)) {
                 $dbo->query('UPDATE in_fasceorarie SET is_predefined = 0');
             }
-
+            
             $dbo->update('in_fasceorarie', [
                 'nome' => $nome,
                 'giorni' => $giorni ? implode(',' , $giorni) : null,
@@ -60,7 +60,7 @@ switch (post('op')) {
         $ora_fine = post('ora_fine');
 
         if ($dbo->fetchNum('SELECT * FROM `in_fasceorarie` WHERE `nome`='.prepare($nome)) == 0) {
-
+           
             $dbo->insert('in_fasceorarie', [
                 'nome' => $nome,
                 'ora_inizio' => $ora_inizio,

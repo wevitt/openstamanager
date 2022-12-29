@@ -17,6 +17,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+
 use Modules\Articoli\Articolo as ArticoloOriginale;
 use Modules\Contratti\Components\Articolo;
 use Modules\Contratti\Components\Riga;
@@ -99,7 +100,9 @@ switch ($operazione) {
                 $inizio = $date_pianificazioni[0];
                 $fine = date('Y-m-d', strtotime($inizio.' '.$timeing));
                 $fine = date('Y-m-d', strtotime($fine.' -1 days'));
-
+                if( $cadenza_fatturazione=='Fine' ){
+                    $fine = Carbon\Carbon::parse($fine)->endOfMonth()->format("Y-m-d");
+                }  
                 for ($rata = 1; $rata <= $numero_fatture; ++$rata) {
                     if ($qta_evasa < $r->qta) {
                         $qta_riga = ($qta[$r->id] <= ($r->qta - $qta_evasa) ? $qta[$r->id] : ($r->qta - $qta_evasa));
@@ -112,7 +115,9 @@ switch ($operazione) {
 
                         $fine = date('Y-m-d', strtotime($inizio.' '.$timeing));
                         $fine = date('Y-m-d', strtotime($fine.' -1 days'));
-
+                        if( $cadenza_fatturazione=='Fine' ){
+                            $fine = Carbon\Carbon::parse($fine)->endOfMonth()->format("Y-m-d");
+                        }
                         $prezzo_unitario = setting('Utilizza prezzi di vendita comprensivi di IVA') ? (($r->subtotale + $r->iva) / $r->qta)  : ($r->subtotale / $r->qta);
 
                         if (!empty($r->idarticolo)) {
@@ -156,7 +161,6 @@ switch ($operazione) {
         $id_rata = post('rata');
         $accodare = post('accodare');
         $pianificazione = Pianificazione::find($id_rata);
-
         $contratto = $pianificazione->contratto;
 
         $data = post('data');
@@ -175,7 +179,6 @@ switch ($operazione) {
         } else {
             $fattura = Fattura::find($id_documento);
         }
-
         $fattura->note = post('note');
         $fattura->save();
 
@@ -183,7 +186,6 @@ switch ($operazione) {
 
         // Copia righe
         $righe = $pianificazione->getRighe();
-
         foreach ($righe as $riga) {
             $copia = $riga->copiaIn($fattura, $riga->qta);
             $copia->id_conto = $id_conto;
@@ -192,10 +194,12 @@ switch ($operazione) {
 
         // Salvataggio fattura nella pianificazione
         $pianificazione->fattura()->associate($fattura);
-
         $pianificazione->save();
 
-        break;
+        flash()->info(tr('Rata fatturata correttamente!'));
+        database()->commitTransaction();
+        redirect(base_path().'/controller.php?id_module='.Modules::get('Fatture di vendita')['id'].'&id_record='.$fattura->id);
+        exit();
 
     case 'add_fattura_multipla':
         $rate = post('rata');
@@ -208,7 +212,7 @@ switch ($operazione) {
 
         foreach ($rate as $i => $rata) {
             $id_rata = $rata;
-
+            
             $pianificazione = Pianificazione::find($id_rata);
 
             $contratto = $pianificazione->contratto;
@@ -242,9 +246,17 @@ switch ($operazione) {
                 $copia->save();
             }
 
-            // Salvataggio fattura nella pianificazione
-            $pianificazione->fattura()->associate($fattura);
-            $pianificazione->save();
+        // Salvataggio fattura nella pianificazione
+        $pianificazione->fattura()->associate($fattura);
+        $pianificazione->save();
+
         }
-        break;
+
+        flash()->info(tr('Rate fatturate correttamente!'));
+        database()->commitTransaction();
+        redirect(base_path().'/controller.php?id_module='.Modules::get('Fatture di vendita')['id']);
+        exit();
+        
+
 }
+

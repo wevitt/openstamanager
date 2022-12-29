@@ -1,0 +1,10 @@
+name = "Reparto Articolo"
+title = "Reparto"
+version = "1.0"
+directory = "reparto_articolo"
+options = 'custom'
+icon = "fa fa-list-alt"
+compatibility = "2.*"
+module_from = "Articoli"
+module_to = "Articoli"
+position = "tab"

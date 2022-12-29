@@ -1,0 +1,10 @@
+name = "Crea Vendita"
+title = "Crea Vendita"
+version = "1.0"
+directory = "crea_vendita"
+options = 'custom'
+icon = ""
+compatibility = "2.*"
+module_from = "Preventivi"
+module_to = "Preventivi"
+position = "tab"

@@ -46,7 +46,7 @@ echo '<!DOCTYPE html>
 
 if (file_exists(base_dir().'/manifest.json')) {
     echo '
-        <link rel="manifest" href="'.base_path().'/manifest.json">';
+        <link rel="manifest" href="'.base_path().'/manifest.json?r='.rand().'">';
 }
 
 // CSS
@@ -340,7 +340,7 @@ $hide_sidebar = Auth::check() && (setting('Nascondere la barra sinistra di defau
 echo '
     </head>
 
-	<body class="skin-'.$theme.(!empty($hide_sidebar) ? ' sidebar-collapse' : '').(!Auth::check() ? ' hold-transition login-page' : '').'">
+	<body class="sidebar-mini skin-'.$theme.(!empty($hide_sidebar) ? ' sidebar-collapse' : '').(!Auth::check() ? ' hold-transition login-page' : '').'">
 		<div class="'.(!Auth::check() ? '' : 'wrapper').'">';
 
 if (Auth::check()) {
@@ -424,7 +424,7 @@ if (Auth::check()) {
                                     </ul></li>
                                 </ul>
                             </li>
-
+                            
                             <li class="nav-button"><a href="#" onclick="window.print()" class="tip nav-button" title="'.tr('Stampa').'">
                                 <i class="fa fa-print"></i>
                             </a></li>
@@ -513,8 +513,8 @@ if (Auth::check()) {
         if (!empty($id_record)) {
             $plugins = $dbo->fetchArray('SELECT id, title, options, options2 FROM zz_plugins WHERE idmodule_to='.prepare($id_module)." AND position='tab' AND enabled = 1 ORDER BY zz_plugins.order DESC");
             foreach ($plugins as $plugin) {
-
-
+                
+            
                 //Badge count per record plugin
                 $count = 0;
                 $opt = '';

@@ -19,11 +19,14 @@
 
 include_once __DIR__.'/../../core.php';
 
+use Models\OperationLog;
 use Modules\Anagrafiche\Anagrafica;
 use Modules\Fatture\Fattura;
 use Modules\Fatture\Tipo;
 use Modules\Interventi\Intervento;
 use Modules\Interventi\Stato;
+use Modules\Emails\Mail;
+use Modules\Emails\Template;
 use Util\Zip;
 
 // Segmenti
@@ -94,7 +97,14 @@ switch (post('op')) {
 
         // Lettura righe selezionate
         foreach ($interventi as $intervento) {
-            $id_anagrafica = $intervento['idanagrafica'];
+
+            if (!empty($intervento['idclientefinale'])){
+                $id_anagrafica = $intervento['idclientefinale'];
+            }
+            else {
+                $id_anagrafica = $intervento['idanagrafica'];
+            }
+
             $id_documento = $id_documento_cliente[$id_anagrafica];
 
             $anagrafica = Anagrafica::find($id_anagrafica);
@@ -172,6 +182,7 @@ switch (post('op')) {
         $data_richiesta = post('data_richiesta');
         $copia_sessioni = post('sessioni');
         $copia_righe = post('righe');
+        $copia_impianti = post('impianti');
 
         foreach ($id_records as $idintervento) {
             $intervento = Intervento::find($idintervento);
@@ -180,7 +191,7 @@ switch (post('op')) {
             $new->idstatointervento = $id_stato;
 
             // Calcolo del nuovo codice sulla base della data di richiesta
-            $new->codice = Intervento::getNextCodice($data_richiesta);
+            $new->codice = Intervento::getNextCodice($data_richiesta, $new->id_segment);
 
             $new->save();
 
@@ -227,6 +238,25 @@ switch (post('op')) {
             }
         }
 
+        // Copia degli impianti
+        if (!empty($copia_impianti)) {
+            $impianti = $dbo->select('my_impianti_interventi', '*', ['idintervento' => $intervento->id]);
+            foreach ($impianti as $impianto) {
+                $dbo->insert('my_impianti_interventi', [
+                    'idintervento' => $id_record,
+                    'idimpianto' => $impianto['idimpianto']
+                ]);
+            }
+
+            $componenti = $dbo->select('my_componenti_interventi', '*', ['id_intervento' => $intervento->id]);
+            foreach ($componenti as $componente) {
+                $dbo->insert('my_componenti_interventi', [
+                    'id_intervento' => $id_record,
+                    'id_componente' => $componente['id_componente']
+                ]);
+            }
+        }
+
         flash()->info(tr('Attività duplicate correttamente!'));
 
         break;
@@ -251,6 +281,62 @@ switch (post('op')) {
             redirect(base_path().'/pdfgen.php?id_print='.$id_print.'&tipo='.post('tipo'));
             exit();
 
+
+        case 'send-mail':
+            $template = Template::find(post('id_template'));
+
+            $list = [];
+            foreach ($id_records as $id) {
+                $intervento = Intervento::find($id);
+                $id_anagrafica = $intervento->idanagrafica;
+    
+                // Selezione destinatari e invio mail
+                if (!empty($template)) {
+                    $creata_mail = false;
+                    $emails = [];
+
+                    // Aggiungo email anagrafica
+                    if (!empty($intervento->anagrafica->email)) {
+                        $emails[] = $intervento->anagrafica->email;
+                        $mail = Mail::build(auth()->getUser(), $template, $id);
+                        $mail->addReceiver($intervento->anagrafica->email);
+                        $creata_mail = true;
+                    }
+
+                    // Aggiungo email referenti in base alla mansione impostata nel template
+                    $mansioni = $dbo->select('em_mansioni_template', 'idmansione', ['id_template' => $template->id]);
+                    foreach ($mansioni as $mansione) {
+                        $referenti = $dbo->table('an_referenti')->where('idmansione', $mansione['idmansione'])->where('idanagrafica', $id_anagrafica)->where('email', '!=', '')->get();
+                        if (!$referenti->isEmpty() && $creata_mail == false) {
+                            $mail = Mail::build(auth()->getUser(), $template, $id);
+                            $creata_mail = true;
+                        }
+                        
+                        foreach ($referenti as $referente) {
+                            if (!in_array($referente->email, $emails)) {
+                                $emails[] = $referente->email;
+                                $mail->addReceiver($referente->email);
+                            }   
+                        }
+                    }
+                    if ($creata_mail == true) {                        
+                        $mail->save();
+                        OperationLog::setInfo('id_email', $mail->id);
+                        OperationLog::setInfo('id_module', $id_module);
+                        OperationLog::setInfo('id_record', $id_record);
+                        OperationLog::build('send-email');
+
+                        array_push($list, $intervento->codice);
+                    }
+                }
+            }
+    
+            if ($list){
+                flash()->info(tr('Mail inviata per le attività _LIST_ !', [
+                    '_LIST_' => implode(',', $list),
+                ]));
+            }
+    
             break;
 }
 
@@ -276,7 +362,7 @@ if (App::debug()) {
         'data' => [
            'title' => tr('Fatturare gli _TYPE_ selezionati?', ['_TYPE_' => strtolower($module['name'])]).' <small><i class="fa fa-question-circle-o tip" title="'.tr('Verranno fatturati solo gli interventi completati non collegati a contratti o preventivi').'."></i></small>',
             'msg' => '{[ "type": "checkbox", "label": "<small>'.tr('Aggiungere alle fatture di vendita non ancora emesse?').'</small>", "placeholder": "'.tr('Aggiungere alle fatture di vendita nello stato bozza?').'", "name": "accodare" ]}<br>
-            {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module=\''.$id_fatture.'\' ORDER BY name", "value": "'.$id_segment.'" ]}<br>
+            {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(["id_module" => $id_fatture, 'is_sezionale' => 1]).', "value": "'.$id_segment.'" ]}<br>
             {[ "type": "select", "label": "'.tr('Tipo documento').'", "name": "idtipodocumento", "required": 1, "values": "query=SELECT id, CONCAT(codice_tipo_documento_fe, \' - \', descrizione) AS descrizione FROM co_tipidocumento WHERE enabled = 1 AND dir =\'entrata\' ORDER BY codice_tipo_documento_fe", "value": "'.$idtipodocumento.'" ]}',
             'button' => tr('Procedi'),
             'class' => 'btn btn-lg btn-warning',
@@ -303,7 +389,9 @@ if (App::debug()) {
             'msg' => '<br>{[ "type": "timestamp", "label": "'.tr('Data/ora richiesta').'", "name": "data_richiesta", "required": 0, "value": "-now-", "required":1 ]}
             <br>{[ "type": "select", "label": "'.tr('Stato').'", "name": "idstatointervento", "required": 1, "values": "query=SELECT idstatointervento AS id, descrizione, colore AS _bgcolor_ FROM in_statiintervento WHERE deleted_at IS NULL ORDER BY descrizione", "value": "" ]}
             <br>{[ "type":"checkbox", "label":"'.tr('Duplica righe').'", "name":"righe", "value":"" ]}
-            <br>{[ "type":"checkbox", "label":"'.tr('Duplica sessioni').'", "name":"sessioni", "value":"" ]}',
+            <br>{[ "type":"checkbox", "label":"'.tr('Duplica sessioni').'", "name":"sessioni", "value":"" ]}
+            <br>{[ "type":"checkbox", "label":"'.tr('Duplica impianti').'", "name":"impianti", "value":"" ]}
+            <style>.swal2-modal{ width:600px !important; }</style>',
             'button' => tr('Procedi'),
             'class' => 'btn btn-lg btn-warning',
             'blank' => false,
@@ -318,6 +406,17 @@ if (App::debug()) {
             'button' => tr('Stampa'),
             'class' => 'btn btn-lg btn-warning',
             'blank' => true,
+        ],
+    ];
+
+    $operations['send-mail'] = [
+        'text' => '<span><i class="fa fa-envelope"></i> '.tr('Invia mail').'</span>',
+        'data' => [
+            'title' => tr('Inviare mail?'),
+            'msg' => tr('Per ciascuna attività selezionata, verrà inviata una mail').'<br><br>
+            {[ "type": "select", "label": "'.tr('Template').'", "name": "id_template", "required": "1", "values": "query=SELECT id, name AS descrizione FROM em_templates WHERE id_module='.prepare($id_module).' AND deleted_at IS NULL;" ]}',
+            'button' => tr('Invia'),
+            'class' => 'btn btn-lg btn-warning',
         ],
     ];
 

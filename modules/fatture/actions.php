@@ -58,9 +58,7 @@ switch (post('op')) {
 
         $id_record = $fattura->id;
 
-        flash()->info(tr('Aggiunta fattura numero _NUM_!', [
-            '_NUM_' => $fattura->numero,
-        ]));
+        flash()->info(tr('Fattura aggiunta correttamente!'));
 
         break;
 
@@ -247,7 +245,7 @@ switch (post('op')) {
 
         echo json_encode([
             'stored' => round($totale_documento,2),
-            'calculated' => round($fattura->netto,2),
+            'calculated' => round($fattura->totale,2),
         ]);
         
         break;
@@ -279,9 +277,10 @@ switch (post('op')) {
 
         $fatture = Fattura::vendita()
             ->select('*', 'co_documenti.id AS id', 'co_documenti.data AS data')
-            ->where('idanagrafica', $id_anagrafica)
+            ->where('co_documenti.idanagrafica', $id_anagrafica)
             ->whereIn('idstatodocumento', [$stato1->id, $stato2->id])
             ->join('co_scadenziario', 'co_documenti.id', '=', 'co_scadenziario.iddocumento')
+            ->join('co_tipidocumento', 'co_tipidocumento.id','=','co_documenti.idtipodocumento')
             ->whereRaw('co_scadenziario.da_pagare > co_scadenziario.pagato')
             ->whereRaw('co_scadenziario.scadenza < NOW()')
             ->groupBy('co_scadenziario.iddocumento')
@@ -289,7 +288,7 @@ switch (post('op')) {
 
         $results = [];
         foreach ($fatture as $result) {
-            $results[] = Modules::link('Fatture di vendita', $result->id, $result->getReference());
+            $results[] = Modules::link('Fatture di vendita', $result->id, reference($result));
         }
 
         echo json_encode($results);
@@ -351,7 +350,7 @@ switch (post('op')) {
 
     case 'reopen':
         if (!empty($id_record)) {
-            $stato = Stato::where('descrizione', 'Bozza')->first();
+            $stato = Stato::where('descrizione', 'Emessa')->first();
             $fattura->stato()->associate($stato);
             $fattura->save();
             flash()->info(tr('Fattura riaperta!'));
@@ -858,6 +857,7 @@ switch (post('op')) {
         $tipo = Tipo::find(post('idtipodocumento'));
         $iva = Aliquota::find(setting('Iva predefinita'));
         $totale_imponibile = setting('Utilizza prezzi di vendita comprensivi di IVA') ? $fattura->totale_imponibile + ($fattura->totale_imponibile * $iva->percentuale / 100) : $fattura->totale_imponibile;
+        $totale_imponibile = $fattura->tipo->reversed == 1 ? -$totale_imponibile : $totale_imponibile;
 
         $autofattura = Fattura::build($anagrafica, $tipo, $data, $id_segment);
         $autofattura->idconto = $fattura->idconto;

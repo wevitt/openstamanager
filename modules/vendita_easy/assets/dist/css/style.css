@@ -1,0 +1,219 @@
+.pagina, .tab-content{
+    margin-top:-30px !important;
+    padding-right: 1px !important;
+    padding-left: 1px !important;
+}
+
+.text-intestazione{
+    padding-top:10px !important;
+}
+
+.div-articoli{
+    height: 550px;
+    max-height: 550px;
+    overflow: auto;
+}
+
+#row-list{
+    height: 500px;
+    max-height: 500px;
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+    overflow: auto;
+}
+
+.btn-stampa{
+    padding-top: 22px;
+    padding-bottom: 22px;
+}
+
+.btn-menu-bottom{
+    padding-top:22px;
+    padding-bottom:22px;
+    padding-right:10px;
+    padding-left:10px;
+    margin-right:5px;
+    margin-bottom:5px;
+}
+
+.img-articolo{
+    width: 80%;
+    object-fit: contain;
+}
+
+#btn_cancella{
+    padding-top:15px;
+    padding-bottom:15px;
+    font-size:18px;
+}
+
+#btn_attesa{
+    padding-top:15px;
+    padding-bottom:15px;
+    font-size:18px;
+}
+
+#btn_paga{
+    padding-top:45px;
+    padding-bottom:45px;
+    font-size:18px;
+}
+
+.nopadding {
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+}
+
+.table-articoli{
+    font-size: 12px !important;
+}
+
+.nopadding > a > img {
+    height: 130px;
+}
+
+.table-immagini > tbody > tr > td{
+    border-top: 0px !important;
+    border-bottom: 1px solid lightgray !important;
+    border-right: 1px solid lightgray !important;
+    width: 25% !important;
+}
+
+.table-total{
+    font-size: 15px;
+}
+
+#div-menu{
+    text-align: center;
+}
+
+.table-articoli > thead{
+    height: 15px;
+    max-height: 15px;
+}
+
+#div_costi{
+    margin-top: 5px;
+    margin-bottom: -23px;
+}
+
+.btn-immagine{
+    cursor:pointer;
+}
+
+#caret_btn{
+    bottom:100%;
+    top: auto !important;
+}
+
+#caret_btn > li{
+    margin-bottom: 5px;
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+
+@media only screen and (max-width: 768px) {
+    #div-menu{
+        text-align: center !important;
+    }
+
+    .btn-stampa {
+        padding-top: 22px;
+        padding-bottom: 22px;
+        margin-right: 15%;
+        margin-bottom: 15px;
+    }
+
+    .btn-sm{
+        padding: 5px 9px;
+    }
+
+}
+
+@media only screen and (max-width: 1112px) {
+    .div-articoli{
+        height: 480px;
+        max-height: 480px;
+        overflow: auto;
+    }
+
+    #row-list{
+        height: 470px;
+        max-height: 470px;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+        overflow: auto;
+    }
+
+    #div_costi{
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+
+    .table-total{
+        font-size: 15px;
+    }
+
+    #div-buttons{
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-left: 7px;
+    }
+
+    #div-menu{
+        padding-right: 0px !important;
+        padding-left: 0px !important;
+    }
+
+    #div-paga{
+        margin-left: -7px;
+    }
+
+    .btn-menu-bottom{
+        padding-bottom: 23px;
+        padding-top: 24px;
+        padding-right:10px;
+        padding-left:10px;
+        margin-right:5px;
+        margin-bottom:5px;
+    }
+
+
+    .content{
+        padding-left: 2px !important;
+        padding-right: 14px !important;
+        padding-bottom: 2px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .btn-stampa{
+        padding-bottom: 23px;
+        padding-top: 24px;
+    }
+
+    .btn-sm{
+        padding: 5px 9px;
+    }
+
+    .skin-default .content, .skin-default .content-wrapper{
+
+        height:768px !important;
+        overflow: hidden !important;
+
+    }
+
+
+
+}
+
+#list-categories{
+    height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.ui-keyboard{
+    left: 45%;
+    top: 45%;
+}

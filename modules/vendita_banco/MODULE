@@ -1,0 +1,7 @@
+name = "Vendita al banco"
+version = "1.1"
+directory = "vendita_banco"
+options = "{ \"main_query\": [ { \"type\": \"table\", \"fields\": \"Data, Numero, Articoli, Totale, icon_Stato\", \"query\": \"SELECT `vb_venditabanco`.`id`, `numero` AS `Numero`, DATE_FORMAT( `data`, '%d/%m/%Y %H:%i' ) AS `Data`, (SELECT `icona` FROM `vb_stati_vendita` WHERE `id`=`idstato`) AS `icon_Stato`, (SELECT `descrizione` FROM `vb_stati_vendita` WHERE `id`=`idstato`) AS `icon_title_Stato`, IFNULL((SELECT FORMAT( (SUM(subtotale-sconto))+(SUM(subtotale-sconto)/100*22),2) FROM vb_venditabanco_righe WHERE idvendita=vb_venditabanco.id),'0.00') AS `Totale`, (SELECT GROUP_CONCAT(descrizione,' (x',ROUND(qta,2),')'SEPARATOR ', ') FROM vb_venditabanco_righe WHERE idvendita=vb_venditabanco.id) AS `Articoli` FROM `vb_venditabanco` WHERE (CAST(`data` AS DATE) BETWEEN '|period_start|' AND '|period_end|') ORDER BY DATE_FORMAT( `data`, '%Y%m%d' ) DESC\"} ]}"
+icon = "fa fa-shopping-cart"
+compatibility = "2.*"
+parent = "0"

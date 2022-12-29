@@ -81,6 +81,12 @@ foreach ($righe as $riga) {
 
     echo '
                     '.$descrizione;
+
+    if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
+        echo '
+        <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
+    }            
+          
     if (!empty($riga->note)) {
         echo '
                     <br><small class="label label-default">'.nl2br($riga->note).'</small>';
@@ -284,11 +290,11 @@ echo '
 if (!$block_edit && sizeof($righe) > 0) {
     echo '
     <div class="btn-group">
-        <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="duplicaRiga(getSelectData());">
+        <button type="button" class="btn btn-xs btn-default disabled" id="duplica_righe" onclick="duplicaRiga(getSelectData());">
             <i class="fa fa-copy"></i>
         </button>
 
-        <button type="button" class="btn btn-xs btn-default disabled" id="duplica_righe" onclick="rimuoviRiga(getSelectData());">
+        <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="rimuoviRiga(getSelectData());">
             <i class="fa fa-trash"></i>
         </button>
     </div>';

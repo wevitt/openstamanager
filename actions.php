@@ -80,15 +80,13 @@ if (filter('op') == 'aggiungi-allegato' || filter('op') == 'rimuovi-allegato') {
                     'id_record' => $id_record,
                 ]);
 
+                // Upload da form
+                if (!empty($funcNum) ){
+                    echo '
+                    <link rel="stylesheet" type="text/css" href="'.$baseurl.'/assets/dist/css/app.min.css" />
+                    <script src="'.$baseurl.'/assets/dist/js/app.min.js"></script>';
+                }
                 
-                echo '
-                <link rel="stylesheet" type="text/css" href="'.$baseurl.'/assets/dist/css/app.min.css" />';
-
-               
-                echo '
-                <script src="'.$baseurl.'/assets/dist/js/app.min.js"></script>';
-
-
                 // Creazione file fisico
                 if (!empty($upload)) {
                     //flash()->info(tr('File caricato correttamente!'));
@@ -96,14 +94,27 @@ if (filter('op') == 'aggiungi-allegato' || filter('op') == 'rimuovi-allegato') {
                     $id_allegato = $dbo->lastInsertedID();
                     $upload = Upload::find($id_allegato);
 
-                    echo '
-                    <script type="text/javascript">
-                        $(document).ready(function() {
-                            window.parent.toastr.success("'.tr('Caricamento riuscito').'");
-                            window.parent.CKEDITOR.tools.callFunction('.$funcNum.', "'.$baseurl.'/'.$upload->filepath.'");
-                        });
-                    </script>';
+                    $response = [
+                        'fileName' => basename($upload->filepath),
+                        'uploaded' => 1,
+                        'url' => $upload->filepath
+                    ];
 
+                    // Upload da form
+                    if (!empty($funcNum) ){
+                        echo '
+                        <script type="text/javascript">
+                            $(document).ready(function() {
+                                window.parent.toastr.success("'.tr('Caricamento riuscito').'");
+                                window.parent.CKEDITOR.tools.callFunction('.$funcNum.', "'.$baseurl.'/'.$upload->filepath.'");
+                            });
+                        </script>';
+                    }
+                    
+                    // Copia-incolla
+                    else {
+                        echo json_encode($response);
+                    }
                    
                 } else {
 
@@ -324,7 +335,7 @@ elseif (post('op') == 'send-email') {
 
     // Contenuti
     $mail->subject = post('subject');
-    $mail->content = post('body');
+    $mail->content = $_POST['body']; // post('body', true);
 
     // Conferma di lettura
     $mail->read_notify = post('read_notify');

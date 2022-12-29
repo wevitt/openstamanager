@@ -39,19 +39,14 @@ GROUP BY an_anagrafiche.idanagrafica
 ORDER BY ragione_sociale ASC');
 
 // Zone
-$zone = $dbo->fetchArray(
-    '(SELECT 0 AS ordine, \'0\' AS id, \'Nessuna zona\' AS descrizione)
-    UNION
-    (SELECT 1 AS ordine, id, descrizione FROM an_zone) ORDER BY ordine, descrizione ASC'
-);
-
+$zone = $dbo->fetchArray('(SELECT 0 AS ordine, \'0\' AS id, \'Nessuna zona\' AS descrizione) UNION (SELECT 1 AS ordine, id, descrizione FROM an_zone) ORDER BY ordine, descrizione ASC');
 
 // Prima selezione globale per tutti i filtri
 if (!isset($_SESSION['dashboard']['idtecnici'])) {
     $_SESSION['dashboard']['idtecnici'] = ["'-1'"];
 
     foreach ($tecnici_disponibili as $tecnico) {
-        if (($user['gruppo'] == 'Tecnici' && $user['idanagrafica'] == $tecnico['id']) || $user['gruppo'] != 'Tecnici') {
+        if(($user['gruppo']=='Tecnici' && $user['idanagrafica']==$tecnico['id']) || $user['gruppo']!='Tecnici'){
             $_SESSION['dashboard']['idtecnici'][] = "'".$tecnico['id']."'";
         }
     }
@@ -318,7 +313,7 @@ WHERE (SELECT COUNT(*) FROM in_interventi_tecnici WHERE in_interventi_tecnici.id
         $chiave = $data->format('mY');
         $testo = $data->formatLocalized('%B %Y');
 
-
+        
         if (checkdate($data->format('m'), $data->format('d'), $data->format('Y'))){
     echo '
             <option value="'.$chiave.'">'.ucfirst($testo).'</option>';
@@ -656,7 +651,7 @@ if(isMobile() && setting('Utilizzare i tooltip sul calendario')){
             eventClick: function(info) {
                 let link = info.link;
                 let element = $(this);
-                clickCnt++;
+                clickCnt++;         
                 if (clickCnt === 1) {
                     oneClickTimer = setTimeout(function() {
                         clickCnt = 0;
@@ -666,13 +661,13 @@ if(isMobile() && setting('Utilizzare i tooltip sul calendario')){
                     clearTimeout(oneClickTimer);
                     clickCnt = 0;
                     location.href = link;
-                }
+                }          
             },';
 }else{
     echo '
             eventClick: function(info) {
                 let link = info.link;
-                location.href = link;
+                location.href = link;       
             },';
 }
 
@@ -683,7 +678,7 @@ echo '
                 // let element = $(info.el);
                 element.find(".fc-title, .fc-list-item-title").html(event.title);
                 let id_record = event.idintervento;
-
+                
                 if (globals.dashboard.tooltip == 1) {
                     element.tooltipster({
                         content: globals.translations.loading + "...",

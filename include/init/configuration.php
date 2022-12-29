@@ -179,35 +179,18 @@ if (post('db_host') !== null) {
         }
         // Continua con l'esecuzione delle operazioni previste
         else {
-            // Creazione manifest.json
-            $manifest = '{
-    "dir" : "ltr",
-    "lang" : "it-IT",
-    "name" : "OpenSTAManager",
-    "scope" : "'.base_path().'",
-    "display" : "fullscreen",
-    "start_url" : "'.base_path().'",
-    "short_name" : "OSM",
-    "theme_color" : "transparent",
-    "description" : "OpenSTAManager",
-    "orientation" : "any",
-    "background_color" : "transparent",
-    "generated" : "true",
-    "icons" : [
-        {
-            "src": "assets/dist/img/logo_completo.png",
-            "type": "image/png",
-            "sizes": "489x91"
-        }
-    ]
-}';
-            file_put_contents('manifest.json', $manifest);
 
+            // Creazione manifest.json
+            include_once App::filepath('include/init', 'manifest.php');
             redirect(base_path().'/index.php');
             exit();
+
+            
         }
     }
 }
+
+
 
 // Controlla che i parametri di configurazione permettano l'accesso al database
 if ((file_exists('config.inc.php') || $valid_config) && !$dbo->isConnected()) {
@@ -357,7 +340,7 @@ if (empty($creation) && (!file_exists('config.inc.php') || !$valid_config)) {
                     </select>
 
                     <script>
-                    var flag_link = "https://lipis.github.io/flag-icon-css/flags/4x3/|flag|.svg";
+                    var flag_link = "'.$img.'/flags/|flag|.svg";
 
                     $(document).ready(function() {
                         $.ajax({

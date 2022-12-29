@@ -164,7 +164,7 @@ class FatturaElettronica
             $documento = $this->getDocumento();
             $database = database();
 
-            $ordini = $database->fetchArray('SELECT `or_ordini`.`numero_cliente` AS id_documento, `or_ordini`.`num_item`, `or_ordini`.`codice_cig`, `or_ordini`.`codice_cup`, `or_ordini`.`codice_commessa`, `or_ordini`.`data_cliente`, `co_righe_documenti`.`order` AS riferimento_linea FROM `or_ordini` INNER JOIN `co_righe_documenti` ON `co_righe_documenti`.`idordine` = `or_ordini`.`id` WHERE `co_righe_documenti`.`iddocumento` = '.prepare($documento['id']));
+            $ordini = $database->fetchArray('SELECT `or_ordini`.`numero_cliente` AS id_documento, `or_ordini`.`num_item`, `or_ordini`.`codice_cig`, `or_ordini`.`codice_cup`, `or_ordini`.`codice_commessa`, `or_ordini`.`data_cliente` AS `data`, `co_righe_documenti`.`order` AS riferimento_linea FROM `or_ordini` INNER JOIN `co_righe_documenti` ON `co_righe_documenti`.`idordine` = `or_ordini`.`id` WHERE `co_righe_documenti`.`iddocumento` = '.prepare($documento['id']));
 
             $dati_aggiuntivi = $documento->dati_aggiuntivi_fe;
             $dati = $dati_aggiuntivi['dati_ordine'] ?: [];
@@ -719,7 +719,11 @@ class FatturaElettronica
 
         // Informazioni specifiche azienda
         if ($azienda) {
-            $result['RegimeFiscale'] = setting('Regime Fiscale');
+            if ($anagrafica == static::getAzienda()) {
+                $result['RegimeFiscale'] = setting('Regime Fiscale');
+            } else {
+                $result['RegimeFiscale'] = 'RF18';
+            }
         }
 
         return $result;
@@ -774,7 +778,8 @@ class FatturaElettronica
         ];
 
         // IscrizioneREA
-        if (!empty($azienda['codicerea'])) {
+        // Controllo che i codice non sia vuoto e che i primi due caratteri siano lettere
+        if (!empty($azienda['codicerea']) && (ctype_alpha($azienda['codicerea'][0]) && ctype_alpha($azienda['codicerea'][1]))) {
             $codice = explode('-', clean($azienda['codicerea'], '\-'));
 
             if (!empty($codice[0]) && !empty($codice[1])) {
@@ -887,8 +892,12 @@ class FatturaElettronica
         $righe = $fattura->getRighe();
 
         // Ritenuta d'Acconto
-        $id_ritenuta = null;
-        $totale_ritenutaacconto = 0;
+        $id_ritenuta_acconto = null;
+        $totale_ritenuta_acconto = 0;
+
+        // Ritenuta Contributi
+        $id_ritenuta_contributi = $documento->id_ritenuta_contributi;
+        $totale_ritenuta_contributi = $documento->totale_ritenuta_contributi;
 
         // Rivalsa
         $id_rivalsainps = null;
@@ -896,8 +905,8 @@ class FatturaElettronica
 
         foreach ($righe as $riga) {
             if (!empty($riga['idritenutaacconto']) and empty($riga['is_descrizione'])) {
-                $id_ritenuta = $riga['idritenutaacconto'];
-                $totale_ritenutaacconto += $riga['ritenutaacconto'];
+                $id_ritenuta_acconto = $riga['idritenutaacconto'];
+                $totale_ritenuta_acconto += $riga['ritenutaacconto'];
             }
 
             if (!empty($riga['idrivalsainps']) and empty($riga['is_descrizione'])) {
@@ -907,14 +916,25 @@ class FatturaElettronica
             }
         }
 
-        if (!empty($id_ritenuta)) {
-            $percentuale = database()->fetchOne('SELECT percentuale FROM co_ritenutaacconto WHERE id = '.prepare($id_ritenuta))['percentuale'];
+        if (!empty($id_ritenuta_acconto)) {
+            $percentuale = database()->fetchOne('SELECT percentuale FROM co_ritenutaacconto WHERE id = '.prepare($id_ritenuta_acconto))['percentuale'];
             // Con la nuova versione in vigore dal 01/01/2021, questo nodo diventa ripetibile.
-            $result['DatiRitenuta'] = [
+            $result[]['DatiRitenuta'] = [
                 'TipoRitenuta' => ($azienda['piva'] != $azienda['codice_fiscale'] & $azienda['tipo'] != 'Ente pubblico') ? 'RT01' : 'RT02',
-                'ImportoRitenuta' => $totale_ritenutaacconto,
+                'ImportoRitenuta' => $totale_ritenuta_acconto,
                 'AliquotaRitenuta' => $percentuale,
                 'CausalePagamento' => setting("Causale ritenuta d'acconto"),
+            ];
+        }
+
+        if (!empty($id_ritenuta_contributi)) {
+            $ritenuta_contributi = database()->fetchOne('SELECT * FROM co_ritenuta_contributi WHERE id = '.prepare($id_ritenuta_contributi));
+            // Con la nuova versione in vigore dal 01/01/2021, questo nodo diventa ripetibile.
+            $result[]['DatiRitenuta'] = [
+                'TipoRitenuta' => $ritenuta_contributi['tipologia'],
+                'ImportoRitenuta' => $totale_ritenuta_contributi,
+                'AliquotaRitenuta' => $ritenuta_contributi['percentuale'],
+                'CausalePagamento' => $ritenuta_contributi['causale'],
             ];
         }
 
@@ -995,7 +1015,7 @@ class FatturaElettronica
 
         // Importo Totale Documento (2.1.1.9)
         // Valorizzare l’importo complessivo lordo della fattura (onnicomprensivo di Iva, bollo, contributi previdenziali, ecc…)
-        $result['ImportoTotaleDocumento'] = abs($documento->totale);
+        $result['ImportoTotaleDocumento'] = $documento->totale;
 
         // Arrotondamento - Eventuale arrotondamento sul totale documento (ammette anche il segno negativo) (2.1.1.10)
 
@@ -1522,9 +1542,6 @@ class FatturaElettronica
             $totale = round($riepilogo->sum('totale_imponibile') + $riepilogo->sum('rivalsa_inps'), 2);
             $imposta = round($riepilogo->sum('iva') + $riepilogo->sum('iva_rivalsa_inps'), 2);
 
-            $totale = $totale;
-            $imposta = $imposta;
-
             $dati = $riepilogo->first()->aliquota;
 
             $iva = [
@@ -1561,8 +1578,6 @@ class FatturaElettronica
             $totale = round($riepilogo->sum('totale_imponibile') + $riepilogo->sum('rivalsa_inps'), 2);
             $imposta = round($riepilogo->sum('iva') + $riepilogo->sum('iva_rivalsa_inps'), 2);
 
-            $totale = $totale;
-            $imposta = $imposta;
 
             $dati = $riepilogo->first()->aliquota;
 

@@ -90,60 +90,7 @@ switch (filter('op')) {
             in_interventi_tecnici.idtipointervento IN('.implode(',', $tipi).')
             '.Modules::getAdditionalsQuery('Interventi').'
         HAVING
-            idzona IN ('.implode(',', $zone).')
-        UNION
-        SELECT
-            at_attivita.id,
-            at_attivita_tecnici.idintervento,
-            at_attivita.codice,
-            colore,
-            at_attivita_tecnici.idtecnico,
-            at_attivita_tecnici.orario_inizio,
-            at_attivita_tecnici.orario_fine,
-            (SELECT ragione_sociale FROM an_anagrafiche WHERE idanagrafica = idtecnico) AS nome_tecnico,
-            (SELECT id FROM zz_files WHERE id_record = at_attivita.id AND id_module = '.prepare($modulo_interventi->id).' LIMIT 1) AS have_attachments,
-            (SELECT colore FROM an_anagrafiche WHERE idanagrafica = idtecnico) AS colore_tecnico, (SELECT ragione_sociale FROM an_anagrafiche WHERE idanagrafica=at_attivita.idanagrafica) AS cliente,
-            (SELECT idzona FROM an_anagrafiche WHERE idanagrafica = at_attivita.idanagrafica) AS idzona,
-            at_stati_attivita.is_completato AS is_completato
-        FROM at_attivita_tecnici
-            INNER JOIN at_attivita ON at_attivita_tecnici.idintervento = at_attivita.id
-            LEFT OUTER JOIN at_stati_attivita ON at_attivita.idstatointervento = at_stati_attivita.idstatointervento
-        WHERE
-            (
-                (
-                    at_attivita_tecnici.orario_inizio >= '.prepare($start).'
-                    AND
-                    at_attivita_tecnici.orario_fine <= '.prepare($end).'
-                )
-                OR
-                (
-                    at_attivita_tecnici.orario_inizio >= '.prepare($start).'
-                    AND
-                    at_attivita_tecnici.orario_inizio <= '.prepare($end).'
-                )
-                OR
-                (
-                    at_attivita_tecnici.orario_inizio <= '.prepare($start).'
-                    AND
-                    at_attivita_tecnici.orario_fine >= '.prepare($end).'
-                )
-                OR
-                (
-                    at_attivita_tecnici.orario_fine >= '.prepare($start).'
-                    AND
-                    at_attivita_tecnici.orario_fine <= '.prepare($end).'
-                )
-            )
-            AND
-            idtecnico IN('.implode(',', $tecnici).')
-            AND
-            at_attivita.idstatointervento IN('.implode(',', $stati).')
-            AND
-            at_attivita_tecnici.idtipointervento IN('.implode(',', $tipi).')
-            '.Modules::getAdditionalsQuery('Interventi').'
-        HAVING
             idzona IN ('.implode(',', $zone).')';
-
         $sessioni = $dbo->fetchArray($query);
 
         $results = [];
@@ -233,7 +180,7 @@ switch (filter('op')) {
             //# Box allDay eventi
             $query = 'SELECT
                 *
-            FROM
+            FROM 
                 zz_events
             WHERE
                 data >= '.prepare($start).' AND data <= '.prepare($end);
@@ -465,45 +412,6 @@ switch (filter('op')) {
         $promemoria_interventi = $dbo->fetchArray($query_interventi);
 
         $promemoria = array_merge($promemoria_contratti, $promemoria_interventi);
-        // Promemoria da interventi con stato NON completato
-        $query_attivita =
-        "SELECT at_attivita.id,
-            at_attivita.richiesta,
-            at_attivita.id_contratto AS idcontratto,
-            at_attivita_assegnati.id_assegnato AS id_tecnico,
-            tecnico.ragione_sociale AS ragione_sociale_tecnico,
-            DATE_FORMAT(IF(at_attivita.data_scadenza IS NULL, at_attivita.data_richiesta, at_attivita.data_scadenza), '%m%Y') AS mese,
-            IF(at_attivita.data_scadenza IS NULL, at_attivita.data_richiesta, at_attivita.data_scadenza) AS data_richiesta,
-            at_attivita.data_scadenza,
-            an_anagrafiche.ragione_sociale,
-            tecnico.colore,
-            'intervento' AS ref,
-            (SELECT descrizione FROM at_tipiattivita WHERE at_tipiattivita.idtipointervento=at_attivita.idtipointervento) AS tipo_intervento
-        FROM at_attivita
-            INNER JOIN an_anagrafiche ON at_attivita.idanagrafica=an_anagrafiche.idanagrafica";
-
-        // Visualizzo solo promemoria del tecnico loggato
-        if (!empty($id_tecnico) && !empty($solo_promemoria_assegnati)) {
-            $query_attivita .= '
-            INNER JOIN at_attivita_assegnati ON at_attivita.id = at_attivita_assegnati.id_intervento AND id_assegnato = '.prepare($id_tecnico);
-        } else {
-            $query_attivita .= '
-            LEFT JOIN at_attivita_assegnati ON at_attivita.id = at_attivita_assegnati.id_intervento';
-        }
-
-        $query_attivita .= '
-                LEFT JOIN at_attivita_tecnici ON at_attivita_tecnici.idintervento = at_attivita.id
-                INNER JOIN at_stati_attivita ON at_attivita.idstatointervento = at_stati_attivita.idstatointervento
-                LEFT JOIN an_anagrafiche AS tecnico ON at_attivita_assegnati.id_assegnato = tecnico.idanagrafica
-                WHERE at_stati_attivita.is_completato = 0
-            GROUP BY at_attivita.id, at_attivita_assegnati.id_assegnato
-            HAVING COUNT(at_attivita_tecnici.id) = 0
-            ORDER BY data_richiesta ASC';
-
-
-        $promemoria_attivita = $dbo->fetchArray($query_attivita);
-
-        $promemoria = array_merge($promemoria, $promemoria_attivita);
 
         if (!empty($promemoria)) {
             $prev_mese = '';

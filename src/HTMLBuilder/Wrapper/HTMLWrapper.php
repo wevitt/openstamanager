@@ -129,14 +129,17 @@ class HTMLWrapper implements WrapperInterface
             var message = container.find("span");
             var icon = container.find("i");
 
+            var id_record = "'.$id_record.'";
+            var id_module = "'.$id_module.'";
+
             icon.attr("class", "fa fa-spinner fa-spin");
 
             $.ajax({
                 url: globals.rootdir + "/actions.php",
                 type: "post",
                 data: {
-                    id_module: "'.$id_module.'",
-                    id_record: "'.$id_record.'",
+                    id_module: id_module,
+                    id_record: id_record,
                     name: "'.$name.'",
                     value: value,
                     op: "validate",

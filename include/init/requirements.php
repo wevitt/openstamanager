@@ -93,6 +93,10 @@ $settings = [
         'type' => 'ext',
         'description' => tr('Permette la creazione dell\'immagine della firma per il rapportino d\'intervento (facoltativo)'),
     ],
+    'fileinfo' => [
+        'type' => 'ext',
+        'description' => tr('Permette la creazione dell\'immagine della firma per il rapportino d\'intervento (facoltativo)'),
+    ],
 
     //'display_errors' => [
     //    'type' => 'value',
@@ -178,42 +182,107 @@ if ($database->isInstalled()){
     $db = [
 
         'mysql_version' => [
-            'type' => 'mysql',
+            'type' => 'version',
             'description' => '5.7.x - 8.0.x',
             'minimum' => '5.7.0',
             'maximum' => '8.0.99',
         ],
+        
+        'sort_buffer_size' => [
+            'type' => 'value',
+            'description' => '>2M',
+        ],
+
 
     ];
+
+    /*foreach (App::getConfig()['db_options'] as $n => $v){
+       
+        switch ($n){
+            case 'sort_buffer_size':
+                $db[$n] = [
+                    'type' => 'value',
+                    'description' => '>2M',
+                ];
+            break;
+        }
+        
+    }*/
+
 }
 
 foreach ($db as $name => $values) {
-    $description = $values['description'];
-    $description = tr('Valore consigliato: _VALUE_ (Valore attuale: _MYSQL_VERSION_)', [
-        '_VALUE_' => $description,
-        '_MYSQL_VERSION_' => $database->getMySQLVersion(),
-    ]);
 
-    $status = ((version_compare($database->getMySQLVersion(), $values['minimum'], ">=") && version_compare($database->getMySQLVersion(), $values['maximum'], "<=")) ? 1 : 0);
+    $description = $values['description'];
+
+    if ($values['type'] == 'version') {
+
+        $type =  tr('Versione');
+        $description = tr('Valore consigliato: _VALUE_ (Valore attuale: _MYSQL_VERSION_)', [
+            '_VALUE_' => $description,
+            '_MYSQL_VERSION_' => $database->getMySQLVersion(),
+        ]);
+
+        $status = ((version_compare($database->getMySQLVersion(), $values['minimum'], ">=") && version_compare($database->getMySQLVersion(), $values['maximum'], "<=")) ? 1 : 0);
+
+    } else{
+        $type =  tr('Impostazione');
+        
+        //Vedo se riesco a recuperare l'impostazione dalle variabili di sessione o globali di mysql
+        $rs_session_variabile = $dbo->fetchArray('SHOW SESSION VARIABLES LIKE '.prepare($name));
+        $rs_global_variabile = $dbo->fetchArray('SHOW GLOBAL VARIABLES LIKE '.prepare($name));
+
+        if (!empty($rs_session_variabile[0]['Value']))
+            $inc = $rs_session_variabile[0]['Value'];
+        else if (!empty($rs_global_variabile[0]['Value']))
+            $inc = $rs_global_variabile[0]['Value'];
+        else
+            $inc = str_replace(['k', 'M'], ['000', '000000'], App::getConfig()['db_options'][$name]);
+        
+        
+        $real = str_replace(['k', 'M'], ['000', '000000'], $description);
+
+        if (string_starts_with($real, '>')) {
+            $status = $inc >= substr($real, 1);
+        } elseif (string_starts_with($real, '<')) {
+            $status = $inc <= substr($real, 1);
+        } else {
+            $status = ($real == $inc);
+        }
+
+        if (is_bool($description)) {
+            $description = !empty($description) ? 'On' : 'Off';
+        } else {
+            $description = str_replace(['>', '<'], '', $description);
+        }
+
+
+        $description = tr('Valore consigliato: _VALUE_ (Valore attuale: _INC_)', [
+          '_VALUE_' => $description,
+          '_INC_' =>   \Util\FileSystem::formatBytes($inc),
+        ]);
+
+    }
 
     $mysql[] = [
         'name' => $name,
         'description' => $description,
         'status' => $status,
-        'type' => tr('Versione'),
+        'type' => $type,
     ];
 }
 
 
 // Percorsi di servizio
-$dirs = [
+$dirs_to_check = [
     'backup' => tr('Necessario per il salvataggio dei backup'),
     'files' => tr('Necessario per il salvataggio di file inseriti dagli utenti'),
+    'files/temp' => tr('Necessario per la generazione delle stampe'),
     'logs' => tr('Necessario per la gestione dei file di log'),
 ];
 
 $directories = [];
-foreach ($dirs as $name => $description) {
+foreach ($dirs_to_check as $name => $description) {
     $status = is_writable(base_dir().DIRECTORY_SEPARATOR.$name);
 
     $directories[] = [
@@ -225,6 +294,28 @@ foreach ($dirs as $name => $description) {
 }
 
 
+// File di servizio
+$files_to_check = [
+    'manifest.json' => tr('Necessario per l\'aggiunta a schermata home da terminale'),
+    'database_5_7.json' => tr('Necessario per il controllo integrità con database MySQL 5.7.x'),
+    'database.json' => tr('Necessario per il controllo integrità con database MySQL 8.0.x'),
+    'checksum.json' => tr('Necessario per il controllo integrità dei files del gestionale'),
+];
+
+$files = [];
+foreach ($files_to_check as $name => $description) {
+    $status = is_writable(base_dir().DIRECTORY_SEPARATOR.$name);
+
+    $files[] = [
+        'name' => $name,
+        'description' => $description,
+        'status' => $status,
+        'type' => tr('File'),
+    ];
+}
+
+
+
 $requirements = [
     tr('Apache') => $apache,
     tr('PHP (_VERSION_ _SUPPORTED_)', [
@@ -233,6 +324,7 @@ $requirements = [
     ]) => $php,
     tr('MySQL') => $mysql,
     tr('Percorsi di servizio') => $directories,
+    tr('File di servizio') => $files,
 ];
 
 if (!$database->isInstalled() || empty($mysql)){
@@ -271,8 +363,8 @@ foreach ($requirements as $key => $values) {
         echo '
             <tr class="'.($value['status'] ? 'success' : 'danger').'">
                 <td style="width: 10px"><i class="fa fa-'.($value['status'] ? 'check' : 'times').'"></i></td>
-                <td>'.$value['type'].'</td>
-                <td>'.$value['name'].'</td>
+                <td style="width: 120px" >'.$value['type'].'</td>
+                <td style="width: 200px" >'.$value['name'].'</td>
                 <td>'.$value['description'].'</td>
             </tr>';
     }

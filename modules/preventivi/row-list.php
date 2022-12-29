@@ -82,6 +82,14 @@ foreach ($righe as $riga) {
     }
     echo '
                     '.$descrizione;
+
+
+    if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
+        echo '
+        <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
+    }   
+
+
     if (!empty($riga->note)) {
         echo '
                     <br><small class="label label-default">'.nl2br($riga->note).'</small>';
@@ -309,10 +317,6 @@ $margine = $preventivo->margine;
 $margine_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
 $margine_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
 
-// Ricarico
-$ricarico_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
-$ricarico_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
-
 echo '
         <tr>
             <td colspan="7" class="text-right">
@@ -345,10 +349,10 @@ echo '
                     '_PRC_' => numberFormat($preventivo->margine_percentuale),
             ]).':
             </td>
-            <td class="text-right" class="'.$margine_class.'">
+            <td class="text-right '.$margine_class.'" rowspan="2" style="vertical-align:middle;">
                 <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i> '.moneyFormat($preventivo->margine).'
             </td>
-            <td></td>
+            <td rowspan="2"></td>
         </tr>
         
         <tr>
@@ -357,10 +361,6 @@ echo '
                     '_PRC_' => numberFormat($preventivo->ricarico_percentuale),
             ]).':
             </td>
-            <td class="text-right" class="'.$ricarico_class.'">
-                <i class="fa fa-'.$ricarico_icon.' text-'.$ricarico_class.'"></i> '.moneyFormat($preventivo->margine).'
-            </td>
-            <td></td>
         </tr>';
 
 echo '
@@ -368,11 +368,11 @@ echo '
 if (!$block_edit && sizeof($righe) > 0) {
     echo '
     <div class="btn-group">
-        <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="duplicaRiga(getSelectData());">
+        <button type="button" class="btn btn-xs btn-default disabled" id="duplica_righe" onclick="duplicaRiga(getSelectData());">
             <i class="fa fa-copy"></i>
         </button>
 
-        <button type="button" class="btn btn-xs btn-default disabled" id="duplica_righe" onclick="rimuoviRiga(getSelectData());">
+        <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="rimuoviRiga(getSelectData());">
             <i class="fa fa-trash"></i>
         </button>
     </div>';

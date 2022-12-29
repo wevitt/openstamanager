@@ -1,4 +1,5 @@
 <?php
+
 /*
  * OpenSTAManager: il software gestionale open source per l'assistenza tecnica e la fatturazione
  * Copyright (C) DevCode s.r.l.
@@ -62,9 +63,7 @@ switch ($op) {
         Auth::logout();
 
         redirect(base_path().'/index.php');
-        exit();
-
-        break;
+        exit();      
 }
 
 if (Auth::check() && isset($dbo) && $dbo->isConnected() && $dbo->isInstalled()) {

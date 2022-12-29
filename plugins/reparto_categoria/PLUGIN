@@ -1,0 +1,10 @@
+name = "Reparto Categoria"
+title = "Reparto"
+version = "1.0"
+directory = "reparto_categoria"
+options = 'custom'
+icon = "fa fa-list-alt"
+compatibility = "2.*"
+module_from = "Categorie articoli"
+module_to = "Categorie articoli"
+position = "tab"

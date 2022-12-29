@@ -145,6 +145,7 @@ switch (post('op')) {
         $articolo->um_secondaria = post('um_secondaria');
         $articolo->fattore_um_secondaria = post('fattore_um_secondaria');
         $articolo->qta_multipla = post('qta_multipla');
+        $articolo->setMinimoVendita(post('minimo_vendita'), post('idiva_vendita'));
 
         if (empty(post('coefficiente'))) {
             $articolo->setPrezzoVendita(post('prezzo_vendita'), post('idiva_vendita'));
@@ -363,6 +364,47 @@ switch (post('op')) {
         $articolo->delete();
 
         flash()->info(tr('Articolo eliminato!'));
+        break;
+
+    case 'add-movimento':
+
+        $articolo = Articolo::find(post('idarticolo'));
+        $tipo_movimento = post('tipo_movimento');
+        $descrizione = post('movimento');
+        $data = post('data');
+        $qta = post('qta');
+
+        $idsede_partenza = post('idsede_partenza');
+        $idsede_destinazione = post('idsede_destinazione');
+
+        if ($tipo_movimento == 'carico' || $tipo_movimento == 'scarico') {
+            if ($tipo_movimento == 'carico') {
+                $id_sede_azienda = $idsede_destinazione;
+                $id_sede_controparte = 0;
+            } elseif ($tipo_movimento == 'scarico') {
+                $id_sede_azienda = $idsede_partenza;
+                $id_sede_controparte = 0;
+
+                $qta = -$qta;
+            }
+
+            // Registrazione del movimento con variazione della quantità
+            $articolo->movimenta($qta, $descrizione, $data, 1, [
+                'idsede' => $id_sede_azienda,
+            ]);
+
+        } elseif ($tipo_movimento == 'spostamento') {
+            // Registrazione del movimento verso la sede di destinazione
+            $articolo->registra($qta, $descrizione, $data, 1, [
+                'idsede' => $idsede_destinazione,
+            ]);
+
+            // Registrazione del movimento dalla sede di origine
+            $articolo->registra(-$qta, $descrizione, $data, 1, [
+                'idsede' => $idsede_partenza,
+            ]);
+        }
+
         break;
 }
 

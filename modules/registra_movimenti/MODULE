@@ -1,0 +1,7 @@
+name = "Registra movimenti"
+version = "1.0"
+directory = "registra_movimenti"
+options = "custom"
+icon = "fa fa-file-text"
+compatibility = "2.*"
+parent = "0"

@@ -29,7 +29,6 @@ use Modules\Interventi\Intervento;
 use Modules\Ordini\Ordine;
 use Modules\Preventivi\Preventivo;
 use Modules\TipiIntervento\Tipo as TipoSessione;
-use Modules\TipiAttivita\Tipo as TipoAttivitaSessione;
 use Plugins\DichiarazioniIntento\Dichiarazione;
 use Settings;
 use Traits\RecordTrait;
@@ -134,29 +133,6 @@ class Anagrafica extends Model
 
         foreach ($tipi as $tipo) {
             $database->insert('in_tariffe', [
-                'idtecnico' => $anagrafica->id,
-                'idtipointervento' => $tipo->id,
-                'costo_ore' => $tipo->costo_orario,
-                'costo_km' => $tipo->costo_km,
-                'costo_dirittochiamata' => $tipo->costo_diritto_chiamata,
-                'costo_ore_tecnico' => $tipo->costo_orario_tecnico,
-                'costo_km_tecnico' => $tipo->costo_km_tecnico,
-                'costo_dirittochiamata_tecnico' => $tipo->costo_diritto_chiamata_tecnico,
-            ]);
-        }
-    }
-
-    public static function fixTecnicoAttivita(Anagrafica $anagrafica)
-    {
-        $database = database();
-
-        $presenti = $database->fetchArray('SELECT idtipointervento AS id FROM at_tariffe WHERE idtecnico = '.prepare($anagrafica->id));
-
-        // Aggiunta associazioni costi unitari al contratto
-        $tipi = TipoAttivitaSessione::whereNotIn('idtipointervento', array_column($presenti, 'id'))->get();
-
-        foreach ($tipi as $tipo) {
-            $database->insert('at_tariffe', [
                 'idtecnico' => $anagrafica->id,
                 'idtipointervento' => $tipo->id,
                 'costo_ore' => $tipo->costo_orario,
@@ -394,17 +370,19 @@ class Anagrafica extends Model
             ->where('idpianodeiconti2', '=', $categoria_conto_id);
 
         // Verifica su un possibile conto esistente ma non collegato
-        $conto = (clone $table)
-            ->where('descrizione', 'like', '%'.$anagrafica->ragione_sociale.'%')
-            ->first();
-        if (!empty($conto)) {
-            $anagrafiche_collegate = Anagrafica::where($campo, '=', $conto->id)->count();
-            $conto = $anagrafiche_collegate == 0 ? $conto : null;
-        }
+        if (!empty($anagrafica->ragione_sociale)) {
+            $conto = (clone $table)
+                ->where('descrizione', 'like', '%'.$anagrafica->ragione_sociale.'%')
+                ->first();
+            if (!empty($conto)) {
+                $anagrafiche_collegate = Anagrafica::where($campo, '=', $conto->id)->count();
+                $conto = $anagrafiche_collegate == 0 ? $conto : null;
+            }
 
-        // Collegamento a conto esistente
-        if (!empty($conto)) {
-            return $conto->id;
+            // Collegamento a conto esistente
+            if (!empty($conto)) {
+                return $conto->id;
+            }
         }
 
         // Calcolo prossimo numero cliente
@@ -418,7 +396,7 @@ class Anagrafica extends Model
         $id_conto = $database->table('co_pianodeiconti3')
             ->insertGetId([
                 'numero' => $new_numero,
-                'descrizione' => $anagrafica->ragione_sociale,
+                'descrizione' => $anagrafica->ragione_sociale ?: 'N.D.',
                 'idpianodeiconti2' => $categoria_conto_id,
             ]);
 

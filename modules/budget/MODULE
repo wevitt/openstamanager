@@ -1,0 +1,7 @@
+name = "Budget"
+version = "1.0"
+directory = "budget"
+options = 'custom'
+icon = "fa fa-line-chart"
+compatibility = "2.4.15"
+parent = "0"

@@ -21,6 +21,8 @@ include_once __DIR__.'/../../core.php';
 
 use Models\Cache;
 use Modules\Aggiornamenti\Controlli\ColonneDuplicateViste;
+use Modules\Aggiornamenti\Controlli\ReaValidi;
+use Modules\Aggiornamenti\Controlli\PluginDuplicati;
 use Modules\Aggiornamenti\Controlli\Controllo;
 use Modules\Aggiornamenti\Controlli\DatiFattureElettroniche;
 use Modules\Aggiornamenti\Controlli\PianoConti;
@@ -44,7 +46,11 @@ switch (filter('op')) {
         break;
 
     case 'upload':
-        include base_dir().'/modules/aggiornamenti/upload_modules.php';
+        if (setting('Attiva aggiornamenti')){
+            include base_dir().'/modules/aggiornamenti/upload_modules.php';
+        }else{
+            flash()->error(tr('Non è permesso il caricamento di aggiornamenti o moduli!'));
+        }
 
         break;
 
@@ -53,6 +59,8 @@ switch (filter('op')) {
             PianoConti::class,
             DatiFattureElettroniche::class,
             ColonneDuplicateViste::class,
+            PluginDuplicati::class,
+            ReaValidi::class,
         ];
 
         $results = [];

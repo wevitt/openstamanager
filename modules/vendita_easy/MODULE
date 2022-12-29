@@ -1,0 +1,18 @@
+name = "Easy vendita"
+version = "1.1"
+directory = "vendita_easy"
+options = "SELECT |select|
+FROM `vb_venditabanco`
+    INNER JOIN `vb_stati_vendita` ON `vb_venditabanco`.`idstato` = `vb_stati_vendita`.`id`
+    LEFT JOIN (
+        SELECT `idvendita`,
+            GROUP_CONCAT(`descrizione` SEPARATOR ', ') AS `descrizione_righe`,
+            SUM(`subtotale` - `sconto`) AS `totale_imponibile`,
+            SUM(`subtotale` - `sconto` + `iva`) AS `totale`
+        FROM `vb_righe_venditabanco`
+        GROUP BY `idvendita`
+    ) AS righe ON `vb_venditabanco`.`id` = `righe`.`idvendita`
+WHERE deleted_at IS NULL AND 1=1 HAVING 2=2"
+icon = "fa fa-shopping-cart"
+compatibility = "2.*"
+parent = "0"

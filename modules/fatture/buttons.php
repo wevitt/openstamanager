@@ -31,7 +31,7 @@ if ($module->name == 'Fatture di vendita') {
 if ($dir == 'entrata' || !empty($abilita_autofattura)) {
 echo '
 <div class="btn-group">
-    <button type="button" class="btn btn-primary unblockable dropdown-toggle '.(((!empty($record['ref_documento']) || $record['stato'] != 'Bozza') and empty($record['is_reversed'])) ? '' : 'disabled').'" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <button type="button" class="btn btn-primary unblockable dropdown-toggle '.(((!empty($record['ref_documento']) || $record['stato'] != 'Bozza') and (empty($record['is_reversed']) || !empty($abilita_autofattura))) ? '' : 'disabled').'" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <i class="fa fa-magic"></i> '.tr('Crea').'
         <span class="caret"></span>
     </button>';
@@ -59,7 +59,7 @@ echo '
 }
 
 if (empty($record['is_fiscale'])) {
-    $msg = '<br>{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module=\''.$id_module.'\' AND is_fiscale = 1 ORDER BY name" ]}
+    $msg = '<br>{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(["id_module" => $id_module, 'is_sezionale' => 1, 'is_fiscale' => 1]).' ]}
     {[ "type": "date", "label": "'.tr('Data').'", "name": "data", "required": 1, "value": "-now-" ]}';
 
     echo '
@@ -109,7 +109,7 @@ if (!empty($record['is_fiscale'])) {
 
     if ($record['stato'] == 'Pagato') {
         echo '
-        <button type="button" class="btn btn-primary ask tip" data-msg="'.tr('Se riapri questo documento verrà azzerato lo scadenzario e la relativa prima nota. Continuare?').'" data-button="'.tr('Procedi').'" data-method="post" data-op="reopen" data-backto="record-edit" data-title="'.tr('Riaprire il documento?').'" title="'.tr('Riporta il documento in stato "Bozza" e ne elimina i movimenti contabili').'">
+        <button type="button" class="btn btn-primary ask tip" data-msg="'.tr('Se riapri questo documento verrà azzerato lo scadenzario e la relativa prima nota. Continuare?').'" data-button="'.tr('Procedi').'" data-method="post" data-op="reopen" data-backto="record-edit" data-title="'.tr('Riaprire il documento?').'" title="'.tr("Riporta il documento nello stato di 'Emessa' e ne elimina i movimenti contabili").'">
             <i class="fa fa-folder-open"></i> '.tr('Riapri documento').'...
         </button>';
     }

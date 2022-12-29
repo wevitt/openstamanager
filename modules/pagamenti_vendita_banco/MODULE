@@ -1,0 +1,7 @@
+name = "Tipologia pagamenti"
+version = "1.0"
+directory = "pagamenti_vendita_banco"
+options = "SELECT |select| FROM co_pagamenti WHERE tipo_xon_xoff IS NOT NULL AND 1=1 GROUP BY tipo_xon_xoff HAVING 2=2"
+icon = "fa fa-angle-right"
+compatibility = "2.*"
+parent = "Vendita al banco"

@@ -42,11 +42,12 @@ switch (post('op')) {
     case 'add':
         $idanagrafica = post('idanagrafica');
         $data = post('data');
+        $id_segment = post('id_segment');
 
         $anagrafica = Anagrafica::find($idanagrafica);
         $tipo = Tipo::where('dir', $dir)->first();
 
-        $ordine = Ordine::build($anagrafica, $tipo, $data);
+        $ordine = Ordine::build($anagrafica, $tipo, $data, $id_segment);
         $id_record = $ordine->id;
 
         flash()->info(tr('Aggiunto ordine numero _NUM_!', [
@@ -107,6 +108,7 @@ switch (post('op')) {
             $ordine->codice_cup = post('codice_cup');
             $ordine->codice_cig = post('codice_cig');
             $ordine->num_item = post('num_item');
+            $ordine->condizioni_fornitura = post('condizioni_fornitura');
 
             $ordine->setScontoFinale(post('sconto_finale'), post('tipo_sconto_finale'));
 
@@ -422,7 +424,7 @@ switch (post('op')) {
         if (post('create_document') == 'on') {
             $tipo = Tipo::where('dir', $documento->direzione)->first();
 
-            $ordine = Ordine::build($documento->anagrafica, $tipo, post('data'));
+            $ordine = Ordine::build($documento->anagrafica, $tipo, post('data'), post('id_segment'));
             $ordine->idpagamento = $documento->idpagamento;
             $ordine->idsede = $id_sede;
 
@@ -482,7 +484,7 @@ switch (post('op')) {
             $anagrafica = Anagrafica::find(post('idanagrafica'));
             $tipo = Tipo::where('dir', $dir)->first();
 
-            $ordine = Ordine::build($anagrafica, $tipo, post('data'));
+            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'));
             $ordine->save();
 
             $id_record = $ordine->id;
@@ -547,7 +549,7 @@ switch (post('op')) {
             $anagrafica = Anagrafica::find(post('idanagrafica'));
             $tipo = Tipo::where('dir', $dir)->first();
 
-            $ordine = Ordine::build($anagrafica, $tipo, post('data'));
+            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'));
             $ordine->save();
 
             $id_record = $ordine->id;

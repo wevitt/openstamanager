@@ -138,7 +138,7 @@ function discountInfo(Accounting $riga, $mostra_maggiorazione = true)
         return null;
     }
 
-    $text = $riga->sconto_unitario > 0 ? tr('sconto _TOT_ _TYPE_') : tr('maggiorazione _TOT__TYPE_');
+    $text = ($riga->prezzo_unitario >= 0 && $riga->sconto_unitario > 0) || ($riga->prezzo_unitario < 0 && $riga->sconto_unitario < 0) ? tr('sconto _TOT_ _TYPE_') : tr('maggiorazione _TOT__TYPE_');
     $totale = !empty($riga->sconto_percentuale) ? $riga->sconto_percentuale : $riga->sconto_unitario_corrente;
 
     return replace($text, [
@@ -208,3 +208,19 @@ function parseScontoCombinato($combinato)
 
     return (1 - $result) * 100;
 }
+
+/**
+ * Funzione che gestisce il parsing di uno sconto combinato e la relativa trasformazione in sconto fisso.
+ * Esempio: (40 + 10) % = 44 %.
+ *
+ * @param $combinato
+ *
+ * @return float|int
+ */
+function getSegmentPredefined($id_module)
+{
+    $id_segment = database()->selectOne('zz_segments', 'id', ['id_module' => $id_module, 'predefined' => 1])['id'];
+
+    return $id_segment;
+}
+

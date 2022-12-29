@@ -1,0 +1,7 @@
+name = "Sorgenti esterne"
+version = "1.0"
+directory = "sorgenti_esterne"
+options = 'SELECT |select| FROM bu_sorgenti WHERE 1=1 HAVING 2=2 ORDER BY nome ASC'
+icon = "fa fa-angle-right"
+compatibility = "2.4.15"
+parent = "Budget"

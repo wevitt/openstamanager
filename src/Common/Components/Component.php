@@ -248,10 +248,10 @@ abstract class Component extends Model
         // Azioni specifiche di inizializzazione
         $model->customInitCopiaIn($this);
 
-        //$model->save();
+        $model->save();
 
         // Impostazione degli attributi
-        //$model = $object::find($model->id);
+        $model = $object::find($model->id);
         $accepted = $model->getAttributes();
 
         // Azioni specifiche precedenti

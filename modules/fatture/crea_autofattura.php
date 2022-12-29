@@ -29,11 +29,11 @@ echo '
 
     <div class="row">
         <div class="col-md-6">
-            {[ "type": "select", "label": "'.tr('Tipo documento').'", "name": "idtipodocumento", "required": 1, "values": "query=SELECT id, CONCAT_WS(\" - \",codice_tipo_documento_fe, descrizione) AS descrizione FROM co_tipidocumento WHERE dir=\"entrata\" AND codice_tipo_documento_fe IN(\"TD16\", \"TD17\", \"TD18\", \"TD19\", \"TD20\") ORDER BY codice_tipo_documento_fe" ]}
+            {[ "type": "select", "label": "'.tr('Tipo documento').'", "name": "idtipodocumento", "required": 1, "values": "query=SELECT id, CONCAT_WS(\" - \",codice_tipo_documento_fe, descrizione) AS descrizione FROM co_tipidocumento WHERE dir=\"entrata\" AND codice_tipo_documento_fe IN(\"TD16\", \"TD17\", \"TD18\", \"TD19\", \"TD20\", \"TD21\", \"TD28\") ORDER BY codice_tipo_documento_fe" ]}
         </div>
 
         <div class="col-md-6">
-            {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module='.prepare($id_module_fatture_vendita).' ORDER BY name", "value": "'.$id_segment.'" ]}
+            {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(['id_module' => $id_module_fatture_vendita, 'is_sezionale' => 1]).', "value": "'.$id_segment.'" ]}
         </div>
     </div>
 

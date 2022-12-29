@@ -21,18 +21,20 @@ include_once __DIR__.'/../../core.php';
 
 switch (post('op')) {
     case 'add':
+        $idanagrafica = post('idanagrafica');
         $data = post('data');
         $tipo = post('tipo');
         $da_pagare = post('da_pagare');
         $descrizione = post('descrizione');
 
-        $dbo->query('INSERT INTO co_scadenziario(descrizione, tipo, data_emissione, scadenza, da_pagare, pagato) VALUES('.prepare($descrizione).', '.prepare($tipo).', CURDATE(), '.prepare($data).', '.prepare($da_pagare).", '0')");
+        $dbo->query('INSERT INTO co_scadenziario(idanagrafica, descrizione, tipo, data_emissione, scadenza, da_pagare, pagato) VALUES('.prepare($idanagrafica).', '.prepare($descrizione).', '.prepare($tipo).', CURDATE(), '.prepare($data).', '.prepare($da_pagare).", '0')");
         $id_record = $dbo->lastInsertedID();
 
         flash()->info(tr('Scadenza inserita!'));
         break;
 
     case 'update':
+        $idanagrafica = post('idanagrafica');
         $tipo = post('tipo');
         $descrizione = post('descrizione');
         $iddocumento = post('iddocumento') ?: 0;
@@ -78,6 +80,7 @@ switch (post('op')) {
             $id_scadenza = post('id_scadenza')[$id];
             if (!empty($id_scadenza)) {
                 $database->update('co_scadenziario', [
+                    'idanagrafica' => $idanagrafica,
                     'descrizione' => $descrizione,
                     'da_pagare' => $da_pagare,
                     'pagato' => $pagato,

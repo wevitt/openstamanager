@@ -141,7 +141,13 @@ echo '
                 <?php
             }
             ?>
-            
+
+            <div class="row">
+				<div class="col-md-12">
+                    {[ "type": "ckeditor", "use_full_ckeditor": 0, "label": "<?php echo tr('Condizioni generali di fornitura'); ?>", "name": "condizioni_fornitura", "class": "autosize", "value": "$condizioni_fornitura$" ]}
+				</div>
+			</div>
+
 			<div class="row">
 				<div class="col-md-12">
 					{[ "type": "textarea", "label": "<?php echo tr('Note'); ?>", "name": "note", "value": "$note$" ]}
@@ -333,7 +339,7 @@ $("#idanagrafica").change(function() {
 
 	$("#idsede").selectReset();
     $("#idpagamento").selectReset();
-    
+
     let data = $(this).selectData();
 	if (data) {
         // Impostazione del tipo di pagamento da anagrafica

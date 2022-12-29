@@ -47,8 +47,8 @@ if ($user['gruppo'] == 'Tecnici' && !empty($user['idanagrafica'])) {
     $id_cliente = $user['idanagrafica'];
 }
 
-// Stato di default associato all'attivitò
-$stato = $dbo->fetchArray("SELECT * FROM in_statiintervento WHERE codice = 'WIP'");
+// Stato di default associato all'attività
+$stato = $dbo->fetchOne("SELECT * FROM in_statiintervento WHERE codice = 'WIP'");
 $id_stato = $stato['idstatointervento'];
 
 // Se è indicata un'anagrafica relativa, si carica il tipo di intervento di default impostato
@@ -142,15 +142,12 @@ $data_fine = $data_fine ?: $data;
 $inizio_sessione = $data.' '.$orario_inizio;
 $fine_sessione = $data_fine.' '.$orario_fine;
 
-// Calcolo del nuovo codice
-$new_codice = Intervento::getNextCodice($data);
-
 echo '
 <form action="" method="post" id="add-form">
 	<input type="hidden" name="op" value="add">
 	<input type="hidden" name="ref" value="'.get('ref').'">
 	<input type="hidden" name="backto" value="record-edit">
-
+    
     <!-- Fix creazione da Anagrafica -->
     <input type="hidden" name="id_record" value="">';
 
@@ -195,6 +192,10 @@ echo '
         <div class="col-md-4">
             {[ "type": "select", "label": "'.tr('Referente').'", "name": "idreferente", "ajax-source": "referenti", "select-options": '.json_encode(['idanagrafica' => $id_anagrafica, 'idclientefinale' => $id_cliente_finale]).', "icon-after": "add|'.Modules::get('Anagrafiche')['id'].'|id_plugin='.Plugins::get('Referenti')['id'].'&id_parent='.$id_anagrafica.'" ]}
         </div>
+
+        <div class="col-md-4">
+			{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(['id_module' => $id_module, 'is_sezionale' => 1]).', "value": "'.$_SESSION['module_'.$id_module]['id_segment'].'" ]}
+		</div>
     </div>
 
     <div class="row">
@@ -213,7 +214,7 @@ echo '
 
     <div class="row">
         <div class="col-md-12">
-            {[ "type": "ckeditor", "label": "'.tr('Richiesta').'", "name": "richiesta", "id": "richiesta_add", "required": 1, "value": "'.$richiesta.'", "extra": "style=\'max-height:80px;\'" ]}
+            {[ "type": "ckeditor", "label": "'.tr('Richiesta').'", "name": "richiesta", "id": "richiesta_add", "required": 1, "value": "'.htmlentities($richiesta).'", "extra": "style=\'max-height:80px;\'" ]}
         </div>
     </div>';
 
@@ -237,8 +238,7 @@ echo '
                 </div>
 
                 <div class="col-md-4">
-                    {[ "type": "select", "label": "'.tr('Impianto').'", "multiple": 1, "name": "idimpianti[]", "value": "'.$impianti_collegati.'", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": '.($id_anagrafica ?: '""').', "idsede_destinazione": '.($id_sede ?: '""').'} ]}'; /* "icon-after": "add|Modules::get('Impianti')['id']|id_anagrafica=$id_anagrafica" ]}*/
-                echo '
+                    {[ "type": "select", "label": "'.tr('Impianto').'", "multiple": 1, "name": "idimpianti[]", "value": "'.$impianti_collegati.'", "ajax-source": "impianti-cliente", "select-options": {"idanagrafica": '.($id_anagrafica ?: '""').', "idsede_destinazione": '.($id_sede ?: '""').'}, "icon-after": "add|'.Modules::get('Impianti')['id'].'|id_anagrafica='.$id_anagrafica.'" ]}
                 </div>
 
                 <div class="col-md-4">
@@ -463,8 +463,15 @@ echo '
 		let orario_inizio = input("orario_inizio").getElement();
 		let orario_fine = input("orario_fine").getElement();
         orario_inizio.on("dp.change", function (e) {
-            orario_fine.data("DateTimePicker").minDate(e.date);
-            orario_fine.change();
+            if(orario_fine.data("DateTimePicker").date() < e.date){
+                orario_fine.data("DateTimePicker").date(e.date);
+            }
+        });
+
+        orario_fine.on("dp.change", function (e) {
+            if(orario_inizio.data("DateTimePicker").date() > e.date){
+                orario_inizio.data("DateTimePicker").date(e.date);
+            }
         });
 
         // Refresh modulo dopo la chiusura di una pianificazione attività derivante dalle attività
@@ -538,8 +545,8 @@ echo '
         plus_sede = $(".modal #idsede_destinazione").parent().find(".btn");
         plus_sede.attr("onclick", plus_sede.attr("onclick").replace(/id_parent=[0-9]*/, "id_parent=" + value));
 
-        //plus_impianto = $(".modal #idimpianti").parent().find(".btn");
-        //plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
+        plus_impianto = $(".modal #idimpianti").parent().find(".btn");
+        plus_impianto.attr("onclick", plus_impianto.attr("onclick").replace(/id_anagrafica=[0-9]*/, "id_anagrafica=" + value));
 
         plus_contratto = $(".modal #idcontratto").parent().find(".btn");
         plus_contratto.attr("onclick", plus_contratto.attr("onclick").replace(/idanagrafica=[0-9]*/, "idanagrafica=" + value));
@@ -712,7 +719,7 @@ echo '
             input("data_fine_ricorrenza").enable();
             $("#data_fine_ricorrenza").attr("required", true);
             input("numero_ricorrenze").disable();
-            input("numero_ricorrenze").set("");
+            input("numero_ricorrenze").set("");  
         } else {
             input("numero_ricorrenze").enable();
             input("data_fine_ricorrenza").disable();

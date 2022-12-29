@@ -52,6 +52,7 @@ echo '
 				</li>';
 
 $plugins = $dbo->fetchArray('SELECT id, title FROM zz_plugins WHERE idmodule_to='.prepare($id_module)." AND position='tab_main' AND enabled = 1");
+
 // Tab dei plugin
 foreach ($plugins as $plugin) {
     echo '

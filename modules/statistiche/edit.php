@@ -281,7 +281,34 @@ $tipi = $dbo->fetchArray('SELECT * FROM `in_tipiintervento`');
 
 $dataset = '';
 foreach ($tipi as $tipo) {
-    $interventi = $dbo->fetchArray('SELECT COUNT(*) AS result, YEAR(in_interventi.data_richiesta) AS year, MONTH(in_interventi.data_richiesta) AS month FROM in_interventi WHERE in_interventi.idtipointervento = '.prepare($tipo['idtipointervento']).' AND in_interventi.data_richiesta BETWEEN '.prepare($start).' AND '.prepare($end).' GROUP BY YEAR(in_interventi.data_richiesta), MONTH(in_interventi.data_richiesta) ORDER BY YEAR(in_interventi.data_richiesta) ASC, MONTH(in_interventi.data_richiesta) ASC');
+    $interventi = $dbo->fetchArray('SELECT
+    COUNT(in_interventi.id) AS result,
+    YEAR(sessioni.orario_fine) AS `year`,
+    MONTH(sessioni.orario_fine) AS `month`
+FROM
+    in_interventi
+LEFT JOIN(
+    SELECT
+        in_interventi_tecnici.idintervento,
+        MAX(orario_fine) AS orario_fine
+    FROM
+        in_interventi_tecnici
+    GROUP BY
+        idintervento
+) sessioni
+ON
+    in_interventi.id = sessioni.idintervento
+WHERE
+    in_interventi.idtipointervento = '.prepare($tipo['idtipointervento']).' AND IFNULL(
+        sessioni.orario_fine,
+        in_interventi.data_richiesta
+    ) BETWEEN '.prepare($start).' AND '.prepare($end).'
+GROUP BY
+    YEAR(sessioni.orario_fine),
+    MONTH(sessioni.orario_fine)
+ORDER BY
+    YEAR(sessioni.orario_fine) ASC,
+    MONTH(sessioni.orario_fine) ASC');
 
     $interventi = Stats::monthly($interventi, $start, $end);
 
@@ -337,7 +364,8 @@ $(document).ready(function() {
 // Ore interventi per tipologia
 $dataset = '';
 foreach ($tipi as $tipo) {
-    $interventi = $dbo->fetchArray('SELECT ROUND( SUM(in_interventi_tecnici.ore), 2 ) AS result, YEAR(in_interventi.data_richiesta) AS year, MONTH(in_interventi.data_richiesta) AS month FROM in_interventi INNER JOIN in_interventi_tecnici ON in_interventi.id=in_interventi_tecnici.idintervento WHERE in_interventi.idtipointervento = '.prepare($tipo['idtipointervento']).' AND in_interventi.data_richiesta BETWEEN '.prepare($start).' AND '.prepare($end).' GROUP BY YEAR(in_interventi.data_richiesta), MONTH(in_interventi.data_richiesta) ORDER BY YEAR(in_interventi.data_richiesta) ASC, MONTH(in_interventi.data_richiesta) ASC');
+    $interventi = $dbo->fetchArray('SELECT ROUND( SUM(in_interventi_tecnici.ore), 2 ) AS result, YEAR(in_interventi_tecnici.orario_fine) AS year, MONTH(in_interventi_tecnici.orario_fine) AS month FROM in_interventi INNER JOIN in_interventi_tecnici ON in_interventi.id=in_interventi_tecnici.idintervento WHERE in_interventi.idtipointervento = '.prepare($tipo['idtipointervento']).' AND in_interventi.data_richiesta BETWEEN '.prepare($start).' AND '.prepare($end).' GROUP BY
+    YEAR(in_interventi_tecnici.orario_fine), MONTH(in_interventi_tecnici.orario_fine) ORDER BY YEAR(in_interventi_tecnici.orario_fine) ASC, MONTH(in_interventi_tecnici.orario_fine) ASC');
 
     $interventi = Stats::monthly($interventi, $start, $end);
 
@@ -446,7 +474,7 @@ $(document).ready(function() {
         data: {
             labels: months,
             datasets: [
-                '.$dataset.'
+                '.($dataset? :'{ label: "", backgroundColor: "transparent", data: [ 0,0,0,0,0,0,0,0,0,0,0,0 ] }').'
             ]
         },
         options: {
@@ -521,7 +549,6 @@ INNER JOIN an_tipianagrafiche_anagrafiche ON an_anagrafiche.idanagrafica=an_tipi
 INNER JOIN an_tipianagrafiche ON an_tipianagrafiche_anagrafiche.idtipoanagrafica=an_tipianagrafiche.idtipoanagrafica
 WHERE an_tipianagrafiche.descrizione = "Cliente" AND co_tipidocumento.dir = "entrata" AND an_anagrafiche.created_at BETWEEN '.prepare($start).' AND '.prepare($end).' GROUP BY YEAR(an_anagrafiche.created_at), MONTH(an_anagrafiche.created_at) ORDER BY YEAR(an_anagrafiche.created_at) ASC, MONTH(an_anagrafiche.created_at) ASC');
 
-$clienti = Stats::monthly($clienti, $start, $end);
 
 //Random color
 $background = '#'.dechex(rand(256, 16777215));

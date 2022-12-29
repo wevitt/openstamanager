@@ -19,6 +19,8 @@
 
 include_once __DIR__.'/../../../core.php';
 
+use Modules\Articoli\Articolo;
+
 $idarticolo = get('idarticolo');
 $limit = get('limit');
 
@@ -129,34 +131,55 @@ switch ($resource) {
             return;
         }
 
+        $articolo = Articolo::find($id_articolo);
+        $giacenze = $articolo->getGiacenze();
+
         $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
+        // Prezzi netti clienti / listino fornitore
         $query = 'SELECT minimo, massimo,
             sconto_percentuale,
             '.($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario').' AS prezzo_unitario
         FROM mg_prezzi_articoli
         WHERE id_articolo = '.prepare($id_articolo).' AND dir = '.prepare($direzione).' |where|
         ORDER BY minimo ASC, massimo DESC';
-
-        // Lettura dei prezzi relativi all'anagrafica
         $query_anagrafica = replace($query, [
             '|where|' => ' AND id_anagrafica = '.prepare($id_anagrafica),
         ]);
-        $results = $database->fetchArray($query_anagrafica);
+        $prezzi = $database->fetchArray($query_anagrafica);
 
-        // Lettura dei prezzi registrati direttamente sull'articolo, per compatibilità con il formato standard
-        if (empty($results)) {
-            $result = $database->fetchOne('SELECT prezzo_acquisto, '.($prezzi_ivati ? 'prezzo_vendita_ivato' : 'prezzo_vendita').' AS prezzo_vendita FROM mg_articoli WHERE id = '.prepare($id_articolo));
+        // Prezzi listini clienti
+        $query = 'SELECT sconto_percentuale AS sconto_percentuale_listino,
+            '.($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario').' AS prezzo_unitario_listino
+        FROM mg_listini
+        LEFT JOIN mg_listini_articoli ON mg_listini.id=mg_listini_articoli.id_listino
+        LEFT JOIN an_anagrafiche ON mg_listini.id=an_anagrafiche.id_listino
+        WHERE mg_listini.data_attivazione<=NOW() AND mg_listini_articoli.data_scadenza>=NOW() AND mg_listini.attivo=1 AND id_articolo = '.prepare($id_articolo).' AND dir = '.prepare($direzione).' |where|';
+        $query_anagrafica = replace($query, [
+            '|where|' => ' AND idanagrafica = '.prepare($id_anagrafica),
+        ]);
+        $listino = $database->fetchArray($query_anagrafica);
 
-            $results = [
-                [
-                    'minimo' => null,
-                    'massimo' => null,
-                    'sconto_percentuale' => 0,
-                    'prezzo_unitario' => $direzione == 'uscita' ? $result['prezzo_acquisto'] : $result['prezzo_vendita'],
-                ],
-            ];
+        // Prezzi listini clienti sempre visibili
+        $query = 'SELECT mg_listini.nome, sconto_percentuale AS sconto_percentuale_listino_visibile,
+            '.($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario').' AS prezzo_unitario_listino_visibile
+        FROM mg_listini
+        LEFT JOIN mg_listini_articoli ON mg_listini.id=mg_listini_articoli.id_listino
+        WHERE mg_listini.data_attivazione<=NOW() AND mg_listini_articoli.data_scadenza>=NOW() AND mg_listini.attivo=1 AND mg_listini.is_sempre_visibile=1 AND id_articolo = '.prepare($id_articolo).' AND dir = '.prepare($direzione);
+        $listini_sempre_visibili = $database->fetchArray($query);
+
+        // Prezzi scheda articolo
+        if ($direzione == 'uscita') {
+            $prezzo_articolo = $database->fetchArray('SELECT prezzo_acquisto AS prezzo_scheda FROM mg_articoli WHERE id = '.prepare($id_articolo));
+        } else {
+            $prezzo_articolo = $database->fetchArray('SELECT '.($prezzi_ivati ? 'prezzo_vendita_ivato' : 'prezzo_vendita').' AS prezzo_scheda FROM mg_articoli WHERE id = '.prepare($id_articolo));
         }
+
+        // Ultimo prezzo al cliente
+        $ultimo_prezzo = $dbo->fetchArray('SELECT '.($prezzi_ivati ? '(prezzo_unitario_ivato-sconto_unitario_ivato)' : '(prezzo_unitario-sconto_unitario)').' AS prezzo_ultimo FROM co_righe_documenti LEFT JOIN co_documenti ON co_documenti.id=co_righe_documenti.iddocumento WHERE idarticolo='.prepare($id_articolo).' AND idanagrafica='.prepare($id_anagrafica).' AND idtipodocumento IN(SELECT id FROM co_tipidocumento WHERE dir='.prepare($direzione).') ORDER BY data DESC LIMIT 0,1');
+
+        $results = array_merge($prezzi, $listino, $listini_sempre_visibili, $prezzo_articolo, $ultimo_prezzo, $giacenze);
+        alert_log($results);
 
         echo json_encode($results);
 

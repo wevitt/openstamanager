@@ -1,0 +1,7 @@
+name = "Movimenti ABI"
+version = "1.0"
+directory = "movimenti_abi"
+options = "SELECT |select| FROM `co_movimenti_abi` WHERE 1=1 HAVING 2=2"
+icon = "fa fa-angle-right"
+compatibility = "2.*"
+parent = "40"

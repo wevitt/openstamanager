@@ -1,0 +1,10 @@
+{
+    "require": {
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\RegistraMovimenti\\": "src"
+        }
+    }
+}

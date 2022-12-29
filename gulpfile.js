@@ -124,7 +124,9 @@ const JS = gulp.parallel(() => {
         vendor[i] = config.nodeDirectory + '/' + vendor[i];
     }
 
-    return gulp.src(vendor)
+    return gulp.src(vendor, {
+        allowEmpty: true
+    })
         .pipe(babel(config.babelOptions))
         .pipe(concat('app.min.js'))
         .pipe(gulpIf(!config.debug, minifyJS()))
@@ -181,7 +183,9 @@ const CSS = gulp.parallel(() => {
         vendor[i] = config.nodeDirectory + '/' + vendor[i];
     }
 
-    return gulp.src(vendor)
+    return gulp.src(vendor, {
+        allowEmpty: true
+    })
         .pipe(gulpIf('*.scss', sass(), gulpIf('*.less', less(), gulpIf('*.styl', stylus()))))
         .pipe(autoprefixer())
         .pipe(minifyCSS({
@@ -402,11 +406,12 @@ function release(done) {
 
     archive.pipe(output);
 
-    // Individuazione dei file da aggiungere
+    // Individuazione dei file da aggiungere e escludere
     glob([
         '**/*',
         '!checksum.json',
         '!database.json',
+        '!database_5_7.json',
         '!.idea/**',
         '!.git/**',
         '!node_modules/**',
@@ -416,6 +421,7 @@ function release(done) {
         'files/temp/.gitkeep',
         '!logs/**',
         '!config.inc.php',
+        '!psalm.xml',
         '!update/structure.php',
         '!**/*.(lock|phar|log|zip|bak|jar|txt)',
         '!**/~*',
