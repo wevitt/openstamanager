@@ -21,6 +21,8 @@ $result['idarticolo'] = isset($result['idarticolo']) ? $result['idarticolo'] : n
 $qta_minima = 0;
 $id_listino = $dbo->selectOne('an_anagrafiche', 'id_listino', ['idanagrafica' => $options['idanagrafica']])['id_listino'];
 
+$module_articoli_id = Modules::get('Articoli')['id'];
+
 // Articolo
 if (empty($result['idarticolo'])) {
     // Sede partenza
@@ -66,6 +68,27 @@ if (empty($result['idarticolo'])) {
         });
     </script>';
 }
+
+//giacenze
+echo
+'<div class="row">
+    <div class="col-md-12">
+        <label for="tbl_giacenze">' . tr('Giacenze') . '</label>
+        <table id="tbl_giacenze" class="table table-striped table-condensed table-bordered">
+            <thead>
+                <tr>
+                    <th>'.tr('Sede').'</th>
+                    <th width="20%" class="text-center">'.tr('Q.tà').'</th>
+                    <th width="5%" class="text-center">#</th>
+                </tr>
+            </thead>
+            <tbody>
+                <td colspan="3" class="text-center">' . tr('Nessuna giacenza disponibile') . '</td>
+            </tbody>
+        </table>
+    </div>
+</div>';
+
 
 echo '
     <input type="hidden" name="qta_minima" id="qta_minima" value="'.$qta_minima.'">
@@ -156,7 +179,6 @@ $("#idarticolo").on("change", function() {
     // Autoimpostazione dei campi relativi all\'articolo
     let $data = $(this).selectData();
     ottieniDettagliArticolo($data.id).then(function() {
-        console.log($data);
         if ($("#prezzo_unitario").val().toEnglish() === 0){
             aggiornaPrezzoArticolo();
         } else {
@@ -200,6 +222,8 @@ $("#idarticolo").on("change", function() {
             input("tipo_provvigione").set(input("tipo_provvigione_default").get());
         }
     });
+
+    getGiacenzeArticoloPerSede($data.id);
 });
 
 $("#idsede").on("change", function() {
@@ -213,6 +237,58 @@ $(document).on("change", "input[name^=qta], input[name^=prezzo_unitario], input[
     verificaScontoArticolo();
     verificaMinimoVendita();
 });
+
+/**
+ * Restituisce le giacenze dell\'articolo per ogni sede e le mostra in tabella
+ */
+function getGiacenzeArticoloPerSede(id_articolo) {
+    $.get(
+        globals.rootdir + "/ajax_complete.php?module=Articoli&op=getGiacenze&id_anagrafica=' . $options['idanagrafica'] . '&id_articolo=" + id_articolo + "&dir=" + direzione,
+        function(response) {
+            const data = JSON.parse(response);
+
+            var sedi = data.sedi;
+            var giacenze = data.giacenze;
+            var articolo = data.articolo;
+
+            var html = "";
+            for (var i = 0; i < sedi.length; i++) {
+                var sede = sedi[i];
+                var giacenza = giacenze[i];
+
+                html +=
+                    "<tr>" +
+                        "<td>" + sede.nomesede + "</td>" +
+                        "<td>" + giacenze[sede["id"]][0] + " " + articolo.um + "</td>" +
+                        "<td class=\"text-center\">" +
+                            "<a class=\"btn btn-xs btn-info\" title=\"Dettagli\" onclick=\"getDettagli(" + sede["id"] + ", " + id_articolo + ");\">" +
+                                "<i class=\"fa fa-eye\"></i>" +
+                            "</a>" +
+                        "</td>" +
+                    "</tr>";
+            }
+
+            if (html == "") {
+                html = "<tr><td colspan=\"3\" class=\"text-center\">" + "' . tr('Nessuna giacenza disponibile') . '" + "</td></tr>";
+            }
+
+            $("#tbl_giacenze tbody").html(html);
+        }
+    );
+}
+
+/**
+ * Apre la modal per il dettaglio della sede.
+ */
+function getDettagli(id_sede, id_articolo) {
+    // Apertura modal
+    openModal(
+        "' . tr('Dettagli') . '",
+        globals.rootdir + "/modules/articoli/plugins/dettagli_giacenze.php?id_module=' . $module_articoli_id . '&id_record=" + id_articolo + "&idsede=" + id_sede
+    );
+
+}
+
 
 /**
 * Restituisce il dettaglio registrato per una specifica quantità dell\'articolo.

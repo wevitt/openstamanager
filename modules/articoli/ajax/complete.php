@@ -131,9 +131,6 @@ switch ($resource) {
             return;
         }
 
-        $articolo = Articolo::find($id_articolo);
-        $giacenze = $articolo->getGiacenze();
-
         $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
         // Prezzi netti clienti / listino fornitore
@@ -178,8 +175,30 @@ switch ($resource) {
         // Ultimo prezzo al cliente
         $ultimo_prezzo = $dbo->fetchArray('SELECT '.($prezzi_ivati ? '(prezzo_unitario_ivato-sconto_unitario_ivato)' : '(prezzo_unitario-sconto_unitario)').' AS prezzo_ultimo FROM co_righe_documenti LEFT JOIN co_documenti ON co_documenti.id=co_righe_documenti.iddocumento WHERE idarticolo='.prepare($id_articolo).' AND idanagrafica='.prepare($id_anagrafica).' AND idtipodocumento IN(SELECT id FROM co_tipidocumento WHERE dir='.prepare($direzione).') ORDER BY data DESC LIMIT 0,1');
 
-        $results = array_merge($prezzi, $listino, $listini_sempre_visibili, $prezzo_articolo, $ultimo_prezzo, $giacenze);
-        alert_log($results);
+        $results = array_merge($prezzi, $listino, $listini_sempre_visibili, $prezzo_articolo, $ultimo_prezzo);
+
+        echo json_encode($results);
+
+        break;
+
+    case 'getGiacenze':
+        $id_articolo = get('id_articolo');
+        $id_anagrafica = get('id_anagrafica');
+        $direzione = get('dir') == 'uscita' ? 'uscita' : 'entrata';
+
+        if (empty($id_articolo) || empty($id_anagrafica)) {
+            return;
+        }
+
+        $articolo = Articolo::find($id_articolo);
+        $giacenze = $articolo->getGiacenze();
+        $sedi = $dbo->fetchArray('(SELECT "0" AS id, IF(indirizzo!=\'\', CONCAT_WS(" - ", "'.tr('Sede legale').'", CONCAT(citta, \' (\', indirizzo, \')\')), CONCAT_WS(" - ", "'.tr('Sede legale').'", citta)) AS nomesede FROM an_anagrafiche WHERE idanagrafica = '.prepare(setting('Azienda predefinita')).') UNION (SELECT id, IF(indirizzo!=\'\',CONCAT_WS(" - ", nomesede, CONCAT(citta, \' (\', indirizzo, \')\')), CONCAT_WS(" - ", nomesede, citta )) AS nomesede FROM an_sedi WHERE idanagrafica='.prepare(setting('Azienda predefinita')).')');
+
+        $results = [
+            'articolo' => $articolo,
+            'giacenze' => $giacenze,
+            'sedi' => $sedi,
+        ];
 
         echo json_encode($results);
 
