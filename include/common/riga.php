@@ -343,3 +343,38 @@ if (in_array($module['name'], ['Fatture di vendita', 'Fatture di acquisto'])) {
         }
     </script>';
 }
+
+if (in_array($module['name'], ['Ordini fornitore'])) {
+    echo '
+    <div class="box box-info collapsable collapsed-box">
+        <div class="box-header with-border">
+            <h3 class="box-title">'.tr('Dati di vendita').'</h3>
+            <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="box-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <table id="tbl_vendite" class="table table-striped table-condensed table-bordered">
+                        <thead>
+                            <tr>
+                                <th>'.tr('Mese').'</th>
+                                <th>'.tr('Q.tà').'</th>
+                                <th width="20%" class="text-center">'.tr('Totale').'</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <td colspan="2" class="text-center">' . tr('Nessuna Vendita') . '</td>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    </script>';
+}
+

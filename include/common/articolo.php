@@ -224,6 +224,8 @@ $("#idarticolo").on("change", function() {
     });
 
     getGiacenzeArticoloPerSede($data.id);
+
+    getDatiVenditaArticolo($data.id);
 });
 
 $("#idsede").on("change", function() {
@@ -277,6 +279,37 @@ function getGiacenzeArticoloPerSede(id_articolo) {
     );
 }
 
+function getDatiVenditaArticolo(id_articolo) {
+    $.get(
+        globals.rootdir + "/ajax_complete.php?module=Articoli&op=getDatiVendita&id_anagrafica=' . $options['idanagrafica'] . '&id_articolo=" + id_articolo + "&dir=" + direzione,
+        function(response) {
+            const data = JSON.parse(response);
+
+            var datiVendita = data.datiVendita;
+
+            var html = "";
+            for (var i = 0; i < datiVendita.length; i++) {
+                var venditaMese = datiVendita[i];
+
+                if (venditaMese.data.length > 0) {
+                    html +=
+                        "<tr>" +
+                            "<td>" + venditaMese.mese + " - " + venditaMese.anno + "</td>" +
+                            "<td>" + venditaMese.data[0].qta + "</td>" +
+                            "<td>" + venditaMese.data[0].totale + " " + venditaMese.data[0].um + "</td>" +
+                        "</tr>";
+                }
+            }
+
+            if (html == "") {
+                html = "<tr><td colspan=\"2\" class=\"text-center\">" + "' . tr('Nessuna vendita') . '" + "</td></tr>";
+            }
+
+            $("#tbl_vendite tbody").html(html);
+        }
+    );
+}
+
 /**
  * Apre la modal per il dettaglio della sede.
  */
@@ -286,9 +319,7 @@ function getDettagli(id_sede, id_articolo) {
         "' . tr('Dettagli') . '",
         globals.rootdir + "/modules/articoli/plugins/dettagli_giacenze.php?id_module=' . $module_articoli_id . '&id_record=" + id_articolo + "&idsede=" + id_sede
     );
-
 }
-
 
 /**
 * Restituisce il dettaglio registrato per una specifica quantità dell\'articolo.

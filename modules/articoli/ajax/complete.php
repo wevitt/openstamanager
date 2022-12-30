@@ -203,4 +203,67 @@ switch ($resource) {
         echo json_encode($results);
 
         break;
+
+    case 'getDatiVendita':
+        $id_articolo = get('id_articolo');
+        $id_anagrafica = get('id_anagrafica');
+        $direzione = get('dir') == 'uscita' ? 'uscita' : 'entrata';
+
+        if (empty($id_articolo) || empty($id_anagrafica)) {
+            return;
+        }
+
+        //get current date
+        $current_month = date('m');
+        $current_year = date('Y');
+
+        for ($i = 0; $i < 12; ++$i) {
+            $month = $current_month;
+            $year = $current_year;
+
+            $datiVendita[] = [
+                'mese' => $month,
+                'anno' => $year,
+                'data' => $dbo->fetchArray(
+                    'SELECT SUM(IF(reversed=1, -co_righe_documenti.qta, co_righe_documenti.qta)) AS qta,
+                    SUM(
+                        IF(reversed=1, -(co_righe_documenti.subtotale - co_righe_documenti.sconto), (co_righe_documenti.subtotale - co_righe_documenti.sconto))
+                    ) AS totale,
+                    mg_articoli.id, mg_articoli.codice, mg_articoli.descrizione, mg_articoli.um
+                    FROM co_documenti
+                    INNER JOIN co_statidocumento ON co_statidocumento.id = co_documenti.idstatodocumento
+                    INNER JOIN co_tipidocumento ON co_documenti.idtipodocumento=co_tipidocumento.id
+                    INNER JOIN co_righe_documenti ON co_righe_documenti.iddocumento=co_documenti.id
+                    INNER JOIN mg_articoli ON mg_articoli.id=co_righe_documenti.idarticolo
+                    INNER JOIN zz_segments ON co_documenti.id_segment=zz_segments.id
+                    WHERE co_tipidocumento.dir = "entrata"
+                    AND
+                        (co_statidocumento.descrizione = "Pagato"
+                        OR co_statidocumento.descrizione = "Parzialmente pagato"
+                        OR co_statidocumento.descrizione = "Emessa"
+                    )
+                    AND MONTH(co_documenti.data) = ' . $month . '
+                    AND YEAR(co_documenti.data) = ' . $year . '
+                    AND mg_articoli.id = ' . $id_articolo . '
+                    AND zz_segments.autofatture=0
+                    GROUP BY co_righe_documenti.idarticolo'
+                ),
+            ];
+
+            if ($current_month == 1) {
+                $current_month = 12;
+                $current_year--;
+            } else {
+                $current_month--;
+            }
+
+        }
+
+        $results = [
+            'datiVendita' => $datiVendita,
+        ];
+
+        echo json_encode($results);
+
+        break;
 }

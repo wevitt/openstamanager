@@ -25,8 +25,11 @@ $intestazione_prezzo = ($options['dir'] == 'uscita' ? tr('Prezzo di acquisto') :
 // Articolo
 echo '
 <div class="row">
-    <div class="col-md-offset-4 col-md-4">
-        {[ "type": "text", "label": "", "name": "barcode", "value": "", "icon-before": "<i class=\"fa fa-barcode\"></i>" ]}
+    <div class="col-md-6">
+        {[ "type": "text", "label": "' . tr('Inserisci barcode manualmente') . '", "name": "barcode", "value": "", "icon-before": "<i class=\"fa fa-barcode\"></i>" ]}
+    </div>
+    <div class="col-md-6">
+        {[ "type": "file", "label": "' . tr('Inserisci file') . '", "id": "barcode_file", "name": "barcode_file", "value": "", "icon-before": "<i class=\"fa fa-file\"></i>", "multiple": true ]}
     </div>
 </div>
 
@@ -50,7 +53,7 @@ echo '
             </tr>
         </table>
     </div>
-</div> 
+</div>
 
 <input type="hidden" name="permetti_movimenti_sotto_zero" id="permetti_movimenti_sotto_zero" value="'.setting('Permetti selezione articoli con quantità minore o uguale a zero in Documenti di Vendita').'">';
 
@@ -66,6 +69,30 @@ $(document).ready(function(){
     }, 300);
 
     $(".modal-body button").attr("disabled", true);
+});
+
+
+// gestione drop file
+$("#barcode_file").on("change", function (event) {
+    let files = event.target.files;
+    //read csv file
+    let reader = new FileReader();
+    reader.readAsText(files[0]);
+    reader.onload = function (event) {
+        var csv = event.target.result;
+        var lines = csv.split("\n");
+        console.log(lines);
+        lines.forEach(function (line) {
+            if (line === "") {
+                return;
+            }
+            var barcode = line.split(";")[0];
+            var qta = line.split(";")[1];
+
+            barcodeAdd(barcode, qta);
+        });
+
+    };
 });
 
 // Gestione dell\'invio da tastiera
@@ -94,6 +121,10 @@ $("#barcode").off("keyup").on("keyup", function (event) {
         return;
     }
 
+    barcodeAdd(barcode, 1);
+});
+
+function barcodeAdd(barcode, qta) {
     $.getJSON(globals.rootdir + "/ajax_select.php?op=articoli_barcode&search=" + barcode + "&id_anagrafica='.$options['idanagrafica'].'", function(response) {
         let result = response.results[0];
         if(!result){
@@ -143,7 +174,7 @@ $("#barcode").off("keyup").on("keyup", function (event) {
                 .replace("|info_prezzi|", info_prezzi)
                 .replace("|descrizione|", result.descrizione)
                 .replace("|codice|", result.codice)
-                .replace("|qta|", 1)
+                .replace("|qta|", qta)
                 .replace("|sconto_unitario|", 0)
                 .replace("|tipo_sconto|", "")
                 .replace("|id_dettaglio_fornitore|", result.id_dettaglio_fornitore ? result.id_dettaglio_fornitore : "")
@@ -176,7 +207,7 @@ $("#barcode").off("keyup").on("keyup", function (event) {
         $("#articolo-missing").removeClass("hidden");
         barcodeReset();
     });
-});
+}
 
 $(document).on("change", "input[name^=qta], input[name^=prezzo_unitario]", function() {
     let tr = $(this).closest("tr");
