@@ -81,7 +81,6 @@ $("#barcode_file").on("change", function (event) {
     reader.onload = function (event) {
         var csv = event.target.result;
         var lines = csv.split("\n");
-        console.log(lines);
         lines.forEach(function (line) {
             if (line === "") {
                 return;
@@ -179,7 +178,7 @@ function barcodeAdd(barcode, qta) {
                 .replace("|tipo_sconto|", "")
                 .replace("|id_dettaglio_fornitore|", result.id_dettaglio_fornitore ? result.id_dettaglio_fornitore : "")
 
-            $("#articoli_barcode tr:last").after(text);
+            $("#articoli_barcode tbody").first().append(text);
             restart_inputs();
 
             $(".modal-body button").attr("disabled", false);
@@ -297,7 +296,11 @@ function verificaPrezzoArticolo(tr) {
     let qta = $(tr).find("input[name^=qta]").val().toEnglish();
     let prezzo_previsto = getPrezzoPerQuantita(qta, tr);
 
-    let prezzo_unitario_input = $(tr).find("input[name^=prezzo_unitario]");
+    let id = tr.attr("id");
+    let id_split = id.split("_");
+    let id_art = id_split[id_split.length - 1];
+
+    let prezzo_unitario_input = $(tr).find("#prezzo_unitario" + id_art);
     let prezzo_unitario = prezzo_unitario_input.val().toEnglish();
 
     let div = prezzo_unitario_input.closest("div").parent().find("div[id*=errors]");
@@ -309,23 +312,205 @@ function verificaPrezzoArticolo(tr) {
         return;
     }
 
-    div.css("padding-top", "5px");
-    div.html(`<small class="label label-info" >'.tr('Prezzo suggerito').': ` + prezzo_previsto.toLocale() + " " + globals.currency + `<button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></small>`);
+    div.css("padding-top", "20px");
+    //div.html(`<small class="label label-info" >'.tr('Prezzo suggerito').': ` + prezzo_previsto.toLocale() + " " + globals.currency + `<button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></small>`);
+
+    //div.css("padding-top", "0");
+    div.html("");
+
+    let prezzo_anagrafica = prezzo_previsto;
+    let prezzo_listino = getPrezzoListino(tr);
+    let prezzo_std = getPrezzoScheda(tr);
+    let prezzo_last = getPrezzoUltimo(tr);
+    //let prezzo_minimo = 0; //parseFloat($("#idarticolo").selectData().minimo_vendita);
+    let prezzi_visibili = getPrezziListinoVisibili(tr);
+
+    if (prezzo_anagrafica || prezzo_listino || prezzo_std || prezzo_last || prezzi_visibili) {
+        div.html(`<table class="table table-extra-condensed table-prezzi` + id_art + `" style="background:#eee; margin-top:-13px;"><tbody>`);
+    }
+    let table = $(".table-prezzi" + id_art);
+
+    if (prezzo_anagrafica) {
+        table.append(`<tr><td class="pr_anagrafica"><small>'.($options['dir'] == 'uscita' ? tr('Prezzo listino') : tr('Netto cliente')).': '.Plugins::link(($options['dir'] == 'uscita' ? 'Listino Fornitori' : 'Netto Clienti'), $result['idarticolo'], tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_anagrafica"><small>` + prezzo_anagrafica.toLocale() + ` ` + globals.currency + `</small></td>`);
+
+        let tr = table.find(".pr_anagrafica").parent();
+        if (prezzo_unitario == prezzo_anagrafica.toFixed(2)) {
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+        } else{
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+        }
+        table.append(`</tr>`);
+    }
+
+    if (prezzo_listino) {
+        table.append(`<tr><td class="pr_listino"><small>'.tr('Prezzo listino').': '.Modules::link('Listini Cliente', $id_listino, tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_listino"><small>` + prezzo_listino.toLocale() + ` ` + globals.currency + `</small></td>`);
+
+        let tr = table.find(".pr_listino").parent();
+        if (prezzo_unitario == prezzo_listino.toFixed(2)) {
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+        } else{
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+        }
+        table.append(`</tr>`);
+    }
+
+    if (prezzo_std) {
+        table.append(`<tr><td class="pr_std"><small>'.tr('Prezzo articolo').': '.Modules::link('Articoli', $result['idarticolo'], tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_std"><small>` + prezzo_std.toLocale() + ` ` + globals.currency + `</small></td></tr>`);
+
+        let tr = table.find(".pr_std").parent();
+        if (prezzo_unitario == prezzo_std.toFixed(2)) {
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+        } else{
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+        }
+        table.append(`</tr>`);
+    }
+
+    if (prezzo_last) {
+        table.append(`<tr><td class="pr_last"><small>'.tr('Ultimo prezzo').': '.Modules::link('Articoli', $result['idarticolo'], tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_last"><small>` + prezzo_last.toLocale() + ` ` + globals.currency + `</small></td></tr>`);
+
+        let tr = table.find(".pr_last").parent();
+        if (prezzo_unitario == prezzo_last.toFixed(2)) {
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+        } else{
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+        }
+        table.append(`</tr>`);
+    }
+
+    /*if (prezzo_minimo) {
+        table.append(`<tr><td class="pr_minimo"><small>'.tr('Prezzo minimo').': '.Modules::link('Articoli', $result['idarticolo'], tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_minimo"><small>` + prezzo_minimo.toLocale() + ` ` + globals.currency + `</small></td></tr>`);
+
+        let tr = table.find(".pr_minimo").parent();
+        if (prezzo_unitario == prezzo_minimo.toFixed(2)) {
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+        } else{
+            tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+        }
+        table.append(`</tr>`);
+    }*/
+
+    if (prezzi_visibili) {
+        let i = 0;
+        for (const prezzo_visibile of prezzi_visibili) {
+            i++;
+            let prezzo_listino_visibile = parseFloat(prezzo_visibile.prezzo_unitario_listino_visibile);
+            table.append(`<tr><td class="pr_visibile_`+ i +`"><small>'.tr('Listino visibile ').'(` + prezzo_visibile.nome + `): </small></td><td align="right" class="pr_visibile_`+ i +`"><small>` + prezzo_listino_visibile.toLocale() + ` ` + globals.currency + `</small></td></tr>`);
+
+            let tr = table.find(".pr_visibile_"+ i).parent();
+            if (prezzo_unitario == prezzo_listino_visibile.toFixed(2)) {
+                tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right disabled" style="font-size:10px;"><i class="fa fa-check"></i> '.tr('Aggiorna').'</button></td>`);
+            } else{
+                tr.append(`<td><button type="button" class="btn btn-xs btn-info pull-right" onclick="aggiornaPrezzoArticolo(this)" style="font-size:10px;"><i class="fa fa-refresh"></i> '.tr('Aggiorna').'</button></td>`);
+            }
+            table.append(`</tr>`);
+        }
+    }
+
+    if (prezzo_anagrafica || prezzo_listino || prezzo_std || prezzo_last || prezzi_visibili) {
+        table.append(`</tbody></table>`);
+    }
+}
+
+/**
+* Restituisce il prezzo del listino registrato per l\'articolo-anagrafica.
+*/
+function getPrezzoListino(tr) {
+    const data = $(tr).data("dettagli");
+    if (!data) return null;
+
+    let dettaglio_listino = null;
+    for (const dettaglio of data) {
+        if (dettaglio.prezzo_unitario_listino != null) {
+            dettaglio_listino = dettaglio;
+            continue;
+        }
+    }
+
+    return dettaglio_listino ? parseFloat(dettaglio_listino.prezzo_unitario_listino) : 0;
+}
+
+/**
+* Restituisce il prezzo della scheda articolo.
+*/
+function getPrezzoScheda(tr) {
+    const data = $(tr).data("dettagli");
+    if (!data) return null;
+
+    let dettaglio_scheda = null;
+    for (const dettaglio of data) {
+        if (dettaglio.prezzo_scheda != null) {
+            dettaglio_scheda = dettaglio;
+            continue;
+        }
+    }
+
+    return dettaglio_scheda ? parseFloat(dettaglio_scheda.prezzo_scheda) : 0;
+}
+
+/**
+* Restituisce l\'ultimo prezzo registrato dell\' articolo.
+*/
+function getPrezzoUltimo(tr) {
+    const data = $(tr).data("dettagli");
+    if (!data) return null;
+
+    let dettaglio_ultimo = null;
+    for (const dettaglio of data) {
+        if (dettaglio.prezzo_ultimo != null) {
+            dettaglio_ultimo = dettaglio;
+            continue;
+        }
+    }
+
+    return dettaglio_ultimo ? parseFloat(dettaglio_ultimo.prezzo_ultimo) : 0;
+}
+
+/**
+* Restituisce i prezzi dei listini sempre visibili registrati per l\'articolo.
+*/
+function getPrezziListinoVisibili(tr, nome = "") {
+    const data = $(tr).data("dettagli");
+    if (!data) return null;
+
+    let dettaglio_prezzi_visibili = [];
+    for (const dettaglio of data) {
+        if (dettaglio.prezzo_unitario_listino_visibile != null) {
+            if (nome != "") {
+                if (dettaglio.nome == nome) {
+                    dettaglio_prezzi_visibili = parseFloat(dettaglio.prezzo_unitario_listino_visibile);
+                    continue;
+                }
+            } else {
+                dettaglio_prezzi_visibili.push(dettaglio);
+            }
+        }
+    }
+
+    return dettaglio_prezzi_visibili;
 }
 
 /**
 * Funzione per aggiornare il prezzo unitario sulla base dei valori automatici.
 */
 function aggiornaPrezzoArticolo(button) {
-    let tr = $(button).closest("tr");
-    let qta = tr.find("input[name^=qta]").val().toEnglish();
-    let prezzo_previsto = getPrezzoPerQuantita(qta, tr);
+    let fist_tr = $(button).closest("tr");
+    let tr = $(button).closest("table").closest("tr");
 
-    tr.find("input[name^=prezzo_unitario]").val(prezzo_previsto).trigger("change");
+    let prezzo_previsto = fist_tr.find("td:eq(1)").text();
+    split_prezzo_previsto = prezzo_previsto.split(" ");
+    prezzo_previsto = split_prezzo_previsto[0];
+
+    //get tr id
+    let id = tr.attr("id");
+    let id_split = id.split("_");
+    let id_art = id_split[id_split.length - 1];
+
+    tr.find("#prezzo_unitario" + id_art).val(prezzo_previsto);
 
     // Aggiornamento automatico di guadagno e margine
     if (direzione === "entrata") {
-        aggiorna_guadagno();
+        //aggiorna_guadagno();
     }
 }
 
@@ -356,14 +541,14 @@ function verificaScontoArticolo(tr) {
 */
 function aggiornaScontoArticolo(button) {
     let tr = $(button).closest("tr");
-    let qta = tr.find("input[name^=qta]").val().toEnglish();
+    let qta = tr.find("input[name^=qta]").val(); //.toEnglish();
     let sconto_previsto = getScontoPerQuantita(qta, tr);
 
     $("#sconto").val(sconto_previsto).trigger("change");
 
     // Aggiornamento automatico di guadagno e margine
     if (direzione === "entrata") {
-        aggiorna_guadagno();
+        //aggiorna_guadagno();
     }
 }
 </script>
