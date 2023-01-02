@@ -366,7 +366,7 @@ if (in_array($module['name'], ['Ordini fornitore'])) {
                             </tr>
                         </thead>
                         <tbody>
-                            <td colspan="2" class="text-center">' . tr('Nessuna Vendita') . '</td>
+                            <td colspan="3" class="text-center">' . tr('Nessuna Vendita') . '</td>
                         </tbody>
                     </table>
                 </div>

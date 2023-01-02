@@ -291,18 +291,21 @@ function getDatiVenditaArticolo(id_articolo) {
             for (var i = 0; i < datiVendita.length; i++) {
                 var venditaMese = datiVendita[i];
 
+                var qta = venditaMese.data[0].qta;
+                qta = qta.toFixed(2);
+
                 if (venditaMese.data.length > 0) {
                     html +=
                         "<tr>" +
                             "<td>" + venditaMese.mese + " - " + venditaMese.anno + "</td>" +
-                            "<td>" + venditaMese.data[0].qta + "</td>" +
-                            "<td>" + venditaMese.data[0].totale + " " + venditaMese.data[0].um + "</td>" +
+                            "<td>" + venditaMese.data[0].qta.toFixed(2) + " " + venditaMese.data[0].um + "</td>" +
+                            "<td>" + venditaMese.data[0].totale.toFixed(2) + "</td>" +
                         "</tr>";
                 }
             }
 
             if (html == "") {
-                html = "<tr><td colspan=\"2\" class=\"text-center\">" + "' . tr('Nessuna vendita') . '" + "</td></tr>";
+                html = "<tr><td colspan=\"3\" class=\"text-center\">" + "' . tr('Nessuna vendita') . '" + "</td></tr>";
             }
 
             $("#tbl_vendite tbody").html(html);
