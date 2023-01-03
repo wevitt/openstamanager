@@ -32,7 +32,7 @@ echo '
 // Prezzo di vendita unitario
 echo '
         <div class="col-md-4">
-            {[ "type": "number", "label": "'.tr('Prezzo unitario di vendita').'", "name": "prezzo_unitario", "value": "'.$riga->prezzo_unitario_corrente.'", "required": 1, "icon-after": "'.currency().'", "help": "'.tr('Importo IVA inclusa').'" ]}
+            {[ "type": "number", "label": "'.tr('Prezzo unitario di vendita ivato').'", "name": "prezzo_unitario", "value": "'.$riga->prezzo_unitario_corrente.'", "required": 1, "icon-after": "'.currency().'", "help": "'.tr('Importo IVA inclusa').'" ]}
         </div>';
 
 // Sconto unitario
