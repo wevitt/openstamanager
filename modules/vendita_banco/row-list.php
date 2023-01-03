@@ -10,7 +10,7 @@ echo '
     <tr>
         <th>'.tr('Descrizione').'</th>
         <th width="8%" class="text-center">'.tr('Q.tà').'</th>
-        <th width="10%" class="text-center">'.tr('Prezzo unitario').'</th>
+        <th width="10%" class="text-center">'.tr('Prezzo unitario ivato').'</th>
         <th width="10%" class="text-center">'.tr('Sconto unitario').'</th>
         <th width="10%" class="text-center">'.tr('Iva unitaria').'</th>
         <th width="10%" class="text-center">'.tr('Reparto').'</th>

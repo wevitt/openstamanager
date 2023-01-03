@@ -316,7 +316,7 @@ switch (post('op')) {
             $articolo = Articolo::build($documento, $originale);
 
             $query = 'SELECT sconto_percentuale AS sconto_percentuale_listino,
-                ' . ($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario') . ' AS prezzo_unitario_listino
+                prezzo_unitario_ivato, prezzo_unitario AS prezzo_unitario_listino
                 FROM mg_listini
                 LEFT JOIN mg_listini_articoli ON mg_listini.id=mg_listini_articoli.id_listino
                 LEFT JOIN an_anagrafiche ON mg_listini.id=an_anagrafiche.id_listino
@@ -333,11 +333,10 @@ switch (post('op')) {
             $articolo->descrizione = $originale->descrizione;
             $articolo->um = $originale->um;
             $articolo->qta = (!empty($qta)) ? $qta : 1;
-            $articolo->costo_unitario = ($listino !== null && count($listino) > 0) ? $listino[0]['prezzo_unitario_listino'] : $originale->prezzo_acquisto;
+            $articolo->costo_unitario = $originale->prezzo_acquisto;
 
             $id_iva = $originale->idiva_vendita ?: setting('Iva predefinita');
-
-            $vendita = $originale->prezzo_vendita_ivato;
+            $vendita = ($listino !== null && count($listino) > 0) ? $listino[0]['prezzo_unitario_ivato'] : $originale->prezzo_vendita_ivato;
             $articolo->setPrezzoUnitario($vendita, $id_iva);
             $articolo->id_reparto = $originale->id_reparto ?: $reparto_predefinito;
 
