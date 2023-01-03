@@ -85,8 +85,10 @@ $("#barcode_file").on("change", function (event) {
             if (line === "") {
                 return;
             }
-            var barcode = line.split(";")[0];
             var qta = line.split(";")[1];
+            var barcode = line.split(";")[0];
+            barcode = barcode.replace(/\\\\/g, "-");
+            barcode = barcode.replace(/\//g, "-");
 
             barcodeAdd(barcode, qta);
         });
@@ -190,6 +192,12 @@ function barcodeAdd(barcode, qta) {
                     aggiornaPrezzoArticolo(tr);
                 } else {
                     verificaPrezzoArticolo(tr);
+                }
+
+                var listino = getPrezzoListino(tr);
+
+                if (listino) {
+                    $(tr).find("input[name^=prezzo_unitario]").val(listino).trigger("change");
                 }
 
                 if ($(tr).find("input[name^=sconto]").val().toEnglish() === 0){
@@ -506,7 +514,7 @@ function aggiornaPrezzoArticolo(button) {
     let id_split = id.split("_");
     let id_art = id_split[id_split.length - 1];
 
-    tr.find("#prezzo_unitario" + id_art).val(prezzo_previsto);
+    tr.find("#prezzo_unitario" + id_art).val(prezzo_previsto).trigger("change");
 
     // Aggiornamento automatico di guadagno e margine
     if (direzione === "entrata") {
