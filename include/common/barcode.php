@@ -233,8 +233,11 @@ function rimuoviRigaBarcode(id) {
     if (confirm("'.tr('Eliminare questo articolo?').'")) {
         $("#riga_barcode_" + id).remove();
 
+        //get rows number of #articoli_barcode
+        var num = $("#articoli_barcode tbody tr").length;
+
         // Disabilito il pulsante di aggiunta se non ci sono articoli inseriti
-        if ($(".inputmask-decimal").length === 0) {
+        if (num <= 1) {
             $(".modal-body button").attr("disabled", true);
             $("#articoli_barcode").addClass("hide");
         }
