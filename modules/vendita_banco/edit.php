@@ -94,6 +94,10 @@ if (!$is_pagato) {
 					{[ "type": "text", "label": "'.tr('Aggiungi un articolo tramite barcode').'", "name": "barcode", "extra": "autocomplete=\"off\"", "icon-before": "<i class=\"fa fa-barcode\"></i>", "required": 0 ]}
 				</div>
 
+                <div class="col-md-3">
+                    {[ "type": "file", "label": "' . tr('Inserisci barcode file') . '", "id": "barcode_file", "name": "barcode_file", "value": "", "icon-before": "<i class=\"fa fa-file\"></i>", "multiple": true ]}
+                </div>
+
 				<div class="col-md-3">
 					{[ "type": "text", "label": "'.tr('Aggiungi un articolo tramite codice').'", "name": "codice", "extra": "autocomplete=\"off\"", "icon-before": "<i class=\"fa fa-th-large\"></i>", "required": 0 ]}
 				</div>
@@ -102,19 +106,19 @@ if (!$is_pagato) {
 					{[ "type": "select", "label": "'.tr('Articolo').'", "name": "id_articolo", "value": "", "ajax-source": "articoli", "icon-after": "add|'.Modules::get('Articoli')['id'].'" ]}
 				</div>
 
-				<div class="col-md-3" style="margin-top: 25px">
+				<div class="col-md-3 col-md-offset-9" style="margin-bottom: 20px">
                     <button title="'.tr('Aggiungi articolo alla vendita').'" class="btn btn-primary tip" type="button" onclick="salvaArticolo()">
                         <i class="fa fa-plus"></i> '.tr('Aggiungi').'
                     </button>';
 
-    // Aggiunta riga libera
-    echo '
+                    // Aggiunta riga libera
+                    echo '
                     <a class="btn btn-primary" data-href="'.$module->fileurl('row-add.php').'?id_module='.$id_module.'&id_record='.$id_record.'&is_riga" data-toggle="tooltip" data-title="'.tr('Aggiungi riga').'">
                         <i class="fa fa-plus"></i> '.tr('Riga').'
                     </a>';
 
-    // Aggiunta sconto o descrizione
-    echo '
+                    // Aggiunta sconto o descrizione
+                    echo '
                     <div class="btn-group tip" data-toggle="tooltip">
                         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                             <i class="fa fa-list"></i> '.tr('Altro').'
@@ -134,8 +138,7 @@ if (!$is_pagato) {
                             </li>
                         </ul>
                     </div>';
-
-    echo '
+                 echo '
 				</div>
 			</div>
 		</form>';
@@ -158,6 +161,41 @@ echo '
 
 echo '
 <script>
+    function salvaArticoloFile(barcode, qta) {
+        $.ajax({
+			url: globals.rootdir + "/actions.php",
+			data: {
+				id_module: globals.id_module,
+				id_record: globals.id_record,
+				idmagazzino : ' . $documento->idmagazzino . ',
+				ajax: true,
+                op: "add_articolo",
+                backto: "record-edit",
+                barcode: barcode,
+                qta: qta,
+                id_anagrafica: $(\'select[name="idanagrafica"]\').val(),
+			},
+			type: "post",
+			beforeSubmit: function(arr, $form, options) {
+				return $form.parsley().validate();
+			},
+			success: function(response){
+                if( response.length>0 ){
+					swal({
+						type: "error",
+						title: "'.tr('Errore').'",
+						text:  "'.tr('Nessun articolo corrispondente a magazzino').'",
+					});
+				}
+
+				$("#barcode").val("");
+				$("#codice").val("");
+				$("#id_articolo").selectReset();
+				reloadRows();
+			}
+		});
+    }
+
 	function salvaArticolo(){
 		$("#link_form").ajaxSubmit({
 			url: globals.rootdir + "/actions.php",
@@ -166,6 +204,7 @@ echo '
 				id_record: globals.id_record,
 				idmagazzino : '.$documento->idmagazzino.',
 				ajax: true,
+                id_anagrafica: $(\'select[name="idanagrafica"]\').val(),
 			},
 			type: "post",
 			beforeSubmit: function(arr, $form, options) {
@@ -216,6 +255,29 @@ echo '
    	}
 
 	$(document).ready( function(){
+        $("#barcode_file").on("change", function (event) {
+            let files = event.target.files;
+            //read csv file
+            let reader = new FileReader();
+            reader.readAsText(files[0]);
+            reader.onload = function (event) {
+                var csv = event.target.result;
+                var lines = csv.split("\n");
+                lines.forEach(function (line) {
+                    if (line === "") {
+                        return;
+                    }
+                    var barcode = line.split(";")[0];
+                    var qta = line.split(";")[1];
+                    barcode = barcode.replace(/\\\\/g, "-");
+                    barcode = barcode.replace(/\//g, "-");
+
+                    console.log(barcode);
+                    salvaArticoloFile(barcode, qta);
+                });
+            };
+        });
+
 		$("#id_articolo").on("change", function(e) {
 			if ($(this).val()) {
 				var data = $(this).selectData();

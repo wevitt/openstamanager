@@ -292,6 +292,10 @@ switch (post('op')) {
         $codice = post('codice');
         $barcode = post('barcode');
         $idmagazzino = post('idmagazzino') ?: 0;
+        $qta = post('qta');
+        $id_anagrafica = post('id_anagrafica');
+        $direzione = 'entrata';
+        $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
         if (!empty($id_articolo)) {
             if (setting('Gestisci articoli sottoscorta')) {
@@ -306,15 +310,30 @@ switch (post('op')) {
         }
 
         if (!empty($articolo['id'])) {
+            $id_articolo = $articolo['id'];
+
             $originale = ArticoloOriginale::find($articolo['id']);
             $articolo = Articolo::build($documento, $originale);
 
-            $qta = 1;
+            $query = 'SELECT sconto_percentuale AS sconto_percentuale_listino,
+                ' . ($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario') . ' AS prezzo_unitario_listino
+                FROM mg_listini
+                LEFT JOIN mg_listini_articoli ON mg_listini.id=mg_listini_articoli.id_listino
+                LEFT JOIN an_anagrafiche ON mg_listini.id=an_anagrafiche.id_listino
+                WHERE mg_listini.data_attivazione<=NOW()
+                AND mg_listini_articoli.data_scadenza>=NOW()
+                AND mg_listini.attivo=1 AND id_articolo = ' . prepare($id_articolo) . '
+                AND dir = ' . prepare($direzione) . ' |where|';
+            $query_anagrafica = replace($query, [
+                '|where|' => ' AND idanagrafica = '.prepare($id_anagrafica),
+            ]);
+
+            $listino = $database->fetchArray($query_anagrafica);
 
             $articolo->descrizione = $originale->descrizione;
             $articolo->um = $originale->um;
-            $articolo->qta = 1;
-            $articolo->costo_unitario = $originale->prezzo_acquisto;
+            $articolo->qta = (!empty($qta)) ? $qta : 1;
+            $articolo->costo_unitario = ($listino !== null && count($listino) > 0) ? $listino[0]['prezzo_unitario_listino'] : $originale->prezzo_acquisto;
 
             $id_iva = $originale->idiva_vendita ?: setting('Iva predefinita');
 
