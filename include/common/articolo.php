@@ -256,18 +256,19 @@ function getGiacenzeArticoloPerSede(id_articolo) {
             var html = "";
             for (var i = 0; i < sedi.length; i++) {
                 var sede = sedi[i];
-                var giacenza = giacenze[i];
 
-                html +=
-                    "<tr>" +
-                        "<td>" + sede.nomesede + "</td>" +
-                        "<td>" + giacenze[sede["id"]][0] + " " + articolo.um + "</td>" +
-                        "<td class=\"text-center\">" +
-                            "<a class=\"btn btn-xs btn-info\" title=\"Dettagli\" onclick=\"getDettagli(" + sede["id"] + ", " + id_articolo + ");\">" +
-                                "<i class=\"fa fa-eye\"></i>" +
-                            "</a>" +
-                        "</td>" +
-                    "</tr>";
+                if (giacenze[sede["id"]] !== undefined) {
+                    html +=
+                        "<tr>" +
+                            "<td>" + sede.nomesede + "</td>" +
+                            "<td>" + giacenze[sede["id"]][0] + " " + articolo.um + "</td>" +
+                            "<td class=\"text-center\">" +
+                                "<a class=\"btn btn-xs btn-info\" title=\"Dettagli\" onclick=\"getDettagli(" + sede["id"] + ", " + id_articolo + ");\">" +
+                                    "<i class=\"fa fa-eye\"></i>" +
+                                "</a>" +
+                            "</td>" +
+                        "</tr>";
+                }
             }
 
             if (html == "") {
@@ -291,16 +292,15 @@ function getDatiVenditaArticolo(id_articolo) {
             for (var i = 0; i < datiVendita.length; i++) {
                 var venditaMese = datiVendita[i];
 
-                var qta = venditaMese.data[0].qta;
-                qta = qta.toFixed(2);
-
-                if (venditaMese.data.length > 0) {
-                    html +=
-                        "<tr>" +
-                            "<td>" + venditaMese.mese + " - " + venditaMese.anno + "</td>" +
-                            "<td>" + venditaMese.data[0].qta.toFixed(2) + " " + venditaMese.data[0].um + "</td>" +
-                            "<td>" + venditaMese.data[0].totale.toFixed(2) + "</td>" +
-                        "</tr>";
+                if (venditaMese.data[0] !== undefined) {
+                    if (venditaMese.data.length > 0) {
+                        html +=
+                            "<tr>" +
+                                "<td>" + venditaMese.mese + " - " + venditaMese.anno + "</td>" +
+                                "<td>" + parseFloat(venditaMese.data[0].qta).toFixed(2) + " " + venditaMese.data[0].um + "</td>" +
+                                "<td>" + parseFloat(venditaMese.data[0].totale).toFixed(2) + "</td>" +
+                            "</tr>";
+                    }
                 }
             }
 

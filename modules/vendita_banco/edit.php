@@ -269,10 +269,8 @@ echo '
                     }
                     var barcode = line.split(";")[0];
                     var qta = line.split(";")[1];
-                    barcode = barcode.replace(/\\\\/g, "-");
                     barcode = barcode.replace(/\//g, "-");
 
-                    console.log(barcode);
                     salvaArticoloFile(barcode, qta);
                 });
             };

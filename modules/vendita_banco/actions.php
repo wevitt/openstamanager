@@ -297,16 +297,33 @@ switch (post('op')) {
         $direzione = 'entrata';
         $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
+
         if (!empty($id_articolo)) {
             if (setting('Gestisci articoli sottoscorta')) {
-                $articolo = $dbo->fetchOne('SELECT mg_articoli.id FROM mg_articoli WHERE mg_articoli.deleted_at IS NULL AND mg_articoli.id = '.prepare($id_articolo));
+                $articolo = $dbo->fetchOne(
+                    'SELECT mg_articoli.id
+                    FROM mg_articoli
+                    WHERE mg_articoli.deleted_at IS NULL AND mg_articoli.id = ' . prepare($id_articolo)
+                );
             } else {
-                $articolo = $dbo->fetchOne('SELECT mg_articoli.id FROM mg_articoli INNER JOIN mg_movimenti ON mg_articoli.id = mg_movimenti.idarticolo WHERE mg_movimenti.idsede= 0 AND mg_articoli.deleted_at IS NULL AND mg_articoli.id = '.prepare($id_articolo));
+                $articolo = $dbo->fetchOne(
+                    'SELECT mg_articoli.id
+                    FROM mg_articoli
+                    WHERE mg_articoli.deleted_at IS NULL AND mg_articoli.id = ' . prepare($id_articolo)
+                );
             }
         } elseif (!empty($codice)) {
-            $articolo = $dbo->fetchOne('SELECT mg_articoli.id FROM mg_articoli INNER JOIN mg_movimenti ON mg_articoli.id = mg_movimenti.idarticolo WHERE mg_movimenti.idsede= '.prepare($idmagazzino).' AND mg_articoli.deleted_at IS NULL AND mg_articoli.codice = '.prepare(post('codice')));
+            $articolo = $dbo->fetchOne(
+                'SELECT mg_articoli.id
+                FROM mg_articoli
+                WHERE mg_articoli.deleted_at IS NULL AND mg_articoli.codice = ' . prepare(post('codice'))
+            );
         } elseif (!empty($barcode)) {
-            $articolo = $dbo->fetchOne('SELECT mg_articoli.id FROM mg_articoli INNER JOIN mg_movimenti ON mg_articoli.id = mg_movimenti.idarticolo WHERE mg_movimenti.idsede = '.prepare($idmagazzino).' AND mg_articoli.deleted_at IS NULL AND mg_articoli.barcode = '.prepare($barcode));
+            $articolo = $dbo->fetchOne(
+                'SELECT mg_articoli.id
+                FROM mg_articoli
+                WHERE  mg_articoli.deleted_at IS NULL AND REPLACE(mg_articoli.barcode, "/", "-") = ' . prepare($barcode)
+            );
         }
 
         if (!empty($articolo['id'])) {

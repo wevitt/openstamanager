@@ -87,7 +87,6 @@ $("#barcode_file").on("change", function (event) {
             }
             var qta = line.split(";")[1];
             var barcode = line.split(";")[0];
-            barcode = barcode.replace(/\\\\/g, "-");
             barcode = barcode.replace(/\//g, "-");
 
             barcodeAdd(barcode, qta);
