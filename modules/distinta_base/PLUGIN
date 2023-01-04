@@ -1,0 +1,10 @@
+name = "Distinta base"
+title = "Distinta base"
+version = "1.0"
+directory = "distinta_base"
+options = 'custom'
+icon = "fa fa-list-alt"
+compatibility = "2.*"
+module_from = "Articoli"
+module_to = "Articoli"
+position = "tab"
