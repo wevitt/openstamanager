@@ -83,6 +83,23 @@ class Articolo extends Model
             $this->save();
         }
 
+        $descrizione_ricorsivo = '';
+        if (!empty($array['reference_type']) && !empty($array['reference_id'])) {
+            $object = new $array['reference_type'];
+            $document = $object::find($array['reference_id']);
+            $dir = $document->direzione;
+        }
+
+        if (!$this->componenti->isEmpty() && setting('Produci articoli della distinta base in fase di aggiunta nei documenti') && $manuale == false && $dir == 'entrata' && $descrizone != "tr('Produzione articolo')"  && $descrizone != "tr('Scomposizione articolo')") {
+            if ($qta < 0) {
+                $descrizione_ricorsivo = tr('Produzione articolo');
+            } else {
+                $descrizione_ricorsivo = tr('Scomposizione articolo');
+            }
+            $this->movimenta(-$qta, $descrizione_ricorsivo, $data, false);
+            $this->movimentaRicorsivo($qta, $descrizione_ricorsivo);
+        }
+
         return $id;
     }
 
@@ -336,5 +353,142 @@ class Articolo extends Model
         return $this->dettaglioFornitori()
             ->where('id_fornitore', $id_fornitore)
             ->first();
+    }
+
+     /**
+     * @version distinta_base
+     *
+     * @return mixed
+     */
+    public function componenti()
+    {
+        return $this->belongsToMany(Articolo::class, 'mg_articoli_distinte', 'id_articolo', 'id_figlio')->withPivot('qta');
+    }
+
+    public function parti()
+    {
+        return $this->belongsToMany(Articolo::class, 'mg_articoli_distinte', 'id_figlio', 'id_articolo')->withPivot('qta');
+    }
+
+    /**
+     * @version distinta_base
+     *
+     * @param Articolo $trigger
+     */
+    public function triggerChange(Articolo $trigger)
+    {
+        if ($this->sincronizza_prezzo_vendita) {
+            $this->prezzo_vendita = $this->totale_vendita;
+        }
+
+        if ($this->sincronizza_prezzo_acquisto) {
+            $this->prezzo_acquisto = $this->totale_acquisto;
+        }
+
+        $this->save();
+    }
+
+        /**
+     * @version distinta_base
+     *
+     * @param array $attributes
+     *
+     * @return mixed
+     */
+    public function save(array $attributes = [])
+    {
+        // Supporto al plugin Fornitori (prodotto per il coefficiente relativo)
+        if (!$this->componenti->isEmpty()) {
+            if ($this->sincronizza_prezzo_vendita) {
+                $this->prezzo_vendita = $this->totale_vendita;
+            }
+
+            if ($this->sincronizza_prezzo_acquisto) {
+                $this->prezzo_acquisto = $this->totale_acquisto;
+            }
+        }
+
+        $result = parent::save($attributes);
+
+        $parti = $this->parti;
+        foreach ($parti as $parte) {
+            $parte->pivot->qta = 1; // Fix per le quantità inverse
+            $parte->triggerChange($this);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Funzione per inserire i movimenti di magazzino.
+     *
+     * @version distinta_base
+     *
+     * @param $qta
+     * @param null  $descrizone
+     * @param null  $data
+     * @param bool  $manuale
+     * @param array $array
+     *
+     * @return bool
+     */
+    public function movimentaRicorsivo($qta, $descrizone = null, $data = null, $manuale = false, $array = [])
+    {
+        $componenti = $this->componenti;
+
+        $suffix = ' (di.ba.)';
+        $descrizone = strpos($descrizone, $suffix) !== false ? $descrizone : $descrizone.$suffix;
+
+        foreach ($componenti as $componente) {
+            $qta_componente = $qta * $componente->pivot->qta;
+            $componente->movimenta($qta_componente, $descrizone, $data, $manuale, $array);
+        }
+    }
+
+    public function getTotaleAcquistoAttribute(){
+        $componenti = $this->componenti;
+        $prezzo_acquisto = 0;
+
+        foreach ($componenti as $componente) {
+            $prezzo_acquisto += $componente->prezzo_acquisto*$componente->pivot->qta;
+        }
+
+        return $prezzo_acquisto;
+    }
+
+    public function getTotaleVenditaAttribute(){
+        $componenti = $this->componenti;
+        $prezzo_vendita = 0;
+
+        foreach ($componenti as $componente) {
+            $prezzo_vendita += $componente->prezzo_vendita*$componente->pivot->qta;
+        }
+
+        return $prezzo_vendita;
+    }
+
+    /**
+     * @version distinta_base
+     *
+     * @return mixed
+     */
+    public function componenti_preventivo($idrigapreventivo = null)
+    {
+
+        return database()->select('mg_articoli_distinte_preventivi', ['id_figlio', 'qta', 'prezzo_acquisto', 'prezzo_vendita', 'sconto', 'tipo_sconto'], [
+            'idrigapreventivo' => $idrigapreventivo,
+            'id_articolo' => $this->id,
+        ]);
+
+    }
+
+    public function triggerChangePreventivo($idrigapreventivo){
+
+        $riga = ArticoloPreventivo::find($idrigapreventivo);
+
+        $riga->costo_unitario = $riga->totale_acquisto ?: 0;
+        $riga->setPrezzoUnitario($riga->totale_vendita, $riga->idiva);
+
+        $riga->save();
     }
 }
