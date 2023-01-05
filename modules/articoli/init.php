@@ -25,5 +25,21 @@ if (isset($id_record)) {
     $articolo = Articolo::withTrashed()->find($id_record);
     $articolo->nome_variante;
 
+    $articoloSedeLegale = $dbo->fetchOne(
+        'SELECT "0" as id_sede , CONCAT("Sede legale - ", citta) as nomesede, mgas.id_articolo, mgas.threshold_qta
+        FROM an_anagrafiche ana
+        LEFT JOIN mg_articoli_sedi mgas
+        ON mgas.id_sede = " "  AND mgas.id_articolo = ' . prepare($id_record) . '
+        WHERE ana.idanagrafica = 1'
+    );
+
+    $articoloSedi = $dbo->fetchArray(
+        'SELECT ans.id as id_sede, ans.nomesede, mgas.id_articolo, mgas.threshold_qta
+        FROM an_sedi ans
+        LEFT JOIN mg_articoli_sedi mgas
+        ON ans.id = mgas.id_sede AND mgas.id_articolo = ' . prepare($id_record) . '
+        WHERE ans.idanagrafica = 1'
+    );
+
     $record = $dbo->fetchOne('SELECT *, (SELECT COUNT(id) FROM mg_prodotti WHERE id_articolo = mg_articoli.id) AS serial FROM mg_articoli WHERE id='.prepare($id_record));
 }

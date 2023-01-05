@@ -72,7 +72,7 @@ switch (post('op')) {
         $articolo->um = post('um');
         $articolo->um_secondaria = post('um_secondaria');
         $articolo->fattore_um_secondaria = post('fattore_um_secondaria');
-        
+
         $articolo->save();
 
         // Aggiornamento delle varianti per i campi comuni
@@ -158,6 +158,26 @@ switch (post('op')) {
 
         $articolo->save();
 
+        // Aggiorno le soglie minime per le sedi
+        $tresholdSedi = post('threshold_qta_sedi');
+        foreach ($tresholdSedi as $id_sede => $treshold) {
+            $item = $dbo->fetchOne(
+                'SELECT * FROM mg_articoli_sedi WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
+            );
+
+            if (empty($item)) {
+                $dbo->query(
+                    'INSERT INTO mg_articoli_sedi(id_articolo, id_sede, threshold_qta)
+                    VALUES(' . prepare($id_record) . ', ' . prepare($id_sede) . ', ' . prepare($treshold) . ')'
+                );
+            } else {
+                $dbo->query(
+                    'UPDATE mg_articoli_sedi SET threshold_qta = '. prepare($treshold) . '
+                    WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
+                );
+            }
+        }
+
         // Aggiornamento delle varianti per i campi comuni
         Combinazione::sincronizzaVarianti($articolo);
 
@@ -242,7 +262,7 @@ switch (post('op')) {
     // Duplica articolo
     case 'copy':
         $new = $articolo->replicate();
-        
+
         //Se non specifico il codice articolo lo imposto uguale all'id della riga
         if (empty(post('codice'))) {
             $codice = $dbo->fetchOne('SELECT MAX(id) as codice FROM mg_articoli')['codice'] + 1;
