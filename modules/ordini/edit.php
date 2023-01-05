@@ -89,7 +89,7 @@ echo '
 			</div>
 
 			<div class="row">
-				<div class="col-md-3">
+				<div class="col-md-4">
                     <?php
 
                     echo Modules::link('Anagrafiche', $record['idanagrafica'], null, null, 'class="pull-right"');
@@ -106,7 +106,7 @@ echo '
                 echo '
                 </div>
 
-                <div class="col-md-3">';
+                <div class="col-md-4">';
                     if (!empty($record['idreferente'])) {
                         echo Plugins::link('Referenti', $record['idanagrafica'], null, null, 'class="pull-right"');
                     }
@@ -114,13 +114,17 @@ echo '
                     {[ "type": "select", "label": "'.tr('Referente').'", "name": "idreferente", "value": "$idreferente$", "ajax-source": "referenti", "select-options": {"idanagrafica": '.$record['idanagrafica'].'} ]}
                 </div>
 
-                <div class="col-md-3">
-					{[ "type": "select", "label": "'.tr('Sede').'", "name": "idsede", "required": 1, "ajax-source": "sedi", "select-options": {"idanagrafica": '.$record['idanagrafica'].'}, "value": "'.$record['idsede'].'" ]}
-				</div>
-
-				<div class="col-md-3">
+				<div class="col-md-4">
 					{[ "type": "select", "label": "'.tr('Pagamento').'", "name": "idpagamento", "required": 0, "ajax-source": "pagamenti", "value": "$idpagamento$" ]}
 				</div>
+
+                <div class="col-md-6">
+                    {[ "type": "select", "label": "'.tr('Sede di partenza').'", "name": "idsede", "required": 1, "ajax-source": "sedi-partenza", "value": "'.$record['id_sede_partenza'].'" ]}
+                </div>
+
+                <div class="col-md-6">
+                    {[ "type": "select", "label": "'.tr('Sede di arrivo').'", "name": "idsede", "required": 1, "ajax-source": "sedi", "select-options": {"idanagrafica": '.$record['idanagrafica'].'}, "value": "'.$record['idsede'].'" ]}
+                </div>
             </div>';
 
             if ($dir == 'entrata') {
