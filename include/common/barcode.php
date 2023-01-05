@@ -74,6 +74,9 @@ $(document).ready(function(){
 
 // gestione drop file
 $("#barcode_file").on("change", function (event) {
+    $("#articolo-missing").addClass("hidden");
+    $("#articolo-qta").addClass("hidden");
+
     let files = event.target.files;
     //read csv file
     let reader = new FileReader();
@@ -89,7 +92,9 @@ $("#barcode_file").on("change", function (event) {
             var barcode = line.split(";")[0];
             barcode = barcode.replace(/\//g, "-");
 
-            barcodeAdd(barcode, qta);
+            setTimeout(function(){
+                barcodeAdd(barcode, qta);
+            }, 5);
         });
 
     };
