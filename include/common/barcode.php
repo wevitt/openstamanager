@@ -318,7 +318,7 @@ function verificaPrezzoArticolo(tr) {
     let prezzo_unitario_input = $(tr).find("#prezzo_unitario" + id_art);
     let prezzo_unitario = prezzo_unitario_input.val().toEnglish();
 
-    let div = prezzo_unitario_input.closest("div").parent().find("div[id*=errors]");
+    let div = prezzo_unitario_input.closest(".input-group").parent().find("div[id*=errors]");
 
     if (prezzo_previsto === prezzo_unitario || prezzo_previsto === 0) {
         div.css("padding-top", "0");
@@ -358,6 +358,8 @@ function verificaPrezzoArticolo(tr) {
     }
 
     if (prezzo_listino) {
+        console.log(prezzo_listino);
+
         table.append(`<tr><td class="pr_listino"><small>'.tr('Prezzo listino').': '.Modules::link('Listini Cliente', $id_listino, tr('Visualizza'), null, '').'</small></td><td align="right" class="pr_listino"><small>` + prezzo_listino.toLocale() + ` ` + globals.currency + `</small></td>`);
 
         let tr = table.find(".pr_listino").parent();
