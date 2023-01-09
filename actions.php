@@ -60,7 +60,7 @@ if (filter('op') == 'aggiungi-allegato' || filter('op') == 'rimuovi-allegato') {
             $CKEditor = get('CKEditor');
             $funcNum = get('CKEditorFuncNum');
 
-            
+
             $allowed_extension = array(
                 "png","jpg","jpeg"
             );
@@ -86,7 +86,7 @@ if (filter('op') == 'aggiungi-allegato' || filter('op') == 'rimuovi-allegato') {
                     <link rel="stylesheet" type="text/css" href="'.$baseurl.'/assets/dist/css/app.min.css" />
                     <script src="'.$baseurl.'/assets/dist/js/app.min.js"></script>';
                 }
-                
+
                 // Creazione file fisico
                 if (!empty($upload)) {
                     //flash()->info(tr('File caricato correttamente!'));
@@ -110,26 +110,26 @@ if (filter('op') == 'aggiungi-allegato' || filter('op') == 'rimuovi-allegato') {
                             });
                         </script>';
                     }
-                    
+
                     // Copia-incolla
                     else {
                         echo json_encode($response);
                     }
-                   
+
                 } else {
 
                     //flash()->error(tr('Errore durante il caricamento del file!'));
                     echo '<script type="text/javascript">  window.parent.toastr.error("'.tr('Errore durante il caricamento del file!').'"); </script>';
-                
+
                 }
 
             }else{
-                
+
                 //flash()->error(tr('Estensione non permessa!'));
                 echo '<script type="text/javascript">  window.parent.toastr.error("'.tr('Estensione non permessa').'"); </script>';
 
             }
-            
+
             exit();
         }
 
@@ -221,6 +221,22 @@ elseif (filter('op') == 'validate') {
     echo json_encode($response);
 
     return;
+}
+
+elseif (filter('op') == 'manage_subtotale') {
+    if (post('idriga') != null) {
+        $riga = Modules\Fatture\Components\Descrizione::find(post('idriga'));
+    } else {
+        //
+        $fattura = Modules\Fatture\Fattura::find($id_record);
+        $riga = Modules\Fatture\Components\Descrizione::build($fattura);
+    }
+
+    $riga->descrizione = post('descrizione');
+    $riga->note = post('note');
+    $riga->save();
+
+    echo json_encode($riga);
 }
 
 // Aggiunta nota interna
