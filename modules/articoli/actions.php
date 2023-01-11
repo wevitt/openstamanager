@@ -109,6 +109,7 @@ switch (post('op')) {
     // Modifica articolo
     case 'update':
         $qta = post('qta');
+        $tresholdSedi = post('threshold_qta_sedi');
 
         // Inserisco l'articolo e avviso se esiste un altro articolo con stesso codice.
         $numero_codice = Articolo::where([
@@ -130,7 +131,7 @@ switch (post('op')) {
         $articolo->id_sottocategoria = post('subcategoria');
         $articolo->abilita_serial = post('abilita_serial');
         $articolo->ubicazione = post('ubicazione');
-        $articolo->threshold_qta = post('threshold_qta');
+        $articolo->threshold_qta = $tresholdSedi[0];
         $articolo->coefficiente = post('coefficiente');
         $articolo->idiva_vendita = post('idiva_vendita');
         $articolo->prezzo_acquisto = post('prezzo_acquisto');
@@ -159,22 +160,25 @@ switch (post('op')) {
         $articolo->save();
 
         // Aggiorno le soglie minime per le sedi
-        $tresholdSedi = post('threshold_qta_sedi');
-        foreach ($tresholdSedi as $id_sede => $treshold) {
-            $item = $dbo->fetchOne(
-                'SELECT * FROM mg_articoli_sedi WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
-            );
+        $gestisciMagazzini = $dbo->fetchOne('SELECT * FROM zz_settings WHERE nome = "Gestisci soglia minima per magazzino"');
 
-            if (empty($item)) {
-                $dbo->query(
-                    'INSERT INTO mg_articoli_sedi(id_articolo, id_sede, threshold_qta)
-                    VALUES(' . prepare($id_record) . ', ' . prepare($id_sede) . ', ' . prepare($treshold) . ')'
+        if ($gestisciMagazzini['valore'] == '1') {
+            foreach ($tresholdSedi as $id_sede => $treshold) {
+                $item = $dbo->fetchOne(
+                    'SELECT * FROM mg_articoli_sedi WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
                 );
-            } else {
-                $dbo->query(
-                    'UPDATE mg_articoli_sedi SET threshold_qta = '. prepare($treshold) . '
-                    WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
-                );
+
+                if (empty($item)) {
+                    $dbo->query(
+                        'INSERT INTO mg_articoli_sedi(id_articolo, id_sede, threshold_qta)
+                        VALUES(' . prepare($id_record) . ', ' . prepare($id_sede) . ', ' . prepare($treshold) . ')'
+                    );
+                } else {
+                    $dbo->query(
+                        'UPDATE mg_articoli_sedi SET threshold_qta = '. prepare($treshold) . '
+                        WHERE id_articolo = ' . prepare($id_record) . ' AND id_sede = ' . prepare($id_sede)
+                    );
+                }
             }
         }
 
