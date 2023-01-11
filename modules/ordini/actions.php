@@ -427,7 +427,9 @@ switch (post('op')) {
         if (post('create_document') == 'on') {
             $tipo = Tipo::where('dir', $documento->direzione)->first();
 
-            $ordine = Ordine::build($documento->anagrafica, $tipo, post('data'), post('id_segment'));
+            $id_sede_partenza = post('id_sede_partenza');
+
+            $ordine = Ordine::build($documento->anagrafica, $tipo, post('data'), post('id_segment'), $id_sede_partenza);
             $ordine->idpagamento = $documento->idpagamento;
             $ordine->idsede = $id_sede;
 
@@ -486,8 +488,9 @@ switch (post('op')) {
         if (post('create_document') == 'on') {
             $anagrafica = Anagrafica::find(post('idanagrafica'));
             $tipo = Tipo::where('dir', $dir)->first();
+            $id_sede_partenza = post('id_sede_partenza');
 
-            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'));
+            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'), $id_sede_partenza);
             $ordine->save();
 
             $id_record = $ordine->id;
@@ -551,8 +554,9 @@ switch (post('op')) {
         if (post('create_document') == 'on') {
             $anagrafica = Anagrafica::find(post('idanagrafica'));
             $tipo = Tipo::where('dir', $dir)->first();
+            $id_sede_partenza = post('id_sede_partenza');
 
-            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'));
+            $ordine = Ordine::build($anagrafica, $tipo, post('data'), post('id_segment'), $id_sede_partenza);
             $ordine->save();
 
             $id_record = $ordine->id;

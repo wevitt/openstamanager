@@ -119,7 +119,7 @@ echo '
 				</div>
 
                 <div class="col-md-6">
-                    {[ "type": "select", "label": "'.tr('Sede di partenza').'", "name": "idsede", "required": 1, "ajax-source": "sedi-partenza", "value": "'.$record['id_sede_partenza'].'" ]}
+                    {[ "type": "select", "label": "'.tr('Sede di partenza').'", "name": "id_sede_partenza", "required": 1, "ajax-source": "sedi-partenza", "value": "'.$record['id_sede_partenza'].'" ]}
                 </div>
 
                 <div class="col-md-6">

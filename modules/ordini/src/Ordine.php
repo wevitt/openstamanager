@@ -51,7 +51,7 @@ class Ordine extends Document
      *
      * @return self
      */
-    public static function build(Anagrafica $anagrafica, Tipo $tipo_documento, $data, $id_segment = null, $id_sede_partenza = null)
+    public static function build(Anagrafica $anagrafica, Tipo $tipo_documento, $data, $id_segment = null, $id_sede_partenza = 0)
     {
         $model = new static();
 
