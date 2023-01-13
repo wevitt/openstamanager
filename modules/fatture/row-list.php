@@ -460,7 +460,7 @@ if (!$block_edit && sizeof($righe) > 0) {
             <i class="fa fa-trash"></i>
         </button>
 
-        <button type="button" class="btn btn-xs btn-default disabled" id="subtotale_righe" onclick="calcolaSubtotale();">
+        <button type="button" class="btn btn-xs btn-default disabled" id="subtotale_righe" onclick="calcolaSubtotale(\'fatture\');">
             <i class="fa fa-calculator"></i> Subtotale
         </button>
     </div>';

@@ -224,16 +224,24 @@ elseif (filter('op') == 'validate') {
 }
 
 elseif (filter('op') == 'manage_subtotale') {
-    if (post('idriga') != null) {
-        $riga = Modules\Fatture\Components\Descrizione::find(post('idriga'));
-    } else {
-        //
+    if (post('tipo') === 'fatture') {
         $fattura = Modules\Fatture\Fattura::find($id_record);
         $riga = Modules\Fatture\Components\Descrizione::build($fattura);
+    } else if (post('tipo') === 'ddt') {
+        $ddt = Modules\DDT\DDT::find($id_record);
+        $riga = Modules\DDT\Components\Descrizione::build($ddt);
+    } else if (post('tipo') === 'preventivi') {
+        $preventivo = Modules\Preventivi\Preventivo::find($id_record);
+        $riga = Modules\Preventivi\Components\Descrizione::build($preventivo);
+    } else if (post('tipo') === 'ordini') {
+        $ordine = Modules\Ordini\Ordine::find($id_record);
+        $riga = Modules\Ordini\Components\Descrizione::build($ordine);
+    } else {
+        echo "Operazione non valida";
+        return;
     }
 
     $riga->descrizione = post('descrizione');
-    $riga->note = post('note');
     $riga->save();
 
     echo json_encode($riga);

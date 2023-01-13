@@ -117,7 +117,7 @@ foreach ($righe as $riga) {
                     '_COD_FOR_' => $codice_fornitore,
                 ]).'</small>';
             }
-        }   
+        }
     } else {
         echo nl2br($riga->descrizione);
     }
@@ -138,8 +138,8 @@ foreach ($righe as $riga) {
     if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
         echo '
         <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
-    }  
-    
+    }
+
     if (!empty($riga->note)) {
             echo '
                 <br><small class="label label-default">'.nl2br($riga->note).'</small>';
@@ -397,11 +397,15 @@ if (!$block_edit && sizeof($righe) > 0) {
         <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="rimuoviRiga(getSelectData());">
             <i class="fa fa-trash"></i>
         </button>
+
+        <button type="button" class="btn btn-xs btn-default disabled" id="subtotale_righe" onclick="calcolaSubtotale(\'ordini\');">
+            <i class="fa fa-calculator"></i> Subtotale
+        </button>
     </div>';
 }
 echo '
 </div>
-    
+
 <script>
 async function modificaRiga(button) {
     let riga = $(button).closest("tr");
@@ -422,7 +426,7 @@ async function modificaRiga(button) {
 // Estraggo le righe spuntate
 function getSelectData() {
     let data=new Array();
-    $(\'#righe\').find(\'.check:checked\').each(function (){ 
+    $(\'#righe\').find(\'.check:checked\').each(function (){
         data.push($(this).closest(\'tr\').data(\'id\'));
     });
 
@@ -531,13 +535,15 @@ $(".check").on("change", function() {
     if (checked) {
         $("#elimina_righe").removeClass("disabled");
         $("#duplica_righe").removeClass("disabled");
+        $("#subtotale_righe").removeClass("disabled");
     } else {
         $("#elimina_righe").addClass("disabled");
         $("#duplica_righe").addClass("disabled");
+        $("#subtotale_righe").addClass("disabled");
     }
 });
 
-$("#check_all").click(function(){    
+$("#check_all").click(function(){
     if( $(this).is(":checked") ){
         $(".check").each(function(){
             if( !$(this).is(":checked") ){
