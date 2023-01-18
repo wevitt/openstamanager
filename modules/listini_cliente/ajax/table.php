@@ -9,7 +9,6 @@ $length = filter('length');
 
 $tot_articoli = $dbo->select('mg_listini_articoli', '*', ['id_listino' => $id_listino]);
 
-// Utilizzo della risorsa destinatari_newsletter per gestire la ricerca
 if (empty($search)) {
     $articoli = $dbo->fetchArray('SELECT mg_listini_articoli.*, mg_articoli.codice, mg_articoli.descrizione,  mg_articoli.'.($prezzi_ivati ? 'minimo_vendita_ivato' : 'minimo_vendita').' AS minimo_vendita FROM mg_listini_articoli LEFT JOIN mg_articoli ON mg_listini_articoli.id_articolo=mg_articoli.id WHERE id_listino='.prepare($id_listino).' LIMIT '.$start.', '.$length);
 } else {

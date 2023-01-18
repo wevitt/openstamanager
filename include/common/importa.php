@@ -59,6 +59,7 @@ if ($righe->isEmpty()) {
 }
 
 $link = !empty($documento_finale) ? base_path().'/editor.php?id_module='.$final_module['id'].'&id_record='.$documento_finale->id : base_path().'/controller.php?id_module='.$final_module['id'];
+
 echo '
 <form action="'.$link.'" method="post">
     <input type="hidden" name="op" value="'.$options['op'].'">

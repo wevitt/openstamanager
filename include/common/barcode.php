@@ -254,7 +254,6 @@ function barcodeAdd(barcode, qta) {
             let nuova_qta = qta + 1;
 
             if (result.qta < nuova_qta) {
-                console.log("singolo - 2 (result.qta < nuova_qta", result.qta, nuova_qta);
                 $("#articolo-qta").removeClass("hidden");
                 barcodeReset();
                 return;

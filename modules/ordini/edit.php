@@ -337,6 +337,11 @@ $(document).ready(function() {
     caricaRighe();
 });
 
+$("#idsede").change(function(){
+    updateSelectOption("idsede_destinazione", $(this).val());
+    $("#idreferente").selectReset();
+});
+
 $("#idanagrafica").change(function() {
     updateSelectOption("idanagrafica", $(this).val());
     session_set("superselect,idanagrafica", $(this).val(), 0);
