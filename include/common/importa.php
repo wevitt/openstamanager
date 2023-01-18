@@ -70,7 +70,10 @@ echo '
     <input type="hidden" name="is_evasione" value="1">';
 
     if ($options['type'] == 'ordine') {
+        echo '<input type="hidden" name="informazioniaggiuntive" value="'.$options['documento']['note_aggiuntive'].'">';
         echo '<input type="hidden" name="id_sede_partenza" value="'.$options['documento']['id_sede_partenza'].'">';
+    } else {
+        echo '<input type="hidden" name="informazioniaggiuntive" value="'.$options['documento']['informazioniaggiuntive'].'">';
     }
 
 // Creazione fattura dal documento

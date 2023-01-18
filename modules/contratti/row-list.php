@@ -85,8 +85,8 @@ foreach ($righe as $riga) {
     if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
         echo '
         <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
-    }            
-          
+    }
+
     if (!empty($riga->note)) {
         echo '
                     <br><small class="label label-default">'.nl2br($riga->note).'</small>';
@@ -297,6 +297,10 @@ if (!$block_edit && sizeof($righe) > 0) {
         <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="rimuoviRiga(getSelectData());">
             <i class="fa fa-trash"></i>
         </button>
+
+        <button type="button" class="btn btn-xs btn-default disabled" id="confronta_righe" onclick="confrontaRighe(getSelectData());">
+            Confronta prezzi
+        </button>
     </div>';
 }
 echo '
@@ -322,11 +326,15 @@ async function modificaRiga(button) {
 // Estraggo le righe spuntate
 function getSelectData() {
     let data=new Array();
-    $(\'#righe\').find(\'.check:checked\').each(function (){ 
+    $(\'#righe\').find(\'.check:checked\').each(function (){
         data.push($(this).closest(\'tr\').data(\'id\'));
     });
 
     return data;
+}
+
+function confrontaRighe(id) {
+    openModal("'.tr('Confronta prezzi').'", "'.$module->fileurl('modals/confronta_righe.php').'?id_module=" + globals.id_module + "&id_record=" + globals.id_record + "&righe=" + id + "&id_anagrafica='.$ordine->idanagrafica.'&direzione='.$dir.'");
 }
 
 function rimuoviRiga(id) {
@@ -415,13 +423,15 @@ $(".check").on("change", function() {
     if (checked) {
         $("#elimina_righe").removeClass("disabled");
         $("#duplica_righe").removeClass("disabled");
+        $("#confronta_righe").removeClass("disabled");
     } else {
         $("#elimina_righe").addClass("disabled");
         $("#duplica_righe").addClass("disabled");
+        $("#confronta_righe").addClass("disabled");
     }
 });
 
-$("#check_all").click(function(){    
+$("#check_all").click(function(){
     if( $(this).is(":checked") ){
         $(".check").each(function(){
             if( !$(this).is(":checked") ){

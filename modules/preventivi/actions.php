@@ -43,7 +43,7 @@ switch (post('op')) {
         $tipo = TipoSessione::find($idtipointervento);
 
         $preventivo = Preventivo::build($anagrafica, $tipo, $nome, $data_bozza, $id_sede, $id_segment);
-      
+
         $preventivo->idstato = post('idstato');
         $preventivo->save();
 
@@ -368,7 +368,7 @@ switch (post('op')) {
     // Eliminazione riga
     case 'delete_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -385,7 +385,7 @@ switch (post('op')) {
     // Duplicazione riga
     case 'copy_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -441,6 +441,21 @@ switch (post('op')) {
         foreach ($order as $i => $id_riga) {
             $dbo->query('UPDATE `co_righe_preventivi` SET `order` = '.prepare($i + 1).' WHERE id='.prepare($id_riga));
         }
+
+        break;
+
+    case 'edit-price':
+        $righe = $post['righe'];
+
+        foreach ($righe as $riga) {
+            $dbo->query(
+                'UPDATE co_righe_preventivi
+                SET prezzo_unitario = '.$riga['price'].'
+                WHERE id = '.$riga['id']
+            );
+        }
+
+        flash()->info(tr('Prezzi aggiornati!'));
 
         break;
 }

@@ -96,9 +96,8 @@ if (!empty($options['create_document'])) {
                 <input type="hidden" name="create_document" value="on" />
 
                 <div class="col-md-6">
-                    {[ "type": "date", "label": "'.tr('Data del documento').'", "name": "data", "required": 1, "value": "-now-" ]}
+                    {[ "type": "select", "label": "'.tr('Magazzino').'", "name": "idmagazzino", "required": 1, "ajax-source": "sedi_azienda", "value": "'.($documento->idsede_partenza ?: 0).'" ]}
                 </div>
-
             </div>
         </div>
     </div>';

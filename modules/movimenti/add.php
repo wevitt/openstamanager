@@ -108,10 +108,10 @@ echo '
         if (setting('Attiva scorciatoie da tastiera')) {
             echo 'EnableHotkeys()';
         }
-echo '  
+echo '
         $("#barcode").focus();
     });
-    
+
     $(document).on("keyup", function (event) {
         if ($(":focus").is("input, textarea")) {
             return;
@@ -120,7 +120,7 @@ echo '
         let key = window.event ? event.keyCode : event.which; // IE vs Netscape/Firefox/Opera
         $("#articolo-missing").addClass("hidden");
         let barcode = $("#barcode");
-            
+
         if ( barcode.val() == "" && $("#idarticolo").val() == null && key === 13 ){
             swal("'.tr('Inserisci barcode o seleziona un articolo').'", "", "warning");
         }
@@ -273,21 +273,21 @@ echo '
 
         hotkeys("f7,f8,f9,f10", function(event, handler) {
             switch (handler.key) {
-                case "f7": 
+                case "f7":
                     event.preventDefault();
                     $("#barcode").focus();
                 break;
-                case "f8": 
+                case "f8":
                     event.preventDefault();
-                    input("causale").set("1");
+                    input("causale").set("1").trigger("change");
                 break;
-                case "f9": 
+                case "f9":
                     event.preventDefault();
-                    input("causale").set("2");
+                    input("causale").set("2").trigger("change");
                 break;
-                case "f10": 
+                case "f10":
                     event.preventDefault();
-                    input("causale").set("3");
+                    input("causale").set("3").trigger("change");
                 break;
                 default: alert(event);
             }

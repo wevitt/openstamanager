@@ -83,6 +83,8 @@ class Ordine extends Document
         $model->stato()->associate($stato_documento);
         $model->id_segment = $id_segment;
         $model->id_sede_partenza = $id_sede_partenza;
+        $model->idagente = $anagrafica->idagente;
+
 
         $model->save();
 

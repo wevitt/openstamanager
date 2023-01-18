@@ -62,6 +62,7 @@ switch (filter('op')) {
 
         $vendita->idanagrafica = $documento->idanagrafica;
         $vendita->idpagamento = $idpagamento;
+        $vendita->idmagazzino = post('idmagazzino');
 
         $vendita->save();
 
@@ -113,6 +114,7 @@ switch (filter('op')) {
                 unset($attributes['provvigione_unitaria']);
                 unset($attributes['provvigione_percentuale']);
                 unset($attributes['tipo_provvigione']);
+                unset($attributes['note']);
 
                 //Modifico i dati della riga aggiungendo i riferimenti
                 if (!empty($riga->idarticolo)) {

@@ -304,7 +304,7 @@ switch (post('op')) {
     // Eliminazione riga
     case 'delete_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -321,7 +321,7 @@ switch (post('op')) {
     // Duplicazione riga
     case 'copy_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -567,6 +567,21 @@ switch (post('op')) {
             '_DOC_' => $documento->getReference(),
         ]);
         flash()->info($message);
+
+        break;
+
+    case 'edit-price':
+        $righe = $post['righe'];
+
+        foreach ($righe as $riga) {
+            $dbo->query(
+                'UPDATE co_righe_contratti
+                SET prezzo_unitario = '.$riga['price'].'
+                WHERE id = '.$riga['id']
+            );
+        }
+
+        flash()->info(tr('Prezzi aggiornati!'));
 
         break;
 }

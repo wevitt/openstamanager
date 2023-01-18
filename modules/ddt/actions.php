@@ -209,7 +209,7 @@ switch (filter('op')) {
         if ($dir == 'entrata') {
             $articolo->setProvvigione(post('provvigione'), post('tipo_provvigione'));
         }
-        
+
         try {
             $articolo->qta = post('qta');
         } catch (UnexpectedValueException $e) {
@@ -310,6 +310,7 @@ switch (filter('op')) {
     case 'add_documento':
         $class = post('class');
         $id_documento = post('id_documento');
+        $informazioniaggiuntive = post('informazioniaggiuntive');
 
         // Individuazione del documento originale
         if (!is_subclass_of($class, \Common\Document::class)) {
@@ -339,6 +340,7 @@ switch (filter('op')) {
             $ddt->idreferente = $documento->idreferente;
             $ddt->idagente = $documento->idagente;
 
+            $ddt->note_aggiuntive = $informazioniaggiuntive;
             $ddt->save();
 
             $id_record = $ddt->id;
@@ -403,7 +405,7 @@ switch (filter('op')) {
     // Eliminazione riga
     case 'delete_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -425,7 +427,7 @@ switch (filter('op')) {
     // Duplicazione riga
     case 'copy_riga':
         $id_righe = (array)post('righe');
-        
+
         foreach ($id_righe as $id_riga) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
@@ -557,6 +559,19 @@ switch (filter('op')) {
         flash()->info(tr('DDT duplicato correttamente!'));
 
         break;
+
+    case 'edit-price':
+        $righe = $post['righe'];
+
+        foreach ($righe as $riga) {
+            $dbo->query(
+                'UPDATE dt_righe_ddt
+                SET prezzo_unitario = '.$riga['price'].'
+                WHERE id = '.$riga['id']
+            );
+        }
+
+        flash()->info(tr('Prezzi aggiornati!'));
 }
 
 // Aggiornamento stato degli ordini presenti in questa fattura in base alle quantità totali evase

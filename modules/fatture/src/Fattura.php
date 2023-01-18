@@ -127,6 +127,7 @@ class Fattura extends Document
         if ($numero_esterno) {
             $model->numero_esterno = $numero_esterno;
         }
+        $model->idagente = $anagrafica->idagente;
 
         // Sede aziendale scelta tra le sedi disponibili per l'utente
         $id_sede = $user->sedi[0];
@@ -212,9 +213,9 @@ class Fattura extends Document
 
         $dicitura_fissa = database()->selectOne('zz_segments', 'dicitura_fissa', ['id' => $id_segment])['dicitura_fissa'];
         if ($dicitura_fissa) {
-           $notes[] = $dicitura_fissa; 
+           $notes[] = $dicitura_fissa;
         }
-        
+
         $model->note = implode("\n", $notes);
 
         if ($tipo_documento->descrizione == 'Fattura accompagnatoria di vendita') {
@@ -600,7 +601,7 @@ class Fattura extends Document
         // Bozza o Annullato -> Stato diverso da Bozza o Annullato
         if (
             (in_array($stato_precedente->descrizione, ['Bozza', 'Annullata'])
-            && !in_array($this->stato['descrizione'], ['Bozza', 'Annullata'])) 
+            && !in_array($this->stato['descrizione'], ['Bozza', 'Annullata']))
             || $options[0] == 'forza_emissione'
         ) {
             // Registrazione scadenze

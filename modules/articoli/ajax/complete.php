@@ -266,4 +266,45 @@ switch ($resource) {
         echo json_encode($results);
 
         break;
+
+    case 'articoli_barcode_file':
+        $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
+        $id_anagrafica = get('id_anagrafica'); // ID passato via URL in modo fisso
+        $barcodes = json_decode(get('barcodes'), true);
+        $barcodeTrovati = [];
+
+        foreach ($barcodes as $barcode => $qta) {
+            //select barcode
+            $rs = $dbo->fetchOne(
+                'SELECT mg_articoli.*,
+                IFNULL(mg_fornitore_articolo.codice_fornitore, mg_articoli.codice) AS codice,
+                IFNULL(mg_fornitore_articolo.descrizione, mg_articoli.descrizione) AS descrizione,
+                IFNULL(mg_fornitore_articolo.prezzo_acquisto, mg_articoli.prezzo_acquisto) AS prezzo_acquisto,
+                mg_articoli.'.($prezzi_ivati ? 'prezzo_vendita_ivato' : 'prezzo_vendita').' AS prezzo_vendita,
+                mg_articoli.prezzo_vendita_ivato AS prezzo_vendita_ivato,
+                IFNULL(mg_fornitore_articolo.qta_minima, 0) AS qta_minima,
+                mg_fornitore_articolo.id AS id_dettaglio_fornitore
+                FROM mg_articoli
+                LEFT JOIN mg_fornitore_articolo
+                    ON mg_fornitore_articolo.id_articolo = mg_articoli.id
+                    AND mg_fornitore_articolo.deleted_at IS NULL
+                    AND mg_fornitore_articolo.id_fornitore = '.prepare($id_anagrafica).'
+                WHERE mg_articoli.attivo = 1 AND mg_articoli.deleted_at IS NULL AND REPLACE(mg_articoli.barcode, "/", "-") = ' . prepare($barcode)
+            );
+
+            if (!empty($rs)) {
+                $barcodeTrovati[] = [
+                    'dettaglio' => $rs,
+                    'qta' => $qta,
+                ];
+            }
+        }
+
+        $results = [
+            'barcodeTrovati' => $barcodeTrovati,
+        ];
+
+        echo json_encode($results);
+
+        break;
 }
