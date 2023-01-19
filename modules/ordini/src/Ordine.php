@@ -84,7 +84,7 @@ class Ordine extends Document
         $model->id_segment = $id_segment;
         $model->id_sede_partenza = $id_sede_partenza;
         $model->idagente = $anagrafica->idagente;
-
+        $model->note_aggiuntive = $anagrafica->note;
 
         $model->save();
 
