@@ -16,7 +16,7 @@ function calcolaSubtotale(tipo) {
         // se esiste una riga precedente e il suo valore di "data-row" non è
         // consecutivo a quello della riga corrente, mostra un messaggio di errore
         if (prevRow && (currentRow !== prevRow + 1)) {
-            error = 'Errore: le righe selezionate non sono consecutive';
+            error = 'Attenzione: le righe selezionate non sono consecutive';
         }
 
         // sostituisci il punto con nulla
@@ -44,7 +44,7 @@ function calcolaSubtotale(tipo) {
 
     // effettua una chiamata post per creare una nuova riga descrizione
     if (error !== null) {
-        alert(error);
+        toastr.error(error);
         return;
     }
 
