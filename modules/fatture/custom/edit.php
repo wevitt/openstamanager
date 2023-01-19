@@ -932,7 +932,13 @@ if ($fattura->isFE()) {
     })
 </script>';
 }
+
+$module_anagrafica_id = Modules::get('Anagrafiche')['id'];
+
 ?>
+
+{( "name": "filelist_and_upload", "id_module": "<?php echo $module_anagrafica_id ?>", "id_record": "<?php echo $record['idanagrafica'] ?>", "readonly": "1", "title": "Allegati anagrafica")}
+
 
 {( "name": "filelist_and_upload", "id_module": "$id_module$", "id_record": "$id_record$", "abilita_genera": "<?php echo $abilita_genera; ?>" )}
 

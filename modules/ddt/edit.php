@@ -321,7 +321,7 @@ if ($dir == 'entrata') {
     <div class="box box-primary collapsable  <?php echo ($record['tipo_anagrafica'] == 'Ente pubblico' || $record['tipo_anagrafica'] == 'Azienda') ? 'show' : 'hide'; ?> <?php echo $collapsed; ?>">
         <div class=" box-header">
             <h4 class=" box-title">
-                
+
                 <?php echo tr('Dati appalto'); ?></h4>
 
                 <div class="box-tools pull-right">
@@ -329,7 +329,7 @@ if ($dir == 'entrata') {
                     <i class="fa fa-plus"></i>
                     </button>
                 </div>
-            
+
         </div>
         <div class="box-body">
             <div class="row">
@@ -380,7 +380,7 @@ if (!$block_edit) {
             <a class="btn btn-sm btn-primary'.(!empty($ordini) ? '' : ' disabled').'" data-href="'.base_path().'/modules/ddt/add_ordine.php?id_module='.$id_module.'&id_record='.$id_record.'" data-toggle="modal" data-title="'.tr('Aggiungi Ordine').'">
                 <i class="fa fa-plus"></i> '.tr('Ordine').'
             </a>';
-    
+
     // Lettura articoli
     $art_query = 'SELECT id FROM mg_articoli WHERE attivo = 1 AND deleted_at IS NULL';
     if ($dir == 'entrata' && !setting('Permetti selezione articoli con quantità minore o uguale a zero in Documenti di Vendita')) {
@@ -426,7 +426,12 @@ echo '
 			<div class="col-md-12" id="righe"></div>
 		</div>
 	</div>
-</div>
+</div>';
+$module_anagrafica_id = Modules::get('Anagrafiche')['id'];
+
+echo '
+{( "name": "filelist_and_upload", "id_module": "'.$module_anagrafica_id.'", "id_record": "'.$record['idanagrafica'].'", "readonly": "1", "title": "Allegati anagrafica")}
+
 
 {( "name": "filelist_and_upload", "id_module": "$id_module$", "id_record": "$id_record$" )}
 
