@@ -29,7 +29,7 @@ const minifyCSS = require('gulp-clean-css');
 const minifyJSON = require('gulp-json-minify');
 
 // Interpretatori CSS
-const sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 const less = require('gulp-less');
 const stylus = require('gulp-stylus');
 const autoprefixer = require('gulp-autoprefixer');
@@ -285,7 +285,7 @@ function srcFonts() {
 }
 
 function ckeditor() {
-    
+
     const ckeditor =  gulp.src([
         config.nodeDirectory + '/ckeditor4/{adapters,lang,skins,plugins,core}/**/*.{js,json,css,png,gif,html}',
         config.nodeDirectory + '/ckeditor4/*.{js,css}',
