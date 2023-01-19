@@ -297,6 +297,12 @@ switch ($resource) {
                     'dettaglio' => $rs,
                     'qta' => $qta,
                 ];
+            } else {
+                $barcodeTrovati[] = [
+                    'dettaglio' => null,
+                    'barcode' => $barcode,
+                    'qta' => $qta,
+                ];
             }
         }
 

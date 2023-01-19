@@ -107,94 +107,110 @@ $("#barcode_file").on("change", function (event) {
         $.getJSON(globals.rootdir + "/ajax_complete.php?op=articoli_barcode_file&barcodes=" + JSON.stringify(barcodes) + "&id_anagrafica='.$options['idanagrafica'].'", function(response) {
             results = response["barcodeTrovati"];
 
+            let articoli_non_trovati = [];
+            let articoli_insufficienti = [];
+
             $.each(results, function (i, barcode) {
                 dettaglio = barcode.dettaglio;
                 qta = barcode.qta;
 
-                console.log(dettaglio.codice);
-
-                let qta_input = $("#riga_barcode_" + dettaglio.id).find("[name^=qta]");
-                if (parseInt(dettaglio.qta) <= 0 && permetti_movimenti_sotto_zero == 0 && direzione === "entrata") {
-                    $("#articolo-qta").html("'.tr("Articolo ").'dettaglio.codice'.tr(" presente in quantità non sufficiente").'");
-                    $("#articolo-qta").removeClass("hidden");
-                    barcodeFileReset();
-                    return;
-                }
-
-                // Controllo se è già presente l\'articolo, in tal caso incremento la quantità, altrimenti inserisco la riga nuova
-                if (qta_input.length) {
-                    let nuova_qta = qta_input.val().toEnglish() + qta;
-                    console.log("nuova_qta: ", nuova_qta);
-                    console.log("dettaglio.qta: ", dettaglio.qta);
-
-                    if (dettaglio.qta < nuova_qta) {
-                        $("#articolo-qta").html("'.tr("Articolo ").'" + dettaglio.codice + "'.tr(" presente in quantità non sufficiente").'");
-                        $("#articolo-qta").removeClass("hidden");
-                        barcodeFileReset();
-                        return;
-                    }
-
-                    qta_input.val(nuova_qta).trigger("change");
+                if (dettaglio === null) {
+                    articoli_non_trovati.push(barcode.barcode);
                 } else {
-                    if (dettaglio.qta < qta) {
-                        $("#articolo-qta").html("'.tr("Articolo ").'" + dettaglio.codice + "'.tr(" presente in quantità non sufficiente").'");
-                        $("#articolo-qta").removeClass("hidden");
+                    let qta_input = $("#riga_barcode_" + dettaglio.id).find("[name^=qta]");
+                    if (parseInt(dettaglio.qta) <= 0 && permetti_movimenti_sotto_zero == 0 && direzione === "entrata") {
+                        articoli_insufficienti.push(dettaglio.codice);
                     } else {
-                        let prezzo_unitario = (direzione === "uscita") ? dettaglio.prezzo_acquisto : dettaglio.prezzo_vendita;
-                        prezzo_acquisto = parseFloat(dettaglio.prezzo_acquisto, 10).toLocale();
-                        prezzo_vendita = parseFloat(dettaglio.prezzo_vendita, 10).toLocale();
+                        // Controllo se è già presente l\'articolo, in tal caso incremento la quantità, altrimenti inserisco la riga nuova
+                        if (qta_input.length) {
+                            let nuova_qta = qta_input.val().toEnglish() + qta;
 
-                        let info_prezzi;
-                        if(direzione === "entrata") {
-                            info_prezzi = "Acquisto: " + (prezzo_acquisto) + " &euro;";
-                        }else{
-                            info_prezzi = "Vendita: " + (prezzo_vendita) + " &euro;";
+                            if (dettaglio.qta < nuova_qta && permetti_movimenti_sotto_zero == 0 && direzione === "entrata") {
+                                articoli_insufficienti.push(dettaglio.codice);
+                            } else {
+                                qta_input.val(nuova_qta).trigger("change");
+                            }
+                        } else {
+                            if (parseInt(dettaglio.qta) < qta && permetti_movimenti_sotto_zero == 0 && direzione === "entrata") {
+                                articoli_insufficienti.push(dettaglio.codice);
+                            } else {
+                                let prezzo_unitario = (direzione === "uscita") ? dettaglio.prezzo_acquisto : dettaglio.prezzo_vendita;
+                                prezzo_acquisto = parseFloat(dettaglio.prezzo_acquisto, 10).toLocale();
+                                prezzo_vendita = parseFloat(dettaglio.prezzo_vendita, 10).toLocale();
+
+                                let info_prezzi;
+                                if(direzione === "entrata") {
+                                    info_prezzi = "Acquisto: " + (prezzo_acquisto) + " &euro;";
+                                }else{
+                                    info_prezzi = "Vendita: " + (prezzo_vendita) + " &euro;";
+                                }
+
+                                $("#articoli_barcode").removeClass("hide");
+                                cleanup_inputs();
+
+                                var text = replaceAll($("#barcode-template").html(), "-id-", dettaglio.id);
+                                text = text.replace("|prezzo_unitario|", prezzo_unitario)
+                                    .replace("|info_prezzi|", info_prezzi)
+                                    .replace("|descrizione|", dettaglio.descrizione)
+                                    .replace("|codice|", dettaglio.codice)
+                                    .replace("|qta|", qta)
+                                    .replace("|sconto_unitario|", 0)
+                                    .replace("|tipo_sconto|", "")
+                                    .replace("|id_dettaglio_fornitore|", dettaglio.id_dettaglio_fornitore ? dettaglio.id_dettaglio_fornitore : "")
+
+                                $("#articoli_barcode tbody").first().append(text);
+                                restart_inputs();
+
+                                $(".modal-body button").attr("disabled", false);
+
+                                // Gestione dinamica dei prezzi
+                                let tr = $("#riga_barcode_" + dettaglio.id);
+                                ottieniDettagliArticolo(dettaglio.id, tr).then(function() {
+                                    if ($(tr).find("input[name^=prezzo_unitario]").val().toEnglish() === 0){
+                                        aggiornaPrezzoArticolo(tr);
+                                    } else {
+                                        verificaPrezzoArticolo(tr);
+                                    }
+
+                                    var listino = getPrezzoListino(tr);
+
+                                    if (listino) {
+                                        $(tr).find("input[name^=prezzo_unitario]").val(listino).trigger("change");
+                                    }
+
+                                    if ($(tr).find("input[name^=sconto]").val().toEnglish() === 0){
+                                        aggiornaScontoArticolo();
+                                    } else {
+                                        verificaScontoArticolo();
+                                    }
+                                });
+                            }
                         }
-
-                        $("#articoli_barcode").removeClass("hide");
-                        cleanup_inputs();
-
-                        var text = replaceAll($("#barcode-template").html(), "-id-", dettaglio.id);
-                        text = text.replace("|prezzo_unitario|", prezzo_unitario)
-                            .replace("|info_prezzi|", info_prezzi)
-                            .replace("|descrizione|", dettaglio.descrizione)
-                            .replace("|codice|", dettaglio.codice)
-                            .replace("|qta|", qta)
-                            .replace("|sconto_unitario|", 0)
-                            .replace("|tipo_sconto|", "")
-                            .replace("|id_dettaglio_fornitore|", dettaglio.id_dettaglio_fornitore ? dettaglio.id_dettaglio_fornitore : "")
-
-                        $("#articoli_barcode tbody").first().append(text);
-                        restart_inputs();
-
-                        $(".modal-body button").attr("disabled", false);
-
-                        // Gestione dinamica dei prezzi
-                        let tr = $("#riga_barcode_" + dettaglio.id);
-                        ottieniDettagliArticolo(dettaglio.id, tr).then(function() {
-                            if ($(tr).find("input[name^=prezzo_unitario]").val().toEnglish() === 0){
-                                aggiornaPrezzoArticolo(tr);
-                            } else {
-                                verificaPrezzoArticolo(tr);
-                            }
-
-                            var listino = getPrezzoListino(tr);
-
-                            if (listino) {
-                                $(tr).find("input[name^=prezzo_unitario]").val(listino).trigger("change");
-                            }
-
-                            if ($(tr).find("input[name^=sconto]").val().toEnglish() === 0){
-                                aggiornaScontoArticolo();
-                            } else {
-                                verificaScontoArticolo();
-                            }
-                        });
                     }
                 }
-
-                barcodeFileReset();
             });
+
+            if (articoli_insufficienti.length > 0) {
+                $("#articolo-qta").removeClass("hidden");
+
+                if (articoli_insufficienti.length > 1) {
+                    $("#articolo-qta").html("'.tr("Articoli ").'"+articoli_insufficienti.join(", ")+"'.tr(" presenti in quantità non sufficiente").'");
+                } else {
+                    $("#articolo-qta").html("'.tr("Articolo ").'"+articoli_insufficienti.join(", ")+"'.tr(" presente in quantità non sufficiente").'");
+                }
+            }
+
+            if (articoli_non_trovati.length > 0) {
+                $("#articolo-missing").removeClass("hidden");
+
+                if (articoli_non_trovati.length > 1) {
+                    $("#articolo-missing").html("'.tr("Articoli ").'"+articoli_non_trovati.join(", ")+"'.tr(" non trovati").'");
+                } else {
+                    $("#articolo-missing").html("'.tr("Articolo ").'"+articoli_non_trovati.join(", ")+"'.tr(" non trovato").'");
+                }
+            }
+
+            barcodeFileReset();
         });
     };
 });
@@ -253,7 +269,7 @@ function barcodeAdd(barcode, qta) {
             let qta = qta_input.val().toEnglish();
             let nuova_qta = qta + 1;
 
-            if (result.qta < nuova_qta) {
+            if (result.qta < nuova_qta && permetti_movimenti_sotto_zero == 0 && direzione === "entrata") {
                 $("#articolo-qta").removeClass("hidden");
                 barcodeReset();
                 return;
