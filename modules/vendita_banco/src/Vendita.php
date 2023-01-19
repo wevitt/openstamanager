@@ -21,7 +21,7 @@ class Vendita extends Document
     /**
      * Crea un nuovo documento di vendita al banco.
      */
-    public static function build($numero = null, $data = null, $id_magazzino = null)
+    public static function build()
     {
         $model = new static();
 
@@ -29,9 +29,10 @@ class Vendita extends Document
         $stato = Stato::where('descrizione', 'Aperto')->first();
         $model->stato()->associate($stato);
 
-        //$model->data = !empty($data) ?$data: Carbon::now();
         $model->data = Carbon::now();
         $model->numero = isset($numero) ? $numero : self::getNextNumero($model->data);
+        $model->numero_esterno = self::getNextNumeroEsterno($model->data, post('id_segment'));
+        $model->id_segment = post('id_segment');
 
         $model->idpagamento = setting('Pagamento predefinito');
 
@@ -202,6 +203,55 @@ class Vendita extends Document
         $numero = Generator::generate($maschera, $ultimo);
 
         return $numero;
+    }
+
+    /**
+     * Calcola il nuovo numero esterno di vendita banco.
+     *
+     * @param string $data Data di riferimento
+     * @param int $id_segment ID del segmento
+     *
+     * @return string
+     */
+    public static function getNextNumeroEsterno($data, $id_segment)
+    {
+        $maschera = Generator::getMaschera($id_segment);
+
+        $ultimo = Generator::getPreviousFrom($maschera, 'vb_venditabanco', 'numero_esterno', [
+            'YEAR(data) = ' . prepare(date('Y', strtotime($data))),
+            'id_segment = ' . prepare($id_segment),
+        ]);
+        $numero = Generator::generate($maschera, $ultimo, 1, Generator::dateToPattern($data));
+
+        return $numero;
+    }
+
+    /**
+     * Metodo temporaneo
+     * Permette di aggiornare i numeri esterni delle vendite al banco, in caso di movimenti generati prima
+     * dell'introduzione del campo numero_esterno.
+     *
+     * @return void
+     */
+    public static function fixMissingNumeroEsterno()
+    {
+        $database = database();
+        $vendite = $database->fetchArray('SELECT id, numero, idmagazzino, data, numero_esterno, data FROM vb_venditabanco');
+
+        foreach ($vendite as $vendita) {
+            $id_segment = $vendita['idmagazzino'] == '1' ? 38 : 39;
+            $maschera = Generator::getMaschera($id_segment);
+
+            $numero = str_pad($vendita['numero'], 4, '0', STR_PAD_LEFT);
+            $numero = str_replace('####', $numero, $maschera);
+
+            $database->update('vb_venditabanco', [
+                'numero_esterno' => $numero,
+                'id_segment' => $id_segment,
+            ], [
+                'id' => $vendita['id'],
+            ]);
+        }
     }
 
     // Opzioni di riferimento

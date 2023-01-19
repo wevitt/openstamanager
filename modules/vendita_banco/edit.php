@@ -22,8 +22,8 @@ echo '<form action="" method="post" role="form">
 
 			<div class="row">
 
-				<div class="col-md-1">
-					{[ "type": "text", "label": "'.tr('Numero').'", "name": "numero", "required": 1, "class": "text-center", "value": "$numero$", "readonly": "1" ]}
+				<div class="col-md-2">
+					{[ "type": "text", "label": "'.tr('Numero').'", "name": "numero_esterno", "required": 1, "class": "text-center", "value": "$numero_esterno$", "readonly": "1" ]}
 				</div>
 
 				<div class="col-md-2">
@@ -38,7 +38,7 @@ echo '<form action="" method="post" role="form">
 					{[ "type": "select", "label": "'.tr('Magazzino').'", "name": "idmagazzino", "required": 1, "ajax-source": "sedi_azienda", "value": "$idmagazzino$", "readonly": "'.($is_pagato || $numero_righe != 0).'" ]}
 				</div>
 
-				<div class="col-md-4">';
+				<div class="col-md-3">';
 
 $rs_pagamenti = $dbo->fetchArray('SELECT id, descrizione FROM co_pagamenti WHERE idconto_vendite IS NOT NULL ORDER BY descrizione ASC');
 if (!empty($rs_pagamenti)) {

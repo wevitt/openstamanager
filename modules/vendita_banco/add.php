@@ -3,10 +3,12 @@
 use Carbon\Carbon;
 use Modules\VenditaBanco\Vendita;
 
-include_once __DIR__.'/../../core.php';
+include_once __DIR__ . '/../../core.php';
 
 $data = Carbon::now();
-$numero = Vendita::getNextNumero($data);
+
+// Decommentare solo se sono presenti record privi di numero esterno
+//Vendita::fixMissingNumeroEsterno();
 
 echo '
 <form action="" method="post" id="add-form">
@@ -15,15 +17,14 @@ echo '
 
 	<div class="row">
 		<div class="col-md-6">
-			 {[ "type": "span", "label": "'.tr('Numero').'", "name": "numero", "value": "'.$numero.'" ]}
+			 {[ "type": "select", "label": "' . tr('Segmento') . '", "name": "id_segment", "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module = (SELECT id FROM zz_modules WHERE name = \"Vendita al banco\")" ]}
 		</div>
 
 		<div class="col-md-6">
 			 {[ "type": "span", "label": "'.tr('Data e ora').'", "name": "data", "class": "text-center", "value": "'.timestampFormat($data).'" ]}
 		</div>
-
 	</div>
-	
+
     <!-- PULSANTI -->
 	<div class="row">
 		<div class="col-md-12 text-right">
