@@ -354,7 +354,7 @@ if (!empty($righe)) {
             </thead>
 
             <tbody>';
-    
+
     // Dati ordini
     $DatiOrdini =  XML::forceArray($fattura_pa->getBody()['DatiGenerali']['DatiOrdineAcquisto']);
     $DatiDDT =  XML::forceArray($fattura_pa->getBody()['DatiGenerali']['DatiDDT']);
@@ -443,7 +443,7 @@ if (!empty($righe)) {
                     '_DATA_' => $dati_ddt[(int)$riga['NumeroLinea']]['data'],
                 ]);
         }
-        
+
 
         echo '
         <tr data-id="'.$key.'" data-qta="'.$qta.'" data-prezzo_unitario="'.$prezzo_unitario.'" data-iva_percentuale="'.$riga['AliquotaIVA'].'">
@@ -479,7 +479,7 @@ if (!empty($righe)) {
             </td>
         </tr>';
 
-        
+
         if (!$is_descrizione) {
             echo '
         <tr id="dati_'.$key.'">
@@ -534,7 +534,7 @@ if (!empty($righe)) {
                                 {[ "type": "select", "name": "update_info['.$key.']", "values": "list=\"update_not\":\"Non aggiornare\", \"update_price\":\"Aggiorna prezzo di listino\", \"update_all\":\"Aggiorna prezzo di acquisto + imposta fornitore predefinito\"", "label": "'.tr('Aggiorna info di acquisto').'", "value": "'.$update_info.'" ]}
                             </div>
                         </div>
-                    </div> 
+                    </div>
                 </div>
             </td>
         </tr>';
@@ -551,7 +551,7 @@ if (!empty($righe)) {
                 <input type="hidden" name="id_riferimento_vendita['.$key.']" id="id_riferimento_vendita_'.$key.'" value="">
                 <input type="hidden" name="id_riga_riferimento_vendita['.$key.']" id="id_riga_riferimento_vendita_'.$key.'" value="">
                 <input type="hidden" name="tipo_riga_riferimento_vendita['.$key.']" id="tipo_riga_riferimento_vendita_'.$key.'" value="">
-                
+
                 <input type="hidden" name="conto['.$key.']" value="">
                 <input type="hidden" name="iva['.$key.']" value="">
                 <input type="hidden" name="update_info['.$key.']" value="">';
@@ -726,6 +726,13 @@ function impostaRiferimento(id_riga, documento, riga) {
     $("#tipo_riga_riferimento_" + id_riga).val(riga.tipo);
     $("#id_riga_riferimento_" + id_riga).val(riga.id);
 
+    $("#articoli" + id_riga).closest("tr").prev("tr").removeClass("danger").addClass("warning");
+    $("#articoli" + id_riga).parent().next("span").remove();
+    if ($("#articoli" + id_riga).val() != riga.id_articolo) {
+        $("#articoli" + id_riga).closest("tr").prev("tr").addClass("danger").removeClass("warning");
+        $("#articoli" + id_riga).parent().after("<span class=\"label label-danger\">Articolo non corrispondente</span>");
+    }
+
     // Gestione della selezione
     input("selezione_riferimento[" + id_riga + "]").disable();
     $("#rimuovi_riferimento_" + id_riga).removeClass("disabled");
@@ -740,6 +747,10 @@ function impostaRiferimento(id_riga, documento, riga) {
 
     // Informazioni visibili sull\'aliquota IVA
     impostaContenuto(riga_fe.data("iva_percentuale"), parseInt(riga.iva_percentuale), "%", "#riferimento_" + id_riga + "_iva", false);
+
+    if ($("#iva" + id_riga + " option[value]").length === 1) {
+        $("#iva" + id_riga).val($("#iva" + id_riga + " option[value]").val()).change();
+    }
 
     $("#riferimento_" + id_riga).html(documento.descrizione ? documento.descrizione : "");
 

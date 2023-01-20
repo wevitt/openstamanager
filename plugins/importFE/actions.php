@@ -152,10 +152,10 @@ switch (filter('op')) {
             $autofattura_collegata = Fattura::find($id_autofattura);
             $fattura->registraScadenze(true);
             $autofattura_collegata->registraScadenze(true);
-            
+
             $fattura->stato()->associate($new_stato);
             $autofattura_collegata->stato()->associate($new_stato);
-        
+
             $mastrino = Mastrino::build('Compensazione autofattura', $fattura->data, false, true);
 
             $movimento1 = Movimento::build($mastrino, $fattura->anagrafica->idconto_cliente);
@@ -341,7 +341,7 @@ switch (filter('op')) {
                         ];
                     }
                 }
-        
+
                 // Riorganizzazione dati ordini per numero di riga
                 $dati_ddt = [];
                 foreach ($DatiDDT as $dato) {
@@ -561,6 +561,7 @@ switch (filter('op')) {
                     'riga' => [
                         'tipo' => get_class($riga),
                         'id' => $riga->id,
+                        'id_articolo' => $riga->idarticolo,
                         'descrizione' => $riga->descrizione,
                         'qta' => $riga->qta,
                         'um' => $riga->um,
