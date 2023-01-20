@@ -110,6 +110,69 @@ switch (post('op')) {
     case 'update':
         $qta = post('qta');
         $tresholdSedi = post('threshold_qta_sedi');
+        $prezzo_vendita = post('prezzo_vendita');
+
+        //logiche di calcolo
+        $listino_origine = post('listino_origine');
+        $prezzo_di_partenza = post('prezzo_di_partenza');
+
+        $logiche = $dbo->fetchArray(
+            'SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione, formula_da_applicare
+            FROM mg_logiche_calcolo
+            LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
+            WHERE id_listino_origine = '.prepare($listino_origine)
+        );
+
+        $iva_articolo = $dbo->fetchArray(
+            'SELECT co_iva.percentuale
+            FROM co_iva
+            INNER JOIN mg_articoli ON mg_articoli.idiva_vendita = co_iva.id
+            WHERE mg_articoli.id = '.prepare($id_record)
+        )[0]['percentuale'];
+
+        //inserisce il listino di origine
+        $dbo->query(
+            'DELETE FROM mg_listini_articoli
+            WHERE id_articolo = '.prepare($id_record).'
+            AND id_listino = '.prepare($listino_origine)
+        );
+
+        //insert into mg_listini_articoli
+        $dbo->insert('mg_listini_articoli', [
+            'id_articolo' => $id_record,
+            'id_listino' => $listino_origine,
+            'data_scadenza' => '2099-12-31',
+            'prezzo_unitario' => $prezzo_di_partenza,
+            'prezzo_unitario_ivato' => $prezzo_di_partenza * (1 + ($iva_articolo / 100)),
+            'sconto_percentuale' => 0,
+            'dir' => 'uscita'
+        ]);
+
+        //inserisce i listini di destinazione o prezzo di vendita
+        foreach ($logiche as $logica) {
+            $prezzo = $prezzo_di_partenza * (1 + ($logica['formula_da_applicare'] / 100));
+
+            if ($logica['id_listino_destinazione'] == 0) { //caso prezzo di vendita
+                $prezzo_vendita = $prezzo;
+            } else {
+                $dbo->query(
+                    'DELETE FROM mg_listini_articoli
+                    WHERE id_articolo = '.prepare($id_record).'
+                    AND id_listino = '.prepare($logica['id_listino_destinazione'])
+                );
+
+                //insert into mg_listini_articoli
+                $dbo->insert('mg_listini_articoli', [
+                    'id_articolo' => $id_record,
+                    'id_listino' => $logica['id_listino_destinazione'],
+                    'data_scadenza' => '2099-12-31',
+                    'prezzo_unitario' => $prezzo,
+                    'prezzo_unitario_ivato' => $prezzo * (1 + ($iva_articolo / 100)),
+                    'sconto_percentuale' => 0,
+                    'dir' => 'uscita'
+                ]);
+            }
+        }
 
         // Inserisco l'articolo e avviso se esiste un altro articolo con stesso codice.
         $numero_codice = Articolo::where([
@@ -149,7 +212,7 @@ switch (post('op')) {
         $articolo->setMinimoVendita(post('minimo_vendita'), post('idiva_vendita'));
 
         if (empty(post('coefficiente'))) {
-            $articolo->setPrezzoVendita(post('prezzo_vendita'), post('idiva_vendita'));
+            $articolo->setPrezzoVendita($prezzo_vendita, post('idiva_vendita'));
         }
 
         $componente = post('componente_filename');

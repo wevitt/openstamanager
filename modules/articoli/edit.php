@@ -306,6 +306,99 @@ echo '
                     </div>
                 </div>
             </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <?php echo tr('Logiche di calcolo'); ?>
+                    </h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="clearfix"></div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <?php
+                                $queryListiniOrigine = '
+                                    SELECT id_listino_origine as id, mg_listini.nome as descrizione, prezzo_unitario
+                                    FROM mg_logiche_calcolo
+                                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
+                                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine
+                                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                                    GROUP BY id_listino_origine';
+
+                                $listini_origine = $dbo->fetchArray($queryListiniOrigine);
+
+                                $queryLogiche = '
+                                    SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione,
+                                    formula_da_applicare, prezzo_unitario, prezzo_vendita
+                                    FROM mg_logiche_calcolo
+                                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
+                                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_destinazione
+                                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                                    LEFT JOIN mg_articoli on mg_articoli.id = '.prepare($id_record);
+
+                                $logiche = $dbo->fetchArray($queryLogiche);
+
+                                $prezzo_listino_origine = 0;
+
+                                if (count($listini_origine) == 1) {
+                                    $prezzo_listino_origine = $listini_origine[0]['prezzo_unitario'];
+                                }
+
+                            ?>
+
+                            <div class="hidden" id="listini-origine">
+                                <?php echo json_encode($listini_origine); ?>
+                            </div>
+                            <div class="hidden" id="logiche">
+                                <?php echo json_encode($logiche); ?>
+                            </div>
+
+                            <?php if (count($listini_origine) > 0) { ?>
+                                <?php if (count($listini_origine) > 1) { ?>
+                                    {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
+                                <?php } ?>
+                                {[ "type": "number", "label": "<? echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
+
+                                <!-- crea tabella per logiche di calcolo -->
+                                <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th><?php echo tr('Listino di destinazione') ?></th>
+                                            <th><?php echo tr('Operazione') ?></th>
+                                            <th><?php echo tr('Valore') ?></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <?php
+                                            if (count($listini_origine) == 1) {
+                                                foreach ($logiche as $logica) {
+                                                    $descrizione = $logica['descrizione_destinazione'];
+                                                    $prezzo = $logica['prezzo_unitario'];
+                                                    //if descrizione is null
+                                                    if (empty($descrizione)) {
+                                                        $descrizione = tr('Prezzo di vendita');
+                                                        $prezzo = $logica['prezzo_vendita'];
+                                                    }
+                                                    echo '
+                                                    <tr>
+                                                        <td>'.$descrizione.'</td>
+                                                        <td>'.$logica['formula_da_applicare'].'%</td>
+                                                        <td>'.$prezzo.' €</td>
+                                                    </tr>';
+                                                }
+                                            }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -510,5 +603,73 @@ $(document).ready(function(){
     $("#prezziacquisto").load("<?php echo base_path(); ?>/ajax_complete.php?module=Articoli&op=getprezziacquisto&idarticolo="+ <?php echo $id_record; ?> + "&limit=20");
 
     $("#prezzivendita").load("<?php echo base_path(); ?>/ajax_complete.php?module=Articoli&op=getprezzivendita&idarticolo="+ <?php echo $id_record; ?> + "&limit=20");
+
+
+    //LOGICHE DI CALCOLO
+    $('#edit-form').on('change', '#listino_di_origine', function(){
+        //get value
+        var id_listino_di_origine = $(this).val();
+
+        var tbody = $('#tbl-logiche tbody');
+        //clear tbody
+        tbody.html('');
+
+        var logiche = JSON.parse($('#logiche').html());
+        var listiniOrigine = JSON.parse($('#listini-origine').html());
+
+        //foreach listiniOrigine
+        $.each(listiniOrigine, function (i, listinoOrigine) {
+            if (listinoOrigine.id == id_listino_di_origine) {
+                $('#prezzo_di_partenza').val(parseFloat(listinoOrigine.prezzo_unitario).toFixed(4));
+            }
+        });
+
+        //foreach logiche
+        $.each(logiche, function (i, logica) {
+            if (logica.id_listino_origine == id_listino_di_origine) {
+                descrizione_destinazione = logica.descrizione_destinazione;
+                prezzo = logica.prezzo_unitario;
+                if (descrizione_destinazione == null) {
+                    descrizione_destinazione= 'Prezzo di vendita';
+                    prezzo = logica.prezzo_vendita;
+
+                }
+
+                if (prezzo == null) {
+                    prezzo = 0;
+                }
+
+                tbody.append(
+                    '<tr>' +
+                        '<td>' + descrizione_destinazione + '</td>' +
+                        '<td>' + logica.formula_da_applicare + '%</td>' +
+                        '<td>' + parseFloat(prezzo).toFixed(4) + ' €</td>' +
+                    '</tr>'
+                );
+            }
+        });
+    })
+
+    $('#edit-form').on('keyup', '#prezzo_di_partenza', function(){
+        var prezzo_di_partenza = $(this).val();
+        prezzo_di_partenza = parseFloat(prezzo_di_partenza);
+
+        var tbody = $('#tbl-logiche tbody');
+
+        //foreach tr
+        tbody.find('tr').each(function (i) {
+            if (isNaN(prezzo_di_partenza)) {
+                $(this).find('td').eq(2).text('0 €');
+            } else {
+                var calcolo = $(this).find('td').eq(1);
+                calcolo = parseFloat(calcolo.text().replace('%', ''));
+
+                var prezzo = prezzo_di_partenza * (1 + (calcolo / 100));
+
+                $(this).find('td').eq(2).text(prezzo.toFixed(2) + ' €');
+            }
+        });
+    });
+    //FINE LOGICHE DI CALCOLO
 });
 </script>

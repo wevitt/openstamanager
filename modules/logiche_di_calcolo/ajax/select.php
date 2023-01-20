@@ -24,4 +24,12 @@ switch ($resource) {
         $query = 'SELECT id, nome as descrizione FROM mg_listini WHERE attivo = 1';
 
         break;
+
+    case 'listini-logiche-calcolo-destinazione':
+        $query = '
+            SELECT id, nome as descrizione FROM mg_listini WHERE attivo = 1
+            UNION
+            SELECT "0" as id, "prezzo vendita standard" as descrizione';
+
+        break;
 }
