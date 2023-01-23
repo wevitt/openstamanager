@@ -355,10 +355,15 @@ echo '
                             <div class="hidden" id="logiche">
                                 <?php echo json_encode($logiche); ?>
                             </div>
+                            <div class="hidden" id="input-template">
+                                {[ "type": "number", "id": "", "name": "", "value": "", "icon-after": "<?php echo currency(); ?>"]}
+                            </div>
 
                             <?php if (count($listini_origine) > 0) { ?>
                                 <?php if (count($listini_origine) > 1) { ?>
                                     {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
+                                <?php } else { ?>
+                                    {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
                                 <?php } ?>
                                 {[ "type": "number", "label": "<? echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
 
@@ -383,11 +388,16 @@ echo '
                                                         $descrizione = tr('Prezzo di vendita');
                                                         $prezzo = $logica['prezzo_vendita'];
                                                     }
+                                                    if (empty($prezzo)) {
+                                                        $prezzo = 0;
+                                                    }
                                                     echo '
                                                     <tr>
                                                         <td>'.$descrizione.'</td>
                                                         <td>'.$logica['formula_da_applicare'].'%</td>
-                                                        <td>'.$prezzo.' €</td>
+                                                        <td>
+                                                            {[ "type": "number", "id": "listino[' . $logica['id_listino_destinazione'] . ']", "name": "listino[' . $logica['id_listino_destinazione'] . ']", "value": "' . number_format($prezzo, 4) . '", "icon-after": "' . currency() . '"]}
+                                                        </td>
                                                     </tr>';
                                                 }
                                             }
@@ -624,6 +634,8 @@ $(document).ready(function(){
             }
         });
 
+        var $inputTemplate = $('#input-template');
+
         //foreach logiche
         $.each(logiche, function (i, logica) {
             if (logica.id_listino_origine == id_listino_di_origine) {
@@ -639,11 +651,17 @@ $(document).ready(function(){
                     prezzo = 0;
                 }
 
+                $inputTemplate.find('input').attr('name', 'listino[' + logica.id_listino_destinazione + ']');
+                $inputTemplate.find('input').attr('id', 'listino[' + logica.id_listino_destinazione + ']');
+                $inputTemplate.find('input').attr('value', parseFloat(prezzo).toFixed(4));
+
                 tbody.append(
                     '<tr>' +
                         '<td>' + descrizione_destinazione + '</td>' +
                         '<td>' + logica.formula_da_applicare + '%</td>' +
-                        '<td>' + parseFloat(prezzo).toFixed(4) + ' €</td>' +
+                        '<td>' +
+                            $inputTemplate.html() +
+                        '</td>' +
                     '</tr>'
                 );
             }
@@ -652,7 +670,8 @@ $(document).ready(function(){
 
     $('#edit-form').on('keyup', '#prezzo_di_partenza', function(){
         var prezzo_di_partenza = $(this).val();
-        prezzo_di_partenza = parseFloat(prezzo_di_partenza);
+        prezzo_di_partenza = prezzo_di_partenza.replace(/\./g, '');
+        prezzo_di_partenza = prezzo_di_partenza.replace(',', '.');
 
         var tbody = $('#tbl-logiche tbody');
 
@@ -666,7 +685,7 @@ $(document).ready(function(){
 
                 var prezzo = prezzo_di_partenza * (1 + (calcolo / 100));
 
-                $(this).find('td').eq(2).text(prezzo.toFixed(2) + ' €');
+                $(this).find('td').eq(2).find('input').val(prezzo.toFixed(4));
             }
         });
     });

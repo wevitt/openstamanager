@@ -25,13 +25,20 @@ switch (post('op')) {
         $listino_di_destinazione = post('listino_di_destinazione');
         $formula_da_applicare = post('formula_da_applicare');
 
-        //insert into mg_logiche di calcolo
-        $dbo->query(
-            'INSERT INTO `mg_logiche_calcolo` (`id_listino_origine`, `id_listino_destinazione`, `formula_da_applicare`)
-            VALUES ('.prepare($listino_di_origine).', '.prepare($listino_di_destinazione).', '.prepare($formula_da_applicare).')'
-        );
+        //controllo se esiste già una logica di calcolo per il listino di origine e di destinazione
+        $rs = $dbo->fetchArray('SELECT * FROM `mg_logiche_calcolo` WHERE `id_listino_origine`='.prepare($listino_di_origine).' AND `id_listino_destinazione`='.prepare($listino_di_destinazione));
+        if (!empty($rs)) {
+            flash()->error(tr('Esiste gia\' una logica di calcolo per questo listino di origine e di destinazione!'));
+        } else {
+            error_log("Aggiunta nuova logica di calcolo!");
+            //insert into mg_logiche di calcolo
+            $dbo->query(
+                'INSERT INTO `mg_logiche_calcolo` (`id_listino_origine`, `id_listino_destinazione`, `formula_da_applicare`)
+                VALUES ('.prepare($listino_di_origine).', '.prepare($listino_di_destinazione).', '.prepare($formula_da_applicare).')'
+            );
 
-        flash()->info(tr('Aggiunta nuova logica di calcolo!'));
+            flash()->info(tr('Aggiunta nuova logica di calcolo!'));
+        }
 
         break;
 

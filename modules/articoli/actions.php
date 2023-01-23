@@ -115,13 +115,7 @@ switch (post('op')) {
         //logiche di calcolo
         $listino_origine = post('listino_origine');
         $prezzo_di_partenza = post('prezzo_di_partenza');
-
-        $logiche = $dbo->fetchArray(
-            'SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione, formula_da_applicare
-            FROM mg_logiche_calcolo
-            LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
-            WHERE id_listino_origine = '.prepare($listino_origine)
-        );
+        $listini_di_destinazione = post('listino');
 
         $iva_articolo = $dbo->fetchArray(
             'SELECT co_iva.percentuale
@@ -149,22 +143,23 @@ switch (post('op')) {
         ]);
 
         //inserisce i listini di destinazione o prezzo di vendita
-        foreach ($logiche as $logica) {
-            $prezzo = $prezzo_di_partenza * (1 + ($logica['formula_da_applicare'] / 100));
+        foreach ($listini_di_destinazione as $id_listino => $prezzo) {
+            error_log('prezzo ' . $id_listino . ' => ' . $prezzo);
+            $prezzo = floatval($prezzo);
 
-            if ($logica['id_listino_destinazione'] == 0) { //caso prezzo di vendita
+            if ($id_listino == 0) { //caso prezzo di vendita
                 $prezzo_vendita = $prezzo;
             } else {
                 $dbo->query(
                     'DELETE FROM mg_listini_articoli
                     WHERE id_articolo = '.prepare($id_record).'
-                    AND id_listino = '.prepare($logica['id_listino_destinazione'])
+                    AND id_listino = '.prepare($id_listino)
                 );
 
                 //insert into mg_listini_articoli
                 $dbo->insert('mg_listini_articoli', [
                     'id_articolo' => $id_record,
-                    'id_listino' => $logica['id_listino_destinazione'],
+                    'id_listino' => $id_listino,
                     'data_scadenza' => '2099-12-31',
                     'prezzo_unitario' => $prezzo,
                     'prezzo_unitario_ivato' => $prezzo * (1 + ($iva_articolo / 100)),
