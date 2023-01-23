@@ -114,6 +114,11 @@ switch (post('op')) {
             $dbo->query('DELETE FROM an_anagrafiche_agenti WHERE idanagrafica='.prepare($id_record).' AND idagente='.prepare(post('idagente')));
         }
 
+        if (!empty(post('id_banca_cliente'))) {
+            $dbo->query('UPDATE co_banche SET predefined = 0 WHERE id_anagrafica=' . prepare($id_record));
+            $dbo->query('UPDATE co_banche SET predefined = 1 WHERE id=' . post('id_banca_cliente') . ' AND id_anagrafica=' . prepare($id_record));
+        }
+
         flash()->info(tr("Informazioni per l'anagrafica _NAME_ salvate correttamente!", [
             '_NAME_' => $anagrafica->ragione_sociale,
         ]));

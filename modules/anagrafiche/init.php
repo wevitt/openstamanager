@@ -41,6 +41,8 @@ if (isset($id_record)) {
         $record['lng'] = floatval($record['lng']);
     }
 
+    $record['id_banca_cliente'] = $dbo->fetchOne('SELECT id FROM co_banche WHERE id_anagrafica='.prepare($id_record).' AND predefined=1')['id'];
+
     $tipi_anagrafica = $dbo->fetchArray('SELECT an_tipianagrafiche.idtipoanagrafica FROM an_tipianagrafiche INNER JOIN an_tipianagrafiche_anagrafiche ON an_tipianagrafiche.idtipoanagrafica=an_tipianagrafiche_anagrafiche.idtipoanagrafica WHERE idanagrafica='.prepare($id_record));
     $tipi_anagrafica = array_column($tipi_anagrafica, 'idtipoanagrafica');
 }
