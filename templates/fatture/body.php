@@ -27,8 +27,8 @@ $v_totale = [];
 $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
 // Creazione righe fantasma
-$autofill = new \Util\Autofill(6, 40);
-$rows_per_page = $fattura_accompagnatoria ? 13 : 18;
+$autofill = new \Util\Autofill(6, 40, 24);
+$rows_per_page = $fattura_accompagnatoria ? 10 : 11;
 if (!empty($options['last-page-footer'])) {
     $rows_per_page += 7;
 }
