@@ -106,7 +106,8 @@ class EmailNotification extends PHPMailer implements NotificationInterface
         $this->From = $account['from_address'];
         $this->FromName = $account['from_name'];
 
-        if (!empty($account['force_reply_to']) && $account['force_reply_to'] == 1) {
+        $config = \App::getConfig();
+        if (isset($config['force_reply_to_sender']) && $config['force_reply_to_sender'] === true) {
             $user = \Auth::user();
             $this->FromName = $user->username;
             $this->AddReplyTo($user->email, $user->nome);

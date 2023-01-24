@@ -21,6 +21,7 @@ use Modules\Emails\Template;
 
 include_once __DIR__.'/core.php';
 
+$config = \App::getConfig();
 $template = Template::find(get('id'));
 $module = $template->module;
 $smtp = $template->account;
@@ -35,7 +36,7 @@ $subject = $module->replacePlaceholders($id_record, $template['subject'], $place
 $emails = [];
 if ($module->replacePlaceholders($id_record, '{email}')) {
     $emails = explode(';', $module->replacePlaceholders($id_record, '{email}', $placeholder_options));
-} 
+}
 
 $id_anagrafica = $module->replacePlaceholders($id_record, '{id_anagrafica}', $placeholder_options);
 
@@ -58,7 +59,7 @@ if ($template->name  == 'Notifica intervento'){
         $anagrafica = $dbo->table('an_anagrafiche')->where('idanagrafica', $tecnico['id_tecnico'])->where('email', '!=', '')->first();
         if (!in_array($anagrafica->email, $emails)) {
             $emails[] = $anagrafica->email;
-        }   
+        }
     }
 }
 
@@ -94,9 +95,18 @@ echo '
 	<input type="hidden" name="id_module" value="'.$id_module.'">
 	<input type="hidden" name="id_record" value="'.$id_record.'">
 
-    <input type="hidden" name="template" value="'.$template['id'].'">
+    <input type="hidden" name="template" value="'.$template['id'].'">';
 
-    <p><b>'.tr('Mittente').'</b>: '.$smtp['from_name'].' &lt;'.$smtp['from_address'].'&gt;</p>';
+if (!empty($config['force_reply_to_sender']) && $config['force_reply_to_sender'] === true) {
+    $user = \Auth::user();
+    echo '<p><b>' . tr('Mittente') . '</b>: ';
+    echo $user->username . ' &lt;' . $smtp['from_address'] . '&gt;</p>';
+    echo '<p><b>' . tr('Indirizzo per le risposte') . '</b>: ';
+    echo ' &lt;' . $user->email . '&gt;</p>';
+} else {
+    echo '<p><b>' . tr('Mittente') . '</b>: ';
+    echo $smtp['from_name'] . ' &lt;' . $smtp['from_address'] . '&gt;</p>';
+}
 
 if (!empty($template['cc'])) {
     echo '
