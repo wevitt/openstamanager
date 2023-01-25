@@ -807,6 +807,14 @@ function impostaRiferimento(id_riga, documento, riga) {
 
     if ($("#iva" + id_riga + " option[value]").length === 1) {
         $("#iva" + id_riga).val($("#iva" + id_riga + " option[value]").val()).change();
+    } else if (riga_fe.data("iva_percentuale") == "22.00") {
+        $("#iva" + id_riga).val(171).change();
+    } else if (riga_fe.data("iva_percentuale") == "10.00") {
+        $("#iva" + id_riga).val(167).change();
+    } else if (riga_fe.data("iva_percentuale") == "5.00") {
+        $("#iva" + id_riga).val(164).change();
+    } else if (riga_fe.data("iva_percentuale") == "4.00") {
+        $("#iva" + id_riga).val(163).change();
     }
 
     $("#riferimento_" + id_riga).html(documento.descrizione ? documento.descrizione : "");
