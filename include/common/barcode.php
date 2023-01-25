@@ -33,7 +33,7 @@ echo '
     </div>
 </div>
 
-<div class="alert alert-info hidden" id="articolo-missing">
+<div class="alert alert-error hidden" id="articolo-missing">
     <i class="fa fa-exclamation-circle"></i> '.tr('Nessuna corrispondenza trovata!').'
 </div>
 
