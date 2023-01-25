@@ -423,6 +423,11 @@ if (!empty($righe)) {
                 if (empty($id_articolo)) {
                     $id_articolo = $database->fetchOne('SELECT id FROM mg_articoli WHERE REPLACE(codice, " ", "") = '.prepare($codice_principale))['id'];
                 }
+                // se non trovo l'articolo con il codice principale, provo a cercarlo eliminando tutti i caratteri non alfanumerici sia dalla stringa che da sql
+                if (empty($id_articolo)) {
+                    $codice_principale = preg_replace('/[^A-Za-z0-9]/', '', $codice_principale);
+                    $id_articolo = $database->fetchOne('SELECT id FROM mg_articoli WHERE REGEXP_REPLACE(codice, "[^A-Za-z0-9]", "") = '.prepare($codice_principale))['id'];
+                }
             }
 
             $idconto_acquisto = $database->fetchOne('SELECT idconto_acquisto FROM mg_articoli WHERE id = '.prepare($id_articolo))['idconto_acquisto'];
