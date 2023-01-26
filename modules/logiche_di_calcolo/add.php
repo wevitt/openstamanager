@@ -36,7 +36,7 @@ include_once __DIR__.'/../../core.php';
             {[ "type": "select", "label": "<?php echo tr('Listino di destinazione'); ?>", "name": "listino_di_destinazione", "required": 1, "ajax-source": "listini-logiche-calcolo-destinazione", "value": "" ]}
 		</div>
         <div class="col-md-6">
-            {[ "type": "number", "label": "<?php echo tr('Formula da applicare'); ?>", "name": "formula_da_applicare", "required": 1, "value": "" ]}
+            {[ "type": "number", "label": "<?php echo tr('Formula da applicare'); ?>", "name": "formula_da_applicare", "required": 1, "value": "", "icon-after": "%" ]}
 		</div>
 	</div>
 

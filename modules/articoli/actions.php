@@ -114,58 +114,60 @@ switch (post('op')) {
 
         //logiche di calcolo
         $listino_origine = post('listino_origine');
-        $prezzo_di_partenza = post('prezzo_di_partenza');
-        $listini_di_destinazione = post('listino');
 
-        $iva_articolo = $dbo->fetchArray(
-            'SELECT co_iva.percentuale
-            FROM co_iva
-            INNER JOIN mg_articoli ON mg_articoli.idiva_vendita = co_iva.id
-            WHERE mg_articoli.id = '.prepare($id_record)
-        )[0]['percentuale'];
+        if (!empty($listino_origine)) {
+            $prezzo_di_partenza = post('prezzo_di_partenza');
+            $listini_di_destinazione = post('listino');
 
-        //inserisce il listino di origine
-        $dbo->query(
-            'DELETE FROM mg_listini_articoli
-            WHERE id_articolo = '.prepare($id_record).'
-            AND id_listino = '.prepare($listino_origine)
-        );
+            $iva_articolo = $dbo->fetchArray(
+                'SELECT co_iva.percentuale
+                FROM co_iva
+                INNER JOIN mg_articoli ON mg_articoli.idiva_vendita = co_iva.id
+                WHERE mg_articoli.id = '.prepare($id_record)
+            )[0]['percentuale'];
 
-        //insert into mg_listini_articoli
-        $dbo->insert('mg_listini_articoli', [
-            'id_articolo' => $id_record,
-            'id_listino' => $listino_origine,
-            'data_scadenza' => '2099-12-31',
-            'prezzo_unitario' => $prezzo_di_partenza,
-            'prezzo_unitario_ivato' => $prezzo_di_partenza * (1 + ($iva_articolo / 100)),
-            'sconto_percentuale' => 0,
-            'dir' => 'uscita'
-        ]);
+            //inserisce il listino di origine
+            $dbo->query(
+                'DELETE FROM mg_listini_articoli
+                WHERE id_articolo = '.prepare($id_record).'
+                AND id_listino = '.prepare($listino_origine)
+            );
 
-        //inserisce i listini di destinazione o prezzo di vendita
-        foreach ($listini_di_destinazione as $id_listino => $prezzo) {
-            error_log('prezzo ' . $id_listino . ' => ' . $prezzo);
-            $prezzo = floatval($prezzo);
+            //insert into mg_listini_articoli
+            $dbo->insert('mg_listini_articoli', [
+                'id_articolo' => $id_record,
+                'id_listino' => $listino_origine,
+                'data_scadenza' => '2099-12-31',
+                'prezzo_unitario' => $prezzo_di_partenza,
+                'prezzo_unitario_ivato' => $prezzo_di_partenza * (1 + ($iva_articolo / 100)),
+                'sconto_percentuale' => 0,
+                'dir' => 'uscita'
+            ]);
 
-            if ($id_listino == 0) { //caso prezzo di vendita
-                $prezzo_vendita = $prezzo;
-            } else {
-                $dbo->query(
-                    'DELETE FROM mg_listini_articoli
-                    WHERE id_articolo = '.prepare($id_record).'
-                    AND id_listino = '.prepare($id_listino)
-                );
+            //inserisce i listini di destinazione o prezzo di vendita
+            foreach ($listini_di_destinazione as $id_listino => $prezzo) {
+                $prezzo = floatval($prezzo);
 
-                //insert into mg_listini_articoli
-                $dbo->insert('mg_listini_articoli', [
-                    'id_articolo' => $id_record,
-                    'id_listino' => $id_listino,
-                    'data_scadenza' => '2099-12-31',
-                    'prezzo_unitario' => $prezzo,
-                    'prezzo_unitario_ivato' => $prezzo * (1 + ($iva_articolo / 100)),
-                    'sconto_percentuale' => 0,
-                    'dir' => 'uscita'
-                ]);
+                if ($id_listino == 0) { //caso prezzo di vendita
+                    $prezzo_vendita = $prezzo;
+                } else {
+                    $dbo->query(
+                        'DELETE FROM mg_listini_articoli
+                        WHERE id_articolo = '.prepare($id_record).'
+                        AND id_listino = '.prepare($id_listino)
+                    );
+
+                    //insert into mg_listini_articoli
+                    $dbo->insert('mg_listini_articoli', [
+                        'id_articolo' => $id_record,
+                        'id_listino' => $id_listino,
+                        'data_scadenza' => '2099-12-31',
+                        'prezzo_unitario' => $prezzo,
+                        'prezzo_unitario_ivato' => $prezzo * (1 + ($iva_articolo / 100)),
+                        'sconto_percentuale' => 0,
+                        'dir' => 'uscita'
+                    ]);
+                }
             }
         }
 

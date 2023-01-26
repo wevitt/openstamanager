@@ -39,11 +39,11 @@ $module = Modules::get($id_module);
                 </div>
 
                 <div class="col-md-6">
-                    {[ "type": "text", "label": "<?php echo tr('Listino di destinazione'); ?>", "name": "listino_di_destinazione", "readonly":1, "value": "<?php echo $record['listino_destinazione']; ?>" ]}
+                    {[ "type": "text", "label": "<?php echo tr('Listino di destinazione'); ?>", "name": "listino_di_destinazione", "readonly":1, "value": "<?php echo $record['listino_destinazione'] ?? tr('Prezzo di vendita'); ?>" ]}
                 </div>
 
                 <div class="col-md-6">
-                    {[ "type": "number", "label": "<?php echo tr('Formula da applicare'); ?>", "name": "formula_da_applicare", "required": 1, "value": "<?php echo $record['formula_da_applicare']; ?>" ]}
+                    {[ "type": "number", "label": "<?php echo tr('Formula da applicare'); ?>", "name": "formula_da_applicare", "required": 1, "value": "<?php echo $record['formula_da_applicare']; ?>", "icon-after": "%" ]}
                 </div>
             </div>
         </div>

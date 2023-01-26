@@ -307,108 +307,116 @@ echo '
                 </div>
             </div>
 
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        <?php echo tr('Logiche di calcolo'); ?>
-                    </h3>
-                </div>
+            <?php
+                $queryListiniOrigine = '
+                    SELECT id_listino_origine as id, mg_listini.nome as descrizione, prezzo_unitario
+                    FROM mg_logiche_calcolo
+                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
+                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine
+                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                    GROUP BY id_listino_origine';
 
-                <div class="panel-body">
-                    <div class="clearfix"></div>
+                $listini_origine = $dbo->fetchArray($queryListiniOrigine);
+            ?>
+            <?php if ($listini_origine) { ?>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <?php echo tr('Logiche di calcolo'); ?>
+                        </h3>
+                    </div>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <?php
-                                $queryListiniOrigine = '
-                                    SELECT id_listino_origine as id, mg_listini.nome as descrizione, prezzo_unitario
-                                    FROM mg_logiche_calcolo
-                                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
-                                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine
-                                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
-                                    GROUP BY id_listino_origine';
+                    <div class="panel-body">
+                        <div class="clearfix"></div>
 
-                                $listini_origine = $dbo->fetchArray($queryListiniOrigine);
+                        <div class="row">
+                            <div class="col-md-12">
+                                <?php
 
-                                $queryLogiche = '
-                                    SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione,
-                                    formula_da_applicare, prezzo_unitario, prezzo_vendita
-                                    FROM mg_logiche_calcolo
-                                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
-                                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_destinazione
-                                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
-                                    LEFT JOIN mg_articoli on mg_articoli.id = '.prepare($id_record);
 
-                                $logiche = $dbo->fetchArray($queryLogiche);
+                                    $queryLogiche = '
+                                        SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione,
+                                        formula_da_applicare, prezzo_unitario, prezzo_vendita
+                                        FROM mg_logiche_calcolo
+                                        LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
+                                        LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_destinazione
+                                        and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                                        LEFT JOIN mg_articoli on mg_articoli.id = '.prepare($id_record);
 
-                                $prezzo_listino_origine = 0;
+                                    $logiche = $dbo->fetchArray($queryLogiche);
 
-                                if (count($listini_origine) == 1) {
-                                    $prezzo_listino_origine = $listini_origine[0]['prezzo_unitario'];
-                                }
+                                    $prezzo_listino_origine = 0;
 
-                            ?>
+                                    if (count($listini_origine) == 1) {
+                                        $prezzo_listino_origine = $listini_origine[0]['prezzo_unitario'];
+                                    }
 
-                            <div class="hidden" id="listini-origine">
-                                <?php echo json_encode($listini_origine); ?>
-                            </div>
-                            <div class="hidden" id="logiche">
-                                <?php echo json_encode($logiche); ?>
-                            </div>
-                            <div class="hidden" id="input-template">
-                                {[ "type": "number", "id": "", "name": "", "value": "", "icon-after": "<?php echo currency(); ?>"]}
-                            </div>
+                                ?>
 
-                            <?php if (count($listini_origine) > 0) { ?>
-                                <?php if (count($listini_origine) > 1) { ?>
-                                    {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
-                                <?php } else { ?>
-                                    {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
-                                <?php } ?>
-                                {[ "type": "number", "label": "<? echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
+                                <div class="hidden" id="listini-origine">
+                                    <?php echo json_encode($listini_origine); ?>
+                                </div>
+                                <div class="hidden" id="logiche">
+                                    <?php echo json_encode($logiche); ?>
+                                </div>
+                                <div class="hidden" id="input-template">
+                                    {[ "type": "number", "id": "", "name": "", "value": "", "icon-after": "<?php echo currency(); ?>"]}
+                                </div>
 
-                                <!-- crea tabella per logiche di calcolo -->
-                                <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th><?php echo tr('Listino di destinazione') ?></th>
-                                            <th><?php echo tr('Operazione') ?></th>
-                                            <th><?php echo tr('Valore') ?></th>
-                                        </tr>
-                                    </thead>
+                                <?php if (count($listini_origine) > 0) { ?>
+                                    <?php if (count($listini_origine) > 1) { ?>
+                                        {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
+                                    <?php } else { ?>
+                                        {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
+                                    <?php } ?>
+                                    {[ "type": "number", "label": "<? echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
 
-                                    <tbody>
-                                        <?php
-                                            if (count($listini_origine) == 1) {
-                                                foreach ($logiche as $logica) {
-                                                    $descrizione = $logica['descrizione_destinazione'];
-                                                    $prezzo = $logica['prezzo_unitario'];
-                                                    //if descrizione is null
-                                                    if (empty($descrizione)) {
-                                                        $descrizione = tr('Prezzo di vendita');
-                                                        $prezzo = $logica['prezzo_vendita'];
+                                    <!-- crea tabella per logiche di calcolo -->
+                                    <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th><?php echo tr('Listino di destinazione') ?></th>
+                                                <th><?php echo tr('Operazione') ?></th>
+                                                <th><?php echo tr('Valore') ?></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <?php
+                                                if (count($listini_origine) == 1) {
+                                                    foreach ($logiche as $logica) {
+                                                        $descrizione = $logica['descrizione_destinazione'];
+                                                        $prezzo = $logica['prezzo_unitario'];
+                                                        //if descrizione is null
+                                                        if (empty($descrizione)) {
+                                                            $descrizione = tr('Prezzo di vendita');
+                                                            $prezzo = $logica['prezzo_vendita'];
+                                                        }
+                                                        if (empty($prezzo)) {
+                                                            $prezzo = 0;
+                                                        }
+                                                        $prezzo = str_replace('.', ',', $prezzo);
+
+
+                                                        echo '
+                                                        <tr>
+                                                            <td>'.$descrizione.'</td>
+                                                            <td>'.$logica['formula_da_applicare'].'%</td>
+                                                            <td>
+                                                                {[ "type": "number", "id": "listino[' . $logica['id_listino_destinazione'] . ']", "name": "listino[' . $logica['id_listino_destinazione'] . ']", "value": "' . $prezzo . '", "icon-after": "' . currency() . '"]}
+                                                            </td>
+                                                        </tr>';
                                                     }
-                                                    if (empty($prezzo)) {
-                                                        $prezzo = 0;
-                                                    }
-                                                    echo '
-                                                    <tr>
-                                                        <td>'.$descrizione.'</td>
-                                                        <td>'.$logica['formula_da_applicare'].'%</td>
-                                                        <td>
-                                                            {[ "type": "number", "id": "listino[' . $logica['id_listino_destinazione'] . ']", "name": "listino[' . $logica['id_listino_destinazione'] . ']", "value": "' . number_format($prezzo, 4) . '", "icon-after": "' . currency() . '"]}
-                                                        </td>
-                                                    </tr>';
                                                 }
-                                            }
-                                        ?>
-                                    </tbody>
-                                </table>
-                            <?php } ?>
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                <?php } ?>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php } ?>
         </div>
     </div>
 
