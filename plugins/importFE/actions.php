@@ -511,7 +511,8 @@ switch (filter('op')) {
                 // Ricerca di righe DDT/Ordine per stessa descrizione
                 if (empty($collegamento)) {
                     $query_descrizione = replace($query, [
-                        '|where_ddt|' => 'dt_righe_ddt.descrizione = '.prepare($riga['Descrizione']),
+                        '|where_ddt|' => 'dt_righe_ddt.descrizione LIKE '.prepare($riga['Descrizione'] . '%'),
+                        //'|where_ddt|' => 'dt_righe_ddt.descrizione = '.prepare($riga['Descrizione']),
                         '|where_ordini|' => 'or_righe_ordini.descrizione = '.prepare($riga['Descrizione']),
                     ]);
 
