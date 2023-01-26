@@ -42,7 +42,7 @@ echo '
 		</div>
 
 		<div class="col-md-4">
-			{[ "type": "text", "label": "'.tr('BIC').'", "name": "bic", "required": "1", "class": "alphanumeric-mask", "minlength": 8, "maxlength": 11, "value": "$bic$", "help": "'.$help_codice_bic.'" ]}
+			{[ "type": "text", "label": "'.tr('BIC').'", "name": "bic", "class": "alphanumeric-mask", "minlength": 8, "maxlength": 11, "value": "$bic$", "help": "'.$help_codice_bic.'" ]}
 		</div>
 	</div>
 
@@ -83,7 +83,7 @@ echo '
         iban.trigger("keyup");
     });
 
-    iban.on("keyup", function () {
+    iban.on("change", function () {
         if (!iban.isDisabled()){
             let value = iban.get();
             for (const component of components){
@@ -95,8 +95,9 @@ echo '
     });
 
     for (const component of components){
-        component.on("keyup", function () {
+        component.on("change", function () {
             let i = input(this);
+
             if (!i.isDisabled()) {
                 iban.setDisabled(i.get() !== "")
 

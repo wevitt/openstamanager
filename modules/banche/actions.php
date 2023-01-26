@@ -52,7 +52,7 @@ switch (filter('op')) {
 
         $banca->nome = post('nome');
         $banca->iban = post('iban');
-        $banca->bic = post('bic');
+        $banca->bic = post('bic') ?? 0;
 
         $banca->note = post('note');
         $banca->id_pianodeiconti3 = post('id_pianodeiconti3');
