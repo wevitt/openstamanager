@@ -562,7 +562,7 @@ if (!empty($righe)) {
                             </div>
 
                             <div class="col-md-3">
-                                {[ "type": "select", "name": "conto['.$key.']", "id": "conto-'.$key.'", "ajax-source": "conti-acquisti", "required": 1, "label": "'.tr('Conto acquisti').'", "value": "'.$idconto_acquisto.'" ]}
+                                {[ "type": "select", "name": "conto['.$key.']", "id": "conto-'.$key.'", "ajax-source": "conti-acquisti-totali", "required": 1, "label": "'.tr('Conto acquisti').'", "value": "'.$idconto_acquisto.'" ]}
                             </div>
 
                             <div class="col-md-3">
