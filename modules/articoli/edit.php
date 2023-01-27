@@ -369,7 +369,7 @@ echo '
                                     <?php } else { ?>
                                         {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
                                     <?php } ?>
-                                    {[ "type": "number", "label": "<? echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
+                                    {[ "type": "number", "label": "<?php echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
 
                                     <!-- crea tabella per logiche di calcolo -->
                                     <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
