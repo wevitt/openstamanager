@@ -16,8 +16,14 @@ class Articolo extends Article
         $documento = $this->parent;
         $data = $documento->getReferenceDate();
 
+        $date = $documento->data;
+        $date = explode(' ', $date);
+        $date = $date[0];
+        $date = explode('-', $date);
+        $date = $date[2].'/'.$date[1].'/'.$date[0];
+
         $qta_movimento = $documento->direzione == 'uscita' ? $qta : -$qta;
-        $movimento = Movimento::descrizioneMovimento($qta_movimento, $documento->direzione).' - '.$documento->getReference();
+        $movimento = Movimento::descrizioneMovimento($qta_movimento, $documento->direzione).' - Vendita al banco num. '.$documento->numero_esterno.' del '.$date;
 
         $partenza = $documento->idmagazzino;
         $arrivo = 0;

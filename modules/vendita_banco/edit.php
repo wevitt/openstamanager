@@ -27,7 +27,7 @@ echo '<form action="" method="post" role="form">
 				</div>
 
 				<div class="col-md-2">
-					{[ "type": "text", "label": "'.tr('Data e ora').'", "name": "data", "required": 1, "class": "text-center", "value": "$data$", "readonly": "1" ]}
+					{[ "type": "timestamp", "label": "'.tr('Data e ora').'", "name": "data", "readonly": "'.($is_pagato).'", "required": 1, "class": "text-center", "value": "$data$" ]}
 				</div>
 
 				<div class="col-md-2">
@@ -35,7 +35,7 @@ echo '<form action="" method="post" role="form">
 				</div>
 
 				<div class="col-md-3">
-					{[ "type": "select", "label": "'.tr('Magazzino').'", "name": "idmagazzino", "required": 1, "ajax-source": "sedi_azienda", "value": "$idmagazzino$", "readonly": "'.($is_pagato || $numero_righe != 0).'" ]}
+					{[ "type": "select", "label": "'.tr('Magazzino').'", "id": "idmagazzino", "name": "idmagazzino", "required": 1, "ajax-source": "sedi_azienda", "value": "$idmagazzino$", "readonly": "'.($is_pagato).'" ]}
 				</div>
 
 				<div class="col-md-3">';
@@ -202,7 +202,7 @@ echo '
 			data: {
 				id_module: globals.id_module,
 				id_record: globals.id_record,
-				idmagazzino : '.$documento->idmagazzino.',
+				idmagazzino : $("#idmagazzino").val(),
 				ajax: true,
                 id_anagrafica: $(\'select[name="idanagrafica"]\').val(),
 			},
@@ -239,10 +239,10 @@ echo '
                 $("#row-list").html(response);
 
                 if ($("#row-list .table tr").length > 3) {
-                    $("#idmagazzino").attr("disabled", true);
+                    //$("#idmagazzino").attr("disabled", true);
                     $("#btn-close").attr("disabled", false);
                 } else {
-                    $("#idmagazzino").attr("disabled", false);
+                    //$("#idmagazzino").attr("disabled", false);
                     $("#btn-close").prop("disabled", true);
                 }
 

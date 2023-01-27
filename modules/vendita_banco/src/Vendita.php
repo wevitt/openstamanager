@@ -122,6 +122,7 @@ class Vendita extends Document
     {
         $dbo = database();
         $descrizione = $this->getReference();
+
         $idmastrino = get_new_idmastrino();
 
         // Totali
@@ -172,7 +173,7 @@ class Vendita extends Document
             'idmastrino' => $id_mastrino,
             'data' => $data,
             'data' => $this->data,
-            'iddocumento' => 0,
+            'idvendita_banco' => $this->id,
             'id_anagrafica' => null,
             'descrizione' => $descrizione,
             'idconto' => $id_conto_controparte,
@@ -263,7 +264,7 @@ class Vendita extends Document
 
     public function getReferenceNumber()
     {
-        return $this->numero;
+        return $this->numero_esterno;
     }
 
     public function getReferenceDate()

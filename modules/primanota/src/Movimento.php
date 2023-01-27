@@ -23,6 +23,7 @@ use Common\SimpleModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Fatture\Fattura;
 use Modules\Scadenzario\Scadenza;
+use Modules\VenditaBanco\Vendita;
 
 class Movimento extends Model
 {
@@ -36,7 +37,7 @@ class Movimento extends Model
         'dare',
     ];
 
-    public static function build(Mastrino $mastrino, $id_conto, Fattura $documento = null, Scadenza $scadenza = null)
+    public static function build(Mastrino $mastrino, $id_conto, Fattura $documento = null, Scadenza $scadenza = null, Vendita $vendita = null, $primanota = null)
     {
         $model = new static();
 
@@ -58,6 +59,14 @@ class Movimento extends Model
         if (!empty($documento)) {
             $model->id_anagrafica = $documento->idanagrafica;
             $model->iddocumento = $documento->id;
+        }
+        if (!empty($vendita)) {
+            $model->id_anagrafica = $vendita->id_anagrafica;
+            $model->idvendita_banco = $vendita->id;
+
+            if (!empty($primanota)) {
+                $model->primanota = $primanota;
+            }
         }
 
         // Associazione alla scadenza indicata

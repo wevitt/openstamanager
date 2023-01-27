@@ -27,7 +27,9 @@ function renderRiga($id, $riga)
     echo '
     <tr>
         <input type="hidden" name="id_documento['.$id.']" value="'.$riga['iddocumento'].'">
+        <input type="hidden" name="idvendita_banco['.$id.']" value="'.$riga['idvendita_banco'].'">
         <input type="hidden" name="id_scadenza['.$id.']" value="'.$riga['id_scadenza'].'">
+        <input type="hidden" name="primanota['.$id.']" value="'.$riga['primanota'].'">
 
         <td>
             {[ "type": "select", "name": "idconto['.$id.']", "id": "conto'.$id.'", "value": "'.($riga['id_conto'] ?: '').'", "ajax-source": "conti", "icon-after": '.json_encode('<button type="button" onclick="visualizzaMovimenti(this)" class="btn btn-info '.($riga['id_conto'] ? '' : 'disabled').'"><i class="fa fa-eye"></i></button>').' ]}
@@ -53,10 +55,11 @@ function renderTabella($nome, $righe)
 
     $prima_riga = $righe->first();
     $id_documento = $prima_riga ? $prima_riga['iddocumento'] : null;
+    $idvendita_banco = $prima_riga ? $prima_riga['idvendita_banco'] : null;
     $id_scadenza = $prima_riga ? $prima_riga['id_scadenza'] : null;
 
     echo '
-<div class="raggruppamento_primanota" data-id_scadenza="'.$id_scadenza.'" data-id_documento="'.$id_documento.'">
+<div class="raggruppamento_primanota" data-id_scadenza="'.$id_scadenza.'" data-id_documento="'.$id_documento.'" data-idvendita_banco="'.$idvendita_banco.'">
     <button class="btn btn-info btn-xs pull-right" type="button" onclick="addRiga(this)">
         <i class="fa fa-plus"></i> '.tr('Aggiungi riga').'
     </button>
@@ -145,7 +148,7 @@ foreach ($scadenze as $id_scadenza => $righe) {
 
 // Elenco generale
 $movimenti_generali = $movimenti
-    ->where('iddocumento', '=', '0')
+    ->whereNull('iddocumento')
     ->where('id_scadenza', '=', '');
 if ($movimenti_generali->isEmpty()) {
     $movimenti_generali->push([]);

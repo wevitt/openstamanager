@@ -23,6 +23,7 @@ use Modules\Fatture\Fattura;
 use Modules\PrimaNota\Mastrino;
 use Modules\PrimaNota\Movimento;
 use Modules\Scadenzario\Scadenza;
+use Modules\VenditaBanco\Vendita;
 
 switch (post('op')) {
     case 'add':
@@ -101,13 +102,20 @@ switch (post('op')) {
         foreach ($conti as $i => $id_conto) {
             $id_scadenza = post('id_scadenza')[$i];
             $id_documento = post('id_documento')[$i];
+            $id_vendita_banco = post('idvendita_banco')[$i];
             $dare = post('dare')[$i];
             $avere = post('avere')[$i];
 
             $scadenza = Scadenza::find($id_scadenza);
             $fattura = Fattura::find($id_documento);
+            $venditabanco = Vendita::find($id_vendita_banco);
 
-            $movimento = Movimento::build($mastrino, $id_conto, $fattura, $scadenza);
+            $primanota = null;
+            if (!empty($venditabanco)) {
+                $primanota = post('primanota')[$i];
+            }
+
+            $movimento = Movimento::build($mastrino, $id_conto, $fattura, $scadenza, $venditabanco, $primanota);
             $movimento->setTotale($avere, $dare);
             $movimento->save();
         }

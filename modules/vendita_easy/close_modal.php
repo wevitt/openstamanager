@@ -45,7 +45,7 @@ $tab_vendite = '
                                 <tr>
                                     <td>
                                         '.tr('Vendita al banco num. _NUMERO_ del _DATA_', [
-                                            '_NUMERO_' => $dettaglio['numero'],
+                                            '_NUMERO_' => $dettaglio['numero_esterno'],
                                             '_DATA_' => Translator::dateToLocale($dettaglio['data']),
                                         ]).'
                                     </td>

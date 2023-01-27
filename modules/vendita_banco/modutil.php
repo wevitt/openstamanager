@@ -13,21 +13,21 @@ function add_movimento_magazzino_venditabanco($idarticolo, $qta, $movimento = ''
         if ($qta >= 0) {
             // Vendita da banco
             if ($idvendita != '0') {
-                $rs = $dbo->fetchArray("SELECT numero, DATE_FORMAT(data, '%d/%m/%Y ore %H:%i' ) as data FROM vb_venditabanco WHERE id='".$idvendita."'");
-                $movimento = 'Carico magazzino - Vendita al banco num. '.$rs[0]['numero'].' del '.$rs[0]['data'];
+                $rs = $dbo->fetchArray("SELECT numero_esterno, numero, DATE_FORMAT(data, '%d/%m/%Y ore %H:%i' ) as data FROM vb_venditabanco WHERE id='".$idvendita."'");
+                $movimento = 'Carico magazzino - Vendita al banco num. '.$rs[0]['numero_esterno'].' del '.$rs[0]['data'];
             }
         }
-    
+
         // Operazioni di scarico
         elseif ($qta < 0) {
             // Vendita da banco
             if ($idvendita != '0') {
-                $rs = $dbo->fetchArray("SELECT numero, DATE_FORMAT(data, '%d/%m/%Y ore %H:%i' ) as data FROM vb_venditabanco WHERE id='".$idvendita."'");
-                $movimento = 'Scarico magazzino - Vendita al banco num. '.$rs[0]['numero'].' del '.$rs[0]['data'];
+                $rs = $dbo->fetchArray("SELECT numero_esterno, numero, DATE_FORMAT(data, '%d/%m/%Y ore %H:%i' ) as data FROM vb_venditabanco WHERE id='".$idvendita."'");
+                $movimento = 'Scarico magazzino - Vendita al banco num. '.$rs[0]['numero_esterno'].' del '.$rs[0]['data'];
             }
         }
         $reference_type = 'Modules\VenditaBanco\Vendita';
-    
+
         $dbo->query('INSERT INTO mg_movimenti( idarticolo, qta, movimento, reference_id, reference_type, data, idsede ) VALUES( '.prepare($idarticolo).', '.prepare($qta).', '.prepare($movimento).',  '.prepare($idvendita).', '.prepare($reference_type).', "'.date('Y-m-d').'", '.prepare($idmagazzino).' )');
 }
 
@@ -105,6 +105,7 @@ function add_articolo_invenditabanco($idvendita, $idarticolo, $idmagazzino = nul
 
     // Decremento la quantità dell'articolo (,attivo=1)
     $dbo->query('UPDATE mg_articoli SET qta=qta-'.$qta." WHERE id='".$idarticolo."'");
+
 
     // Registro movimento
     add_movimento_magazzino_venditabanco($idarticolo, -$qta, '', $idvendita, $idmagazzino);

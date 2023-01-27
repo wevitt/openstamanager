@@ -28,14 +28,37 @@ switch (post('op')) {
     // Aggiornamento del documento di vendita
     case 'update':
         // Aggiornamento del magazzino di origine solo se non sono presenti righe
-        if ($numero_righe == 0) {
-            $documento->idmagazzino = post('idmagazzino');
-        }
+        $documento->idmagazzino = post('idmagazzino');
+
+        // Aggiornamento del movimento
+        $movimento = $dbo->fetchOne(
+            'SELECT movimento
+            FROM mg_movimenti
+            WHERE reference_type='.prepare('Modules\VenditaBanco\Vendita').' AND reference_id='.prepare($documento->id)
+        )['movimento'];
+
+        $new_date = post('data');
+        $new_date = explode(' ', $new_date);
+        $new_date = $new_date[0];
+        $new_date = explode('-', $new_date);
+        $new_date = $new_date[2].'/'.$new_date[1].'/'.$new_date[0];
+
+        $movimento = explode(' ', $movimento);
+        $movimento[count($movimento) - 1] = $new_date;
+        $movimento = implode(' ', $movimento);
+
+        $dbo->query(
+            'UPDATE mg_movimenti
+            SET idsede='.prepare(post('idmagazzino')).', data='.prepare(post('data')).', movimento='.prepare($movimento).'
+            WHERE reference_type='.prepare('Modules\VenditaBanco\Vendita').' AND reference_id='.prepare($documento->id)
+        );
+        //fine aggiornamento movimento
 
         $documento->note = post('note');
         $documento->idpagamento = post('idpagamento');
         $documento->importo_pagato = post('importo_pagato');
         $documento->idanagrafica = post('idanagrafica');
+        $documento->data = post('data');
         $documento->save();
 
         // Aggiornamento stato a Pagato
@@ -291,12 +314,13 @@ switch (post('op')) {
         $id_articolo = post('id_articolo');
         $codice = post('codice');
         $barcode = post('barcode');
-        $idmagazzino = post('idmagazzino') ?: 0;
+        $idmagazzino = $_POST['idmagazzino'] ? $_POST['idmagazzino'] : 0;
         $qta = post('qta');
         $id_anagrafica = post('id_anagrafica');
         $direzione = 'entrata';
         $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
+        $dbo->query("UPDATE `vb_venditabanco` SET `idmagazzino` = ".prepare($idmagazzino)." WHERE `id` = ".prepare($id_record));
 
         if (!empty($id_articolo)) {
             if (setting('Gestisci articoli sottoscorta')) {
