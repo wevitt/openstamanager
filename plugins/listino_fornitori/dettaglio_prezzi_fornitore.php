@@ -68,6 +68,18 @@ if (!empty($id_riga)) {
     $fornitore = $articolo->dettaglioFornitore($id_anagrafica);
 }
 
+if ($fornitore['descrizione'] == '') {
+    $descrizione = json_encode($articolo->descrizione);
+} else {
+    $descrizione = json_encode($fornitore['descrizione']);
+}
+
+if ($fornitore['codice_fornitore'] == '') {
+    $codice = $articolo['codice'];
+} else {
+    $codice = $fornitore['codice_fornitore'];
+}
+
 echo '
 <table class="table table-striped table-condensed table-bordered">
     <tr>
@@ -106,7 +118,7 @@ echo '
     echo '
     <div class="row">
         <div class="col-md-6">
-            {[ "type": "text", "label": "'.tr('Codice fornitore').'", "name": "codice_fornitore", "required": 1, "value": "'.$fornitore['codice_fornitore'].'" ]}
+            {[ "type": "text", "label": "'.tr('Codice fornitore').'", "name": "codice_fornitore", "required": 1, "value": "'.$codice.'" ]}
         </div>
 
         <div class="col-md-6">
@@ -116,7 +128,7 @@ echo '
 
     <div class="row">
         <div class="col-md-12">
-            {[ "type": "textarea", "label": "'.tr('Descrizione').'", "name": "descrizione", "required": 1, "value": '.json_encode($fornitore['descrizione']).' ]}
+            {[ "type": "textarea", "label": "'.tr('Descrizione').'", "name": "descrizione", "required": 1, "value": '.$descrizione.' ]}
         </div>
     </div>
 
