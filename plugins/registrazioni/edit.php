@@ -22,7 +22,7 @@ use Modules\Interventi\Intervento;
 if ( $id_module == Modules::get('Fatture di acquisto')['id'] ){
     $conti = 'conti-acquisti-totali';
 } else{
-    $conti = 'conti-vendite-totali';
+    $conti = 'conti-vendite';
 }
 
 echo '

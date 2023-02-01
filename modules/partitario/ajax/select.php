@@ -70,7 +70,7 @@ switch ($resource) {
 
         break;
 
-    case 'conti-vendite':
+    case 'conti-vendite-old':
         $query = "SELECT co_pianodeiconti3.id, CONCAT( co_pianodeiconti2.numero, '.', co_pianodeiconti3.numero, ' ', co_pianodeiconti3.descrizione ) AS descrizione FROM co_pianodeiconti3 INNER JOIN (co_pianodeiconti2 INNER JOIN co_pianodeiconti1 ON co_pianodeiconti2.idpianodeiconti1=co_pianodeiconti1.id) ON co_pianodeiconti3.idpianodeiconti2=co_pianodeiconti2.id |where| ORDER BY co_pianodeiconti2.numero ASC, co_pianodeiconti3.numero ASC";
 
         foreach ($elements as $element) {
@@ -85,10 +85,9 @@ switch ($resource) {
 
         break;
 
-    case 'conti-vendite-totali':
+    case 'conti-vendite':
         $query = "SELECT co_pianodeiconti3.id, CONCAT( co_pianodeiconti2.numero, '.', co_pianodeiconti3.numero, ' ', co_pianodeiconti3.descrizione ) AS descrizione FROM co_pianodeiconti3 INNER JOIN (co_pianodeiconti2 INNER JOIN co_pianodeiconti1 ON co_pianodeiconti2.idpianodeiconti1=co_pianodeiconti1.id) ON co_pianodeiconti3.idpianodeiconti2=co_pianodeiconti2.id |where| ORDER BY co_pianodeiconti2.numero ASC, co_pianodeiconti3.numero ASC";
-
-        $where[] = "(co_pianodeiconti2.dir='entrata' OR co_pianodeiconti2.dir='uscita' OR co_pianodeiconti2.dir='entrata/uscita')";
+        $where[] = "(co_pianodeiconti3.idpianodeiconti2 <> '2' and co_pianodeiconti3.idpianodeiconti2 <> '8' ) OR (co_pianodeiconti3.idpianodeiconti2 = '2' AND co_pianodeiconti3.numero < '000100') OR (co_pianodeiconti3.idpianodeiconti2 = '8' AND co_pianodeiconti3.numero < '000250')";
 
         if (!empty($search)) {
             $search_fields[] = "CONCAT( co_pianodeiconti2.numero, '.', co_pianodeiconti3.numero, ' ', co_pianodeiconti3.descrizione ) LIKE ".prepare('%'.$search.'%');

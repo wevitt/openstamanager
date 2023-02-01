@@ -23,6 +23,16 @@ $block_edit = $record['flag_completato'];
 
 $module = Modules::get($id_module);
 
+$id_modulo_fatture = Modules::get('Fatture di vendita')['id'];
+
+$ac_acconti = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+if (!empty($ac_acconti)) {
+    //select ac_acconti_righe
+    $ac_acconti_righe = $dbo->fetchArray('SELECT * FROM ac_acconti_righe WHERE idacconto='.prepare($ac_acconti['id']));
+} else {
+    $ac_acconti_righe = [];
+}
+
 if ($module['name'] == 'Ordini cliente') {
     $dir = 'entrata';
 } else {
@@ -145,6 +155,32 @@ echo '
                 <?php
             }
             ?>
+
+            <div class="row">
+                <div class="col-md-6" style="display:flex; align-items:center;">
+                    <div style="width:100%">
+                        {[ "type": "number", "label": "<?php echo tr('Anticipo sull\'ordine'); ?>", "name": "anticipo", "required":0, "readonly": "<?php echo (count($ac_acconti_righe) == 0) ? 0 : 1; ?>", "value": "<?php echo $ac_acconti['importo']; ?>", "help": "<?php echo tr('<span>Anticipo sull\'ordine</span>'); ?>", "icon-after": "<?php echo currency(); ?>" ]}
+                    </div>
+                    <?php if (count($ac_acconti_righe) == 0) { ?>
+                        <button type="button" class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" title="<?php echo tr('Crea fattura anticipo'); ?>" onclick="creaFatturaAnticipo(this)">
+                            <i class="fa fa-plus"></i><?php echo tr('Crea fattura anticipo'); ?>
+                        </button>
+                    <?php } else { ?>
+                        <?php
+                            $fattura_acconto = $dbo->fetchOne(
+                                'SELECT crd.iddocumento
+                                FROM co_righe_documenti crd
+                                LEFT JOIN ac_acconti_righe aar ON crd.iddocumento = aar.idfattura
+                                LEFT JOIN ac_acconti aa ON aa.id = aar.idacconto
+                                WHERE aa.idordine ='.prepare($id_record)
+                            );
+                        ?>
+                        <a class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
+                            <i class="fa fa-chevron-left"></i><?php echo tr(' Vai a fattura anticipo'); ?>
+                        </a>
+                    <?php } ?>
+                </div>
+            </div>
 
             <div class="row">
 				<div class="col-md-12">
@@ -296,6 +332,19 @@ echo '
 {( "name": "log_email", "id_module": "$id_module$", "id_record": "$id_record$" )}
 
 <script>
+function creaFatturaAnticipo(button) {
+    // Salvataggio via AJAX
+    salvaForm("#edit-form", {}, button);
+
+    // Lettura titolo e chiusura tooltip
+    let title = $(button).tooltipster("content");
+    $(button).tooltipster("close")
+
+    // Apertura modal
+    value = $("#anticipo").val();
+    openModal(title, "'.$structure->fileurl('fattura_anticipo.php').'?id_module='.$id_module.'&id_record='.$id_record.'&value=" + value);
+}
+
 function gestioneArticolo(button) {
     gestioneRiga(button, "is_articolo");
 }

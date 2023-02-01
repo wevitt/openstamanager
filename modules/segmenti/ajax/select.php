@@ -25,7 +25,7 @@ switch ($resource) {
         $id_module = $superselect['id_module'];
         $is_fiscale = $superselect['is_fiscale'];
         $is_sezionale = $superselect['is_sezionale'];
-        
+
         if (isset($id_module)) {
             $query = 'SELECT `id`, `name` AS descrizione FROM zz_segments INNER JOIN `zz_group_segment` ON `zz_segments`.`id` = `zz_group_segment`.`id_segment` |where| ORDER BY `name` ASC';
 

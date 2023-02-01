@@ -24,11 +24,14 @@ use Modules\Articoli\Articolo as ArticoloOriginale;
 use Modules\Ordini\Components\Articolo;
 use Modules\Ordini\Components\Descrizione;
 use Modules\Ordini\Components\Riga;
+use Modules\Fatture\Components\Riga as RigaFattura;
 use Modules\Ordini\Components\Sconto;
 use Modules\Ordini\Ordine;
 use Modules\Ordini\Tipo;
+use Modules\Fatture\Tipo as TipoFattura;
 use Modules\Preventivi\Preventivo;
 use Plugins\ListinoClienti\DettaglioPrezzo;
+use Modules\Fatture\Fattura;
 
 $module = Modules::get($id_module);
 
@@ -134,6 +137,20 @@ switch (post('op')) {
 
                 flash()->info(tr('Ordine modificato correttamente!'));
             }
+        }
+
+        $anticipo = post('anticipo');
+        //get ac_anticipo
+        $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+        if (!empty($ac_acconti)) {
+            $dbo->query(
+                'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
+            );
+        } else {
+            $dbo->query(
+                'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
+                VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
+            );
         }
 
         break;
@@ -380,6 +397,13 @@ switch (post('op')) {
     // Eliminazione ordine
     case 'delete':
         try {
+            //cancello dati riferiti all'accconto se presente
+            $acconto = $dbo->fetchOne('SELECT * FROM `ac_acconti` WHERE `idordine` = '.prepare($id_record));
+            if (!empty($acconto)) {
+                $dbo->query('DELETE FROM `ac_acconti_righe` WHERE `idacconto` = '.prepare($acconto['id']));
+                $dbo->query('DELETE FROM `ac_acconti` WHERE `idordine` = '.prepare($id_record));
+            }
+
             $ordine->delete();
 
             flash()->info(tr('Ordine eliminato!'));
@@ -628,5 +652,87 @@ switch (post('op')) {
 
         flash()->info(tr('Prezzi aggiornati!'));
 
+        break;
+
+    case 'crea-fattura-anticipo':
+        $class = post('class');
+        $id_documento = post('id_documento');
+        $anticipo = post('anticipo');
+
+        // Individuazione del documento originale
+        if (!is_subclass_of($class, \Common\Document::class)) {
+            return;
+        }
+        $documento = $class::find($id_documento);
+
+        // Inserimento fattura
+        $tipo = TipoFattura::find(post('idtipodocumento'));
+        $fattura = Fattura::build($documento->anagrafica, $tipo, post('data'), post('id_segment'));
+
+        if (!empty($documento->idpagamento)) {
+            $fattura->idpagamento = $documento->idpagamento;
+        } else {
+            $fattura->idpagamento = setting('Tipo di pagamento predefinito');
+        }
+
+        $fattura->idsede_destinazione = 0;
+        $fattura->id_ritenuta_contributi = null;
+        $fattura->idreferente = $documento->idreferente;
+        $fattura->idagente = $documento->idagente;
+        $fattura->idconto = post('id_conto');
+        $fattura->note = post('note');
+
+        $fattura->save();
+
+        //inserimento righe fattura
+        $riga = RigaFattura::build($fattura);
+
+        $riga->note = null;
+        $riga->um = null;
+        $riga->idarticolo = null;
+        $riga->calcolo_ritenuta_acconto = null;
+
+        $riga->descrizione = post('descrizione');
+
+        $riga->id_iva = post('id_iva');
+        $riga->desc_iva = post('desc_iva');
+
+        $riga->idconto = post('id_conto');
+
+        error_log(post('anticipo'));
+
+        $riga->costo_unitario = 0;
+        $riga->subtotale = floatval(post('anticipo'));
+        $riga->prezzo_unitario = floatval(post('anticipo'));
+        $riga->prezzo_unitario_ivato = floatval(post('totale'));
+
+        $riga->idordine = $documento->id;
+        $riga->qta = 1;
+
+        $riga->save();
+
+        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+        if (!empty($acconto)) {
+            $acconto = $dbo->query(
+                'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
+            );
+        } else {
+            $acconto = $dbo->query(
+                'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
+                VALUES('.prepare($documento->idanagrafica).', '.prepare($id_record).', '.prepare($anticipo).')'
+            );
+        }
+        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+
+        $dbo->query(
+            'INSERT INTO ac_acconti_righe (idacconto, idfattura, importo_fatturato, tipologia)
+            VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($anticipo).', '.prepare('Anticipo').')'
+        );
+
+
+
+        // Messaggio informativo
+        $message = tr('Anticipo inserito!');
+        flash()->info($message);
         break;
 }

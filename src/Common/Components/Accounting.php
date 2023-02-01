@@ -267,6 +267,7 @@ abstract class Accounting extends Component
         } else {
             $this->sconto_unitario = $sconto;
         }
+        $this->tipo_sconto = $type;
     }
 
     /**
@@ -463,7 +464,7 @@ abstract class Accounting extends Component
     protected function fixSconto()
     {
         $this->attributes['sconto'] = $this->sconto;
-        $this->attributes['tipo_sconto'] = $this->sconto_percentuale ? 'PRC' : 'UNT';
+        //$this->attributes['tipo_sconto'] = $this->sconto_percentuale ? 'PRC' : 'UNT';
     }
 
     /**
