@@ -36,7 +36,7 @@ if ($original_module->name == 'Interventi') {
     $documento = Intervento::find($id_record);
 } elseif ($original_module->name == 'Preventivi') {
     $documento = Preventivo::find($id_record);
-} elseif ($original_module->name == 'DDT in uscita') {
+} elseif ($original_module->name == 'Ddt di vendita') {
     $documento = DDT::find($id_record);
 } elseif ($original_module->name == 'Ordini cliente') {
     $documento = Ordine::find($id_record);
@@ -97,6 +97,9 @@ if (!empty($options['create_document'])) {
 
                 <div class="col-md-6">
                     {[ "type": "select", "label": "'.tr('Magazzino').'", "name": "idmagazzino", "required": 1, "ajax-source": "sedi_azienda", "value": "'.($documento->idsede_partenza ?: 0).'" ]}
+                </div>
+                <div class="col-md-6">
+                    {[ "type": "select", "label": "' . tr('Segmento') . '", "name": "id_segment", "required": 1, "values": "query=SELECT id, name AS descrizione FROM zz_segments WHERE id_module = (SELECT id FROM zz_modules WHERE name = \"Vendita al banco\")" ]}
                 </div>
             </div>
         </div>
