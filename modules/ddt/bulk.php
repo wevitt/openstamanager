@@ -174,11 +174,6 @@ switch (post('op')) {
 
                                 error_log("importo_fatturato: " . $importo_fatturato);
 
-                                $dbo->query(
-                                    'INSERT INTO ac_acconti_righe (idacconto, idfattura, importo_fatturato, tipologia)
-                                    VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($acconto_righe['idfattura']).', '.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
-                                );
-
                                 $fatturaAcconto = Fattura::find($acconto_righe['idfattura']);
                                 $rigaAcconto = $dbo->fetchOne(
                                     'SELECT * FROM co_righe_documenti
@@ -221,6 +216,11 @@ switch (post('op')) {
                                 error_log("riga: " . json_encode($riga));
 
                                 $riga->save();
+
+                                $dbo->query(
+                                    'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
+                                    VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($acconto_righe['idfattura']).', '.prepare($riga->id).','.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
+                                );
                             }
                         }
                     }

@@ -12,3 +12,7 @@ CREATE TABLE `ac_acconti_righe` (
   `importo_fatturato` float NOT NULL,
   `tipologia` varchar(30) NULL
 );
+
+ALTER TABLE `ac_acconti_righe`
+CHANGE `idfattura` `idfattura` int(11) NOT NULL AFTER `idacconto`,
+ADD `idriga_fattura` int(11) NULL AFTER `idfattura`;

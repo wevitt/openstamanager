@@ -175,7 +175,7 @@ echo '
                                 WHERE aa.idordine ='.prepare($id_record)
                             );
                         ?>
-                        <a class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
+                        <a class="btn btn-sm btn-info tip" target= "_blank" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
                             <i class="fa fa-chevron-left"></i><?php echo tr(' Vai a fattura anticipo'); ?>
                         </a>
                     <?php } ?>

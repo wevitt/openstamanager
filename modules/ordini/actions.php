@@ -725,8 +725,8 @@ switch (post('op')) {
         $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
 
         $dbo->query(
-            'INSERT INTO ac_acconti_righe (idacconto, idfattura, importo_fatturato, tipologia)
-            VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($anticipo).', '.prepare('Anticipo').')'
+            'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
+            VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($riga->id).','.prepare($anticipo).', '.prepare('Anticipo').')'
         );
 
 

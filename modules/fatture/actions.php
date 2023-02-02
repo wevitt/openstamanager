@@ -432,6 +432,8 @@ switch (post('op')) {
             flash()->info(tr('Dati FE aggiornati correttamente!'));
         }
 
+
+
         break;
 
     case 'manage_barcode':
@@ -561,6 +563,32 @@ switch (post('op')) {
             $riga = Riga::build($fattura);
         }
 
+        $acconto_riga = $dbo->fetchOne(
+            'SELECT *
+            FROM ac_acconti_righe
+            WHERE idriga_fattura = '.prepare($riga->id).' AND idfattura = '.prepare($riga->iddocumento)
+        );
+
+        if (!empty($acconto_riga)) {
+            $disponibile = $dbo->fetchOne(
+                'SELECT idacconto, idfattura, sum(importo_fatturato) as da_stornare
+                FROM ac_acconti_righe
+                WHERE idacconto = '.prepare($acconto_riga['idacconto']).'
+                GROUP BY idacconto'
+            );
+
+            if (floatval($disponibile['da_stornare']) - floatval($acconto_riga['importo_fatturato']) >= -1 * floatval(post('prezzo_unitario'))) {
+                $dbo->query(
+                    'UPDATE ac_acconti_righe
+                    SET importo_fatturato = '.prepare(floatval(post('prezzo_unitario'))).'
+                    WHERE idriga_fattura = '.prepare(post('idriga')).' AND idfattura = '.prepare($id_record)
+                );
+            } else {
+                flash()->error(tr('Anticipo non applicabile, cifra troppo alta!'));
+                break;
+            }
+        }
+
         $qta = post('qta');
 
         $riga->descrizione = post('descrizione');
@@ -645,6 +673,12 @@ switch (post('op')) {
             $riga = Articolo::find($id_riga) ?: Riga::find($id_riga);
             $riga = $riga ?: Descrizione::find($id_riga);
             $riga = $riga ?: Sconto::find($id_riga);
+
+            // se è un acconto lo cancella, altrimenti non fa nulla
+            $dbo->query(
+                'DELETE FROM ac_acconti_righe
+                WHERE idriga_fattura='.prepare($riga->id).' AND idfattura='.prepare($riga->iddocumento)
+            );
 
             try {
                 $riga->delete();
@@ -842,11 +876,6 @@ switch (post('op')) {
 
                     error_log("importo_fatturato: " . $importo_fatturato);
 
-                    $dbo->query(
-                        'INSERT INTO ac_acconti_righe (idacconto, idfattura, importo_fatturato, tipologia)
-                        VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($id_record).', '.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
-                    );
-
                     $fatturaAcconto = Fattura::find($acconto_righe['idfattura']);
                     $rigaAcconto = $dbo->fetchOne(
                         'SELECT * FROM co_righe_documenti
@@ -888,6 +917,11 @@ switch (post('op')) {
                     error_log("riga: " . json_encode($riga));
 
                     $riga->save();
+
+                    $dbo->query(
+                        'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
+                        VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($id_record).', '.prepare($riga->id).', '.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
+                    );
                 }
             }
         }
