@@ -55,12 +55,22 @@ if (!empty($movimenti)) {
     <tr>
         <td>';
 
-        $modulo_fattura = ($movimento['dir'] == 'entrata') ? Modules::get('Fatture di vendita') : Modules::get('Fatture di acquisto');
+        if ($movimento['dir'] == 'entrata') {
+            $modulo_fattura = Modules::get('Fatture di vendita');
+        } else if ($movimento['dir'] == 'uscita') {
+            $modulo_fattura = Modules::get('Fatture di acquisto');
+        } else {
+            $modulo_fattura = Modules::get('Vendita al banco');
+        }
 
         if (!empty($movimento['primanota'])) {
             echo Modules::link($prima_nota->id, $movimento['idmastrino'], $movimento['descrizione']);
         } else {
-            echo Modules::link($modulo_fattura->id, $movimento['iddocumento'], $movimento['descrizione']);
+            if ($movimento['dir'] == 'entrata' || $movimento['dir'] == 'uscita') {
+                echo Modules::link($modulo_fattura->id, $movimento['iddocumento'], $movimento['descrizione']);
+            } else {
+                echo Modules::link($modulo_fattura->id, $movimento['idvendita_banco'], $movimento['descrizione']);
+            }
         }
 
         echo '
