@@ -25,6 +25,7 @@ use Modules\Fatture\Fattura;
 use Modules\Fatture\Stato;
 use Modules\Fatture\Tipo;
 use Modules\Fatture\Components\Riga;
+use Util\Zip;
 
 if ($module['name'] == 'Ddt di vendita') {
     $dir = 'entrata';
@@ -273,6 +274,44 @@ switch (post('op')) {
         }
 
     break;
+
+
+    case 'export-bulk':
+        $dir = base_dir().'/files/export_ddt/';
+        directory($dir.'tmp/');
+
+        $dir = slashes($dir);
+        $zip = slashes($dir.'ddt_'.time().'.zip');
+
+        // Rimozione dei contenuti precedenti
+        $files = glob($dir.'/*.zip');
+        foreach ($files as $file) {
+            delete($file);
+        }
+
+        // Selezione delle ddt da stampare
+        $ddt = $dbo->fetchArray('SELECT dt_ddt.id, numero_esterno, data, ragione_sociale FROM dt_ddt INNER JOIN an_anagrafiche ON dt_ddt.idanagrafica=an_anagrafiche.idanagrafica WHERE dt_ddt.id IN('.implode(',', $id_records).')');
+
+        if (!empty($ddt)) {
+            foreach ($ddt as $r) {
+                $print = Prints::getModulePredefinedPrint($id_module);
+
+                Prints::render($print['id'], $r['id'], $dir.'tmp/', false, false);
+            }
+
+            // Creazione zip
+            if (extension_loaded('zip')) {
+                Zip::create($dir.'tmp/', $zip);
+
+                // Invio al browser dello zip
+                download($zip);
+
+                // Rimozione dei contenuti
+                delete($dir.'tmp/');
+            }
+        }
+
+        break;
 }
 
 if (App::debug()) {
@@ -308,6 +347,17 @@ $operations['crea_fattura'] = [
             'button' => tr('Procedi'),
             'class' => 'btn btn-lg btn-warning',
             'blank' => false,
+        ],
+    ];
+
+    $operations['export-bulk'] = [
+        'text' => '<span class="'.((!extension_loaded('zip')) ? 'text-muted disabled' : '').'"><i class="fa fa-file-archive-o"></i> '.tr('Esporta stampe').'</span>',
+        'data' => [
+            'title' => '',
+            'msg' => tr('Vuoi davvero esportare i PDF di DDT selezionati in un archivio ZIP?'),
+            'button' => tr('Procedi'),
+            'class' => 'btn btn-lg btn-warning',
+            'blank' => true,
         ],
     ];
 
