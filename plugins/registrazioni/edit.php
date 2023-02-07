@@ -54,7 +54,7 @@ echo '
 
     // Righe documento
     if (!empty($fattura)) {
-        $options = AJAX::select($conti, [], null, 0, 10000);
+        $optionsConti = AJAX::select($conti, [], null, 0, 10000);
         $righe = $fattura->getRighe();
         $num = 0;
         foreach ($righe as $riga) {
@@ -108,7 +108,7 @@ echo '
                     </td>
 
                     <td>
-                        {[ "type": "select", "name": "idconto['.$riga['id'].']", "required": 1, "value": "'.$riga->id_conto.'", "values": ' . json_encode($options['results']) . ', "class": "unblockable" ]}
+                        {[ "type": "select", "name": "idconto['.$riga['id'].']", "required": 1, "value": "'.$riga->id_conto.'", "values": ' . json_encode($optionsConti['results']) . ', "class": "unblockable" ]}
                     </td>
                 </tr>';
             }
