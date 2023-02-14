@@ -161,23 +161,25 @@ echo '
                     <div style="width:100%">
                         {[ "type": "number", "label": "<?php echo tr('Anticipo sull\'ordine'); ?>", "name": "anticipo", "required":0, "readonly": "<?php echo (count($ac_acconti_righe) == 0) ? 0 : 1; ?>", "value": "<?php echo $ac_acconti['importo']; ?>", "help": "<?php echo tr('<span>Anticipo sull\'ordine</span>'); ?>", "icon-after": "<?php echo currency(); ?>" ]}
                     </div>
-                    <?php if (count($ac_acconti_righe) == 0) { ?>
-                        <button type="button" class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" title="<?php echo tr('Crea fattura anticipo'); ?>" onclick="creaFatturaAnticipo(this)">
-                            <i class="fa fa-plus"></i><?php echo tr('Crea fattura anticipo'); ?>
-                        </button>
-                    <?php } else { ?>
-                        <?php
-                            $fattura_acconto = $dbo->fetchOne(
-                                'SELECT crd.iddocumento
-                                FROM co_righe_documenti crd
-                                LEFT JOIN ac_acconti_righe aar ON crd.iddocumento = aar.idfattura
-                                LEFT JOIN ac_acconti aa ON aa.id = aar.idacconto
-                                WHERE aa.idordine ='.prepare($id_record)
-                            );
-                        ?>
-                        <a class="btn btn-sm btn-info tip" target= "_blank" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
-                            <i class="fa fa-chevron-left"></i><?php echo tr(' Vai a fattura anticipo'); ?>
-                        </a>
+                    <?php if ($record['stato'] == 'Accettato' ) { ?>
+                        <?php if (count($ac_acconti_righe) == 0) { ?>
+                            <button type="button" class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" title="<?php echo tr('Crea fattura anticipo'); ?>" onclick="creaFatturaAnticipo(this)">
+                                <i class="fa fa-plus"></i><?php echo tr('Crea fattura anticipo'); ?>
+                            </button>
+                        <?php } else { ?>
+                            <?php
+                                $fattura_acconto = $dbo->fetchOne(
+                                    'SELECT crd.iddocumento
+                                    FROM co_righe_documenti crd
+                                    LEFT JOIN ac_acconti_righe aar ON crd.iddocumento = aar.idfattura
+                                    LEFT JOIN ac_acconti aa ON aa.id = aar.idacconto
+                                    WHERE aa.idordine ='.prepare($id_record)
+                                );
+                            ?>
+                            <a class="btn btn-sm btn-info tip" target= "_blank" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
+                                <i class="fa fa-chevron-left"></i><?php echo tr(' Vai a fattura anticipo'); ?>
+                            </a>
+                        <?php } ?>
                     <?php } ?>
                 </div>
             </div>

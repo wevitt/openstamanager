@@ -143,14 +143,20 @@ switch (post('op')) {
         //get ac_anticipo
         $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
         if (!empty($ac_acconti)) {
-            $dbo->query(
-                'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
-            );
+            if ($anticipo == 0) {
+                $dbo->query('DELETE FROM ac_acconti WHERE idordine='.prepare($id_record));
+            } else {
+                $dbo->query(
+                    'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
+                );
+            }
         } else {
-            $dbo->query(
-                'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
-                VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
-            );
+            if ($anticipo > 0) {
+                $dbo->query(
+                    'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
+                    VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
+                );
+            }
         }
 
         break;

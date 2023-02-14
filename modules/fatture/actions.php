@@ -298,6 +298,8 @@ switch (post('op')) {
     // eliminazione documento
     case 'delete':
         try {
+            $dbo->query('DELETE FROM ac_acconti_righe WHERE idfattura='.prepare($id_record));
+
             $fattura->delete();
 
             $dbo->query('DELETE FROM co_scadenziario WHERE iddocumento='.prepare($id_record));
