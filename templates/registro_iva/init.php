@@ -116,32 +116,6 @@ else {
             AND co_documenti.data_competenza <= '.prepare($date_end).'
             AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, co_documenti.id
-        UNION
-        SELECT
-            vb_venditabanco.id,
-            vb_venditabanco.data as data_registrazione,
-            vb_venditabanco.data_emissione as data,
-            vb_venditabanco.numero_esterno as numero,
-            "Vendita al banco" as codice_tipo_documento_fe,
-            co_iva.percentuale,
-            idiva,
-            desc_iva AS descrizione,
-            SUM((vb_righe_venditabanco.iva)) as iva,
-            SUM((vb_righe_venditabanco.subtotale)) as subtotale,
-            SUM((subtotale - sconto + iva)) as totale,
-            an_anagrafiche.ragione_sociale,
-            an_anagrafiche.codice AS codice_anagrafica
-        FROM vb_venditabanco
-            INNER JOIN vb_righe_venditabanco ON vb_venditabanco.id = vb_righe_venditabanco.idvendita
-            INNER JOIN vb_stati_vendita ON vb_venditabanco.idstato = vb_stati_vendita.id
-            INNER JOIN co_iva ON vb_righe_venditabanco.idiva = co_iva.id
-            LEFT JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = vb_venditabanco.idanagrafica
-        WHERE
-            vb_venditabanco.data >= '.prepare($date_start . ' 00:00:00').'
-            AND vb_venditabanco.data <= '.prepare($date_end . ' 23:59:59').'
-            AND vb_stati_vendita.descrizione = "Pagato"
-            AND '.((!empty($id_sezionale)) ? 'vb_venditabanco.id_segment = '.prepare($id_sezionale).'' : '1=1').'
-            GROUP BY idiva, vb_venditabanco.id
         ORDER BY numero, data_registrazione';
 }
 error_log($query);
