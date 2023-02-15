@@ -86,9 +86,7 @@ if ((!empty($vendita_banco)) AND (empty($id_sezionale)) AND ($tipo == 'vendite')
             AND vb_stati_vendita.descrizione = "Pagato"
             GROUP BY idiva, vb_venditabanco.id
             ORDER BY numero, data_registrazione';
-}
-
-else {
+} else {
     $query = '
         SELECT
             co_documenti.id,
@@ -118,7 +116,7 @@ else {
             GROUP BY idiva, co_documenti.id
         ORDER BY numero, data_registrazione';
 }
-error_log($query);
+
 $records = $dbo->fetchArray($query);
 
 if (empty(get('notdefinitiva'))) {
