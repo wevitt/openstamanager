@@ -29,7 +29,6 @@ echo '
 echo '
     <td>'.($different ? $record['numero'] : '').'</td>
     <td>'.($different ? Translator::datetoLocale($record['data_registrazione']) : '').'</td>
-    <td>'.($different ? $record['numero_esterno'] : '').'</td>
     <td>'.($different ? Translator::datetoLocale($record['data']) : '').'</td>
     <td>'.($different ? $record['codice_tipo_documento_fe'] : '').'</td>
     <td>'.($different ? $record['codice_anagrafica'].' '.safe_truncate(mb_strtoupper(html_entity_decode($record['ragione_sociale']), 'UTF-8'), 50) : '').'</td>

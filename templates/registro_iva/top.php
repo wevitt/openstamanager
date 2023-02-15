@@ -50,7 +50,6 @@ echo '<h4><b>'.$titolo.'</b></h4>
         <tr>
             <th>'.tr('N° Prot.').'</th>
             <th>'.tr('Data reg.').'</th>
-            <th>'.tr('N<sup>o</sup>&nbsp;doc.').'</th>
             <th>'.tr('Data doc.').'</th>
             <th>'.tr('Tipo').'</th>
             <th>'.$tipo.'</th>

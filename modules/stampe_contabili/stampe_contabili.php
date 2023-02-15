@@ -91,7 +91,7 @@ echo '
 		if ($nome_stampa != 'Liquidazione IVA') {
 			echo '
 		<div class="col-md-4">
-			{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_sezionale", "required": "1", "values": "query=SELECT id AS id, name AS descrizione FROM zz_segments WHERE id_module = (SELECT id FROM zz_modules WHERE name = \''.(($dir == 'entrata') ? 'Fatture di vendita' : 'Fatture di acquisto').'\') AND is_fiscale = 1 UNION SELECT  0 AS id, \'Tutti i sezionali\' AS descrizione" ]}
+			{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_sezionale", "required": "1", "values":"query=SELECT zz_segments.id as id, zz_segments.name as descrizione FROM zz_segments INNER JOIN zz_modules ON zz_modules.id = zz_segments.id_module WHERE is_fiscale = 1 AND zz_modules.name = \''.(($dir == 'entrata') ? 'Fatture di vendita' : 'Fatture di acquisto').'\''.(($dir == 'entrata') ? ' OR zz_modules.name = \'Vendita al banco\'' : '').' UNION SELECT \'0\' AS id, \'Tutti i sezionali\' AS descrizione" ]}
 		</div>';
 		}
 		echo '
@@ -144,7 +144,7 @@ if ($nome_stampa != 'Liquidazione IVA') {
 				'_END_' => dateFormat($elemento['date_end']),
 				'_FIRST_' => $elemento['first_page'],
 				'_LAST_' => $elemento['last_page'],
-			]);		
+			]);
 
 			$file = $dbo->selectOne('zz_files', '*', ['id_module' => $id_module, 'id_record' => $elemento['id']]);
 
@@ -194,7 +194,7 @@ if ($nome_stampa != 'Liquidazione IVA') {
 			let year = date.getFullYear();
 			let m_start = 0;
 			let m_end = 3;
-			
+
 			for (i=0; i<=3; i++) {
 				let start = new Date(year, m_start, 1);
 				let end = new Date(year, m_end, 0);
@@ -203,7 +203,7 @@ if ($nome_stampa != 'Liquidazione IVA') {
 				int_end = end.getFullYear() +  "-" + ("0" + (end.getMonth() + 1)).slice(-2) + "-" + ("0" + end.getDate()).slice(-2);
 
 				if (date_start == int_start && date_end == int_end) {
-					intervallo_corretto = 1;	
+					intervallo_corretto = 1;
 				}
 				m_start += 3;
 				m_end += 3;
@@ -219,7 +219,7 @@ if ($nome_stampa != 'Liquidazione IVA') {
 				int_end = end.getFullYear() +  "-" + ("0" + (end.getMonth() + 1)).slice(-2) + "-" + ("0" + end.getDate()).slice(-2);
 
 				if (date_start == int_start && date_end == int_end) {
-					intervallo_corretto = 1;	
+					intervallo_corretto = 1;
 				}
 				m_start += 1;
 				m_end += 1;
@@ -284,7 +284,7 @@ echo '
 			window.open("'.$link.'&dir='.$dir.'&notdefinitiva=1&id_sezionale="+$("#id_sezionale").val()+"&date_start="+$("#date_start").val()+"&date_end="+$("#date_end").val()+"");
 			$("#modals > div").modal("hide");
 		}
-		
+
 	}
 
 	$("#format").change(function() {
