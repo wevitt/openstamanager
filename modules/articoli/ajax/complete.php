@@ -146,7 +146,7 @@ switch ($resource) {
         $prezzi = $database->fetchArray($query_anagrafica);
 
         // Prezzi listini clienti
-        $query = 'SELECT sconto_percentuale AS sconto_percentuale_listino,
+        $query = 'SELECT sconto_percentuale AS sconto_percentuale_listino, mg_listini.nome,
             '.($prezzi_ivati ? 'prezzo_unitario_ivato' : 'prezzo_unitario').' AS prezzo_unitario_listino
         FROM mg_listini
         LEFT JOIN mg_listini_articoli ON mg_listini.id=mg_listini_articoli.id_listino
