@@ -490,6 +490,24 @@ if ($is_cliente or $is_fornitore or $is_tecnico) {
                     <div class="tab-pane '.(!$is_cliente ? 'hide' : 'active').'" id="cliente">
                         <div class="row">
                             <div class="col-md-6">
+                                    {[ "type": "checkbox", "label": "'.tr('Spese di trasporto').'", "name": "spese_di_trasporto", "value": "'.$anagrafica['spese_di_trasporto'].'" ]}
+                            </div>
+                            <div class="col-md-6">
+                                    {[ "type": "number", "label": "'.tr('Importo spese di trasporto').'", "name": "importo_spese_di_trasporto", "value": "'.$anagrafica['importo_spese_di_trasporto'].'" , "icon-after": "'.currency().'" ]}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                    {[ "type": "checkbox", "label": "'.tr('Spese di incasso').'", "name": "spese_di_incasso", "value": "'.$anagrafica['spese_di_incasso'].'" ]}
+                            </div>
+                            <div class="col-md-6">
+                                    {[ "type": "number", "label": "'.tr('Importo spese di incasso').'", "name": "importo_spese_di_incasso", "value": "'.$anagrafica['importo_spese_di_incasso'].'", "icon-after": "'.currency().'" ]}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
                                     {[ "type": "select", "label": "'.tr('Provenienza cliente').'", "name": "id_provenienza", "ajax-source": "provenienze", "value": "$id_provenienza$", "icon-after": "add|'.Modules::get('Provenienze')['id'].'" ]}
                             </div>
                             <div class="col-md-6">
@@ -501,7 +519,7 @@ if ($is_cliente or $is_fornitore or $is_tecnico) {
                             <div class="col-md-6">
                                 {[ "type": "select", "label": "'.tr('Pagamento predefinito').'", "name": "idpagamento_vendite", "values": "query=SELECT id, descrizione FROM co_pagamenti GROUP BY descrizione ORDER BY descrizione ASC", "value": "$idpagamento_vendite$" ]}
                             </div>
-                            
+
                             <div class="col-md-6">
                                 {[ "type": "select", "label": "' . tr('Banca cliente') . '", "name": "id_banca_cliente", "ajax-source": "banche", "select-options": ' . json_encode(['id_anagrafica' => $anagrafica->id]) . ', "value": "$id_banca_cliente$", "icon-after": "add|' . Modules::get('Banche')['id'] . '|id_anagrafica=' . $anagrafica->id . '" ]}
                             </div>
