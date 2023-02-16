@@ -33,7 +33,7 @@ $vendita_banco = $dbo->fetchNum("SELECT * FROM zz_modules WHERE name='Vendita al
 $v_iva = [];
 $v_totale = [];
 
-if ((!empty($vendita_banco)) AND (empty($id_sezionale)) AND ($tipo == 'vendite')){
+if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
     $query = '
         SELECT
             co_documenti.id,
@@ -59,6 +59,7 @@ if ((!empty($vendita_banco)) AND (empty($id_sezionale)) AND ($tipo == 'vendite')
             AND is_descrizione = 0
             AND co_documenti.data_competenza >= '.prepare($date_start).'
             AND co_documenti.data_competenza <= '.prepare($date_end).'
+            AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, co_documenti.id
         UNION
         SELECT
@@ -71,7 +72,7 @@ if ((!empty($vendita_banco)) AND (empty($id_sezionale)) AND ($tipo == 'vendite')
             idiva,
             desc_iva AS descrizione,
             SUM((vb_righe_venditabanco.iva)) as iva,
-            SUM((vb_righe_venditabanco.subtotale)) as subtotale,
+            SUM((vb_righe_venditabanco.subtotale - sconto)) as subtotale,
             SUM((subtotale - sconto + iva)) as totale,
             an_anagrafiche.ragione_sociale,
             an_anagrafiche.codice AS codice_anagrafica
@@ -84,8 +85,11 @@ if ((!empty($vendita_banco)) AND (empty($id_sezionale)) AND ($tipo == 'vendite')
             vb_venditabanco.data >= '.prepare($date_start . ' 00:00:00').'
             AND vb_venditabanco.data <= '.prepare($date_end . ' 23:59:59').'
             AND vb_stati_vendita.descrizione = "Pagato"
+            AND '.((!empty($id_sezionale)) ? 'vb_venditabanco.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, vb_venditabanco.id
-            ORDER BY numero, data_registrazione';
+        ORDER BY numero, data_registrazione';
+
+        error_log($query);
 } else {
     $query = '
         SELECT
