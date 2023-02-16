@@ -141,7 +141,7 @@ switch (post('op')) {
                 'prezzo_unitario' => $prezzo_di_partenza,
                 'prezzo_unitario_ivato' => $prezzo_di_partenza * (1 + ($iva_articolo / 100)),
                 'sconto_percentuale' => 0,
-                'dir' => 'uscita'
+                'dir' => 'entrata',
             ]);
 
             //inserisce i listini di destinazione o prezzo di vendita
@@ -165,7 +165,7 @@ switch (post('op')) {
                         'prezzo_unitario' => $prezzo,
                         'prezzo_unitario_ivato' => $prezzo * (1 + ($iva_articolo / 100)),
                         'sconto_percentuale' => 0,
-                        'dir' => 'uscita'
+                        'dir' => 'entrata',
                     ]);
                 }
             }
