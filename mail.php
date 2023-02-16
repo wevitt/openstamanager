@@ -97,15 +97,34 @@ echo '
 
     <input type="hidden" name="template" value="'.$template['id'].'">';
 
+$from_name = $smtp['from_name'];
+$from_address = $smtp['from_address'];
+$reply_to_address = '';
+
 if (!empty($config['force_reply_to_sender']) && $config['force_reply_to_sender'] === true) {
     $user = \Auth::user();
-    echo '<p><b>' . tr('Mittente') . '</b>: ';
-    echo $user->username . ' &lt;' . $smtp['from_address'] . '&gt;</p>';
+    $from_name = $user->username;
+    $from_address = $smtp['from_address'];
+    $reply_to_address = $user->email;
+}
+
+if (isset($config['force_mail_from_sender']) && $config['force_mail_from_sender'] === true) {
+    $user = \Auth::user();
+    $email = $user->email;
+    $reply_to_address = '';
+    $account = Modules\Emails\Account::where('username', $email)->first();
+    if (!empty($account)) {
+        $from_name = $account->from_name;
+        $from_address = $account->from_address;
+        $reply_to_address = '';
+    }
+}
+
+echo '<p><b>' . tr('Mittente') . '</b>: ';
+echo $from_name . ' &lt;' . $from_address . '&gt;</p>';
+if ($reply_to_address !== '') {
     echo '<p><b>' . tr('Indirizzo per le risposte') . '</b>: ';
-    echo ' &lt;' . $user->email . '&gt;</p>';
-} else {
-    echo '<p><b>' . tr('Mittente') . '</b>: ';
-    echo $smtp['from_name'] . ' &lt;' . $smtp['from_address'] . '&gt;</p>';
+    echo ' &lt;' . $reply_to_address . '&gt;</p>';
 }
 
 if (!empty($template['cc'])) {
