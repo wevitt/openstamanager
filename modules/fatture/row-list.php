@@ -49,226 +49,234 @@ echo '
 
 // Righe documento
 $num = 0;
+$riga_spesa_trasporto = null;
+$riga_spesa_incasso = null;
 foreach ($righe as $riga) {
-    ++$num;
+    if ($riga->is_spesa_trasporto == 1) {
+        $riga_spesa_trasporto = $riga;
+    } else if ($riga->is_spesa_incasso) {
+        $riga_spesa_incasso = $riga;
+    } else {
+        ++$num;
 
-    $extra = '';
-    $mancanti = 0;
-    $delete = 'delete_riga';
+        $extra = '';
+        $mancanti = 0;
+        $delete = 'delete_riga';
 
-    // Individuazione dei seriali
-    if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
-        $serials = $riga->serials;
-        $mancanti = abs($riga->qta) - count($serials);
+        // Individuazione dei seriali
+        if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
+            $serials = $riga->serials;
+            $mancanti = abs($riga->qta) - count($serials);
 
-        if ($mancanti > 0) {
-            $extra = 'class="warning"';
-        } else {
-            $mancanti = 0;
-        }
-    }
-
-    $extra_riga = '';
-    if (!$riga->isDescrizione()) {
-        // Informazioni su CIG, CUP, ...
-        if ($riga->hasOriginalComponent()) {
-            $documento_originale = $riga->getOriginalComponent()->getDocument();
-
-            $num_item = $documento_originale['num_item'];
-            $codice_cig = $documento_originale['codice_cig'];
-            $codice_commessa = $documento_originale['codice_commessa'];
-            $codice_cup = $documento_originale['codice_cup'];
-            $id_documento_fe = $documento_originale['id_documento_fe'];
-        }
-
-        $descrizione_conto = $dbo->fetchOne('SELECT descrizione FROM co_pianodeiconti3 WHERE id = '.prepare($riga->id_conto))['descrizione'];
-
-        $extra_riga = replace('_DESCRIZIONE_CONTO__ID_DOCUMENTO__NUMERO_RIGA__CODICE_COMMESSA__CODICE_CIG__CODICE_CUP__RITENUTA_ACCONTO__RITENUTA_CONTRIBUTI__RIVALSA_', [
-            '_RIVALSA_' => $riga->rivalsa_inps ? '<br>'.tr('Cassa previdenziale').': '.moneyFormat(abs($riga->rivalsa_inps)) : null,
-            '_RITENUTA_ACCONTO_' => $riga->ritenuta_acconto ? '<br>Ritenuta acconto: '.moneyFormat(abs($riga->ritenuta_acconto)) : null,
-            '_RITENUTA_CONTRIBUTI_' => $riga->ritenuta_contributi ? '<br>Ritenuta previdenziale: '.moneyFormat(abs($riga->ritenuta_contributi)) : null,
-            '_DESCRIZIONE_CONTO_' => $descrizione_conto ?: '<span class="label label-danger" ><i class="fa fa-exclamation-triangle"></i>
-            '.tr('Conto mancante').'</span>',
-            '_ID_DOCUMENTO_' => $id_documento_fe ? ' - DOC: '.$id_documento_fe : null,
-            '_NUMERO_RIGA_' => $num_item ? ', NRI: '.$num_item : null,
-            '_CODICE_COMMESSA_' => $codice_commessa ? ', COM: '.$codice_commessa : null,
-            '_CODICE_CIG_' => $codice_cig ? ', CIG: '.$codice_cig : null,
-            '_CODICE_CUP_' => $codice_cup ? ', CUP: '.$codice_cup : null,
-        ]);
-    }
-
-    echo '
-        <tr data-id="'.$riga->id.'" data-type="'.get_class($riga).'" '.$extra.'>
-            <td class="text-center">';
-            if (!$block_edit) {
-                echo '
-                <input class="check" type="checkbox"/>';
+            if ($mancanti > 0) {
+                $extra = 'class="warning"';
+            } else {
+                $mancanti = 0;
             }
-            echo '
-            </td>
-
-            <td class="text-center">
-                '.$num.'
-            </td>
-
-            <td>';
-
-    // Informazioni aggiuntive sulla destra
-    echo '
-                <small class="pull-right text-right text-muted">
-                    '.$extra_riga;
-
-    // Aggiunta dei riferimenti ai documenti
-    if ($riga->hasOriginalComponent()) {
-        echo '
-                    <br>'.reference($riga->getOriginalComponent()->getDocument(), tr('Origine'));
-    }
-    // Fix per righe da altre componenti degli Interventi
-    elseif (!empty($riga->idintervento)) {
-        echo '
-                    <br>'.reference(Intervento::find($riga->idintervento), tr('Origine'));
-    }
-
-    echo '
-                </small>';
-
-    if ($riga->isArticolo()) {
-        echo Modules::link('Articoli', $riga->idarticolo, $riga->codice.' - '.$riga->descrizione);
-    } else {
-        echo nl2br($riga->descrizione);
-    }
-
-    if ($riga->isArticolo() && !empty($riga->articolo->deleted_at)) {
-        echo '
-        <br><b><small class="text-danger">'.tr('Articolo eliminato', []).'</small></b>';
-    }
-
-    if ($riga->isArticolo() && empty($riga->articolo->codice)) {
-        echo '
-        <br><b><small class="text-danger">'.tr('_DATO_ articolo mancante', [
-            '_DATO_' => 'Codice',
-        ]).'</small></b>';
-    }
-
-    if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
-        if (!empty($mancanti)) {
-            echo '
-                <br><b><small class="text-danger">'.tr('_NUM_ serial mancanti', [
-                    '_NUM_' => $mancanti,
-                ]).'</small></b>';
         }
-        if (!empty($serials)) {
-            echo '
-                <br>'.tr('SN').': '.implode(', ', $serials);
+
+        $extra_riga = '';
+        if (!$riga->isDescrizione()) {
+            // Informazioni su CIG, CUP, ...
+            if ($riga->hasOriginalComponent()) {
+                $documento_originale = $riga->getOriginalComponent()->getDocument();
+
+                $num_item = $documento_originale['num_item'];
+                $codice_cig = $documento_originale['codice_cig'];
+                $codice_commessa = $documento_originale['codice_commessa'];
+                $codice_cup = $documento_originale['codice_cup'];
+                $id_documento_fe = $documento_originale['id_documento_fe'];
+            }
+
+            $descrizione_conto = $dbo->fetchOne('SELECT descrizione FROM co_pianodeiconti3 WHERE id = '.prepare($riga->id_conto))['descrizione'];
+
+            $extra_riga = replace('_DESCRIZIONE_CONTO__ID_DOCUMENTO__NUMERO_RIGA__CODICE_COMMESSA__CODICE_CIG__CODICE_CUP__RITENUTA_ACCONTO__RITENUTA_CONTRIBUTI__RIVALSA_', [
+                '_RIVALSA_' => $riga->rivalsa_inps ? '<br>'.tr('Cassa previdenziale').': '.moneyFormat(abs($riga->rivalsa_inps)) : null,
+                '_RITENUTA_ACCONTO_' => $riga->ritenuta_acconto ? '<br>Ritenuta acconto: '.moneyFormat(abs($riga->ritenuta_acconto)) : null,
+                '_RITENUTA_CONTRIBUTI_' => $riga->ritenuta_contributi ? '<br>Ritenuta previdenziale: '.moneyFormat(abs($riga->ritenuta_contributi)) : null,
+                '_DESCRIZIONE_CONTO_' => $descrizione_conto ?: '<span class="label label-danger" ><i class="fa fa-exclamation-triangle"></i>
+                '.tr('Conto mancante').'</span>',
+                '_ID_DOCUMENTO_' => $id_documento_fe ? ' - DOC: '.$id_documento_fe : null,
+                '_NUMERO_RIGA_' => $num_item ? ', NRI: '.$num_item : null,
+                '_CODICE_COMMESSA_' => $codice_commessa ? ', COM: '.$codice_commessa : null,
+                '_CODICE_CIG_' => $codice_cig ? ', CIG: '.$codice_cig : null,
+                '_CODICE_CUP_' => $codice_cup ? ', CUP: '.$codice_cup : null,
+            ]);
         }
-    }
 
-    if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
         echo '
-        <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
-    }
+            <tr data-id="'.$riga->id.'" data-type="'.get_class($riga).'" '.$extra.'>
+                <td class="text-center">';
+                if (!$block_edit) {
+                    echo '
+                    <input class="check" type="checkbox"/>';
+                }
+                echo '
+                </td>
 
-    if (!empty($riga->note)) {
+                <td class="text-center">
+                    '.$num.'
+                </td>
+
+                <td>';
+
+        // Informazioni aggiuntive sulla destra
+        echo '
+                    <small class="pull-right text-right text-muted">
+                        '.$extra_riga;
+
+        // Aggiunta dei riferimenti ai documenti
+        if ($riga->hasOriginalComponent()) {
             echo '
-                <br><small class="label label-default">'.nl2br($riga->note).'</small>';
-    }
-    echo '
-            </td>';
+                        <br>'.reference($riga->getOriginalComponent()->getDocument(), tr('Origine'));
+        }
+        // Fix per righe da altre componenti degli Interventi
+        elseif (!empty($riga->idintervento)) {
+            echo '
+                        <br>'.reference(Intervento::find($riga->idintervento), tr('Origine'));
+        }
 
-    if ($riga->isDescrizione()) {
         echo '
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>';
-    } else {
-        // Quantità e unità di misura
-        echo '
-            <td class="text-center">
-                '.numberFormat($riga->qta, 'qta').' '.$riga->um.'
-            </td>';
+                    </small>';
 
-        // Prezzi unitari
-        if (empty($riga->prezzo_unitario_corrente) && $dir == 'entrata') {
-            $price_danger = 'text-danger';
+        if ($riga->isArticolo()) {
+            echo Modules::link('Articoli', $riga->idarticolo, $riga->codice.' - '.$riga->descrizione);
         } else {
-            $price_danger = '';
+            echo nl2br($riga->descrizione);
         }
-        echo '
-            <td class="text-right">
-                <span class="'.$price_danger.'">'.moneyFormat($riga->prezzo_unitario_corrente).'</span>';
 
-        if ($dir == 'entrata' && $riga->costo_unitario != 0) {
+        if ($riga->isArticolo() && !empty($riga->articolo->deleted_at)) {
             echo '
-                <br><small class="text-muted">
-                    '.tr('Acquisto').': '.moneyFormat($riga->costo_unitario).'
-                </small>';
+            <br><b><small class="text-danger">'.tr('Articolo eliminato', []).'</small></b>';
         }
 
-        if (abs($riga->sconto_unitario) > 0) {
-            $text = discountInfo($riga);
-
+        if ($riga->isArticolo() && empty($riga->articolo->codice)) {
             echo '
-                <br><small class="label label-danger">'.$text.'</small>';
+            <br><b><small class="text-danger">'.tr('_DATO_ articolo mancante', [
+                '_DATO_' => 'Codice',
+            ]).'</small></b>';
         }
-
-        echo '
-            </td>';
-
-        // Iva
-        echo '
-            <td class="text-right">
-                '.moneyFormat($riga->iva_unitaria_scontata).'
-                <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.' ('.$riga->aliquota->esigibilita.') '.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
-            </td>';
-
-        // Importo
-        echo '
-            <td class="text-right">
-                '.moneyFormat($riga->importo).'
-            </td>';
-    }
-
-    // Possibilità di rimuovere una riga solo se la fattura non è pagata
-    echo '
-            <td class="text-center">';
-
-    if ($record['stato'] != 'Pagato' && $record['stato'] != 'Emessa') {
-        echo '
-                <div class="input-group-btn">';
 
         if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
+            if (!empty($mancanti)) {
+                echo '
+                    <br><b><small class="text-danger">'.tr('_NUM_ serial mancanti', [
+                        '_NUM_' => $mancanti,
+                    ]).'</small></b>';
+            }
+            if (!empty($serials)) {
+                echo '
+                    <br>'.tr('SN').': '.implode(', ', $serials);
+            }
+        }
+
+        if ($riga->isArticolo() && !empty($riga->articolo->barcode)) {
             echo '
-                    <a class="btn btn-primary btn-xs" title="'.tr('Modifica seriali della riga').'" onclick="modificaSeriali(this)">
-                        <i class="fa fa-barcode"></i>
-                    </a>';
+            <br><small><i class="fa fa-barcode"></i> '.$riga->articolo->barcode.'</small>';
         }
 
-        if ($riga->id != $fattura->rigaBollo->id) {
+        if (!empty($riga->note)) {
+                echo '
+                    <br><small class="label label-default">'.nl2br($riga->note).'</small>';
+        }
         echo '
-                    <a class="btn btn-xs btn-info" title="'.tr('Aggiungi informazioni FE per questa riga').'" onclick="apriInformazioniFE(this)">
-                        <i class="fa fa-file-code-o"></i>
-                    </a>
+                </td>';
 
-                    <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
-                        <i class="fa fa-edit"></i>
-                    </a>
+        if ($riga->isDescrizione()) {
+            echo '
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>';
+        } else {
+            // Quantità e unità di misura
+            echo '
+                <td class="text-center">
+                    '.numberFormat($riga->qta, 'qta').' '.$riga->um.'
+                </td>';
 
-                    <a class="btn btn-xs btn-danger" title="'.tr('Rimuovi riga').'" onclick="rimuoviRiga([$(this).closest(\'tr\').data(\'id\')])">
-                        <i class="fa fa-trash"></i>
-                    </a>';
+            // Prezzi unitari
+            if (empty($riga->prezzo_unitario_corrente) && $dir == 'entrata') {
+                $price_danger = 'text-danger';
+            } else {
+                $price_danger = '';
+            }
+            echo '
+                <td class="text-right">
+                    <span class="'.$price_danger.'">'.moneyFormat($riga->prezzo_unitario_corrente).'</span>';
+
+            if ($dir == 'entrata' && $riga->costo_unitario != 0) {
+                echo '
+                    <br><small class="text-muted">
+                        '.tr('Acquisto').': '.moneyFormat($riga->costo_unitario).'
+                    </small>';
+            }
+
+            if (abs($riga->sconto_unitario) > 0) {
+                $text = discountInfo($riga);
+
+                echo '
+                    <br><small class="label label-danger">'.$text.'</small>';
+            }
+
+            echo '
+                </td>';
+
+            // Iva
+            echo '
+                <td class="text-right">
+                    '.moneyFormat($riga->iva_unitaria_scontata).'
+                    <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.' ('.$riga->aliquota->esigibilita.') '.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
+                </td>';
+
+            // Importo
+            echo '
+                <td class="text-right">
+                    '.moneyFormat($riga->importo).'
+                </td>';
+        }
+
+        // Possibilità di rimuovere una riga solo se la fattura non è pagata
+        echo '
+                <td class="text-center">';
+
+        if ($record['stato'] != 'Pagato' && $record['stato'] != 'Emessa') {
+            echo '
+                    <div class="input-group-btn">';
+
+            if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
+                echo '
+                        <a class="btn btn-primary btn-xs" title="'.tr('Modifica seriali della riga').'" onclick="modificaSeriali(this)">
+                            <i class="fa fa-barcode"></i>
+                        </a>';
+            }
+
+            if ($riga->id != $fattura->rigaBollo->id) {
+            echo '
+                        <a class="btn btn-xs btn-info" title="'.tr('Aggiungi informazioni FE per questa riga').'" onclick="apriInformazioniFE(this)">
+                            <i class="fa fa-file-code-o"></i>
+                        </a>
+
+                        <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                            <i class="fa fa-edit"></i>
+                        </a>
+
+                        <a class="btn btn-xs btn-danger" title="'.tr('Rimuovi riga').'" onclick="rimuoviRiga([$(this).closest(\'tr\').data(\'id\')])">
+                            <i class="fa fa-trash"></i>
+                        </a>';
+            }
+
+            echo '
+                        <a class="btn btn-xs btn-default handle" title="'.tr('Modifica ordine delle righe').'">
+                            <i class="fa fa-sort"></i>
+                        </a>
+                    </div>';
         }
 
         echo '
-                    <a class="btn btn-xs btn-default handle" title="'.tr('Modifica ordine delle righe').'">
-                        <i class="fa fa-sort"></i>
-                    </a>
-                </div>';
+                </td>
+            </tr>';
     }
-
-    echo '
-            </td>
-        </tr>';
 }
 
 echo '
@@ -285,6 +293,58 @@ $netto_a_pagare = $fattura->netto;
 $rivalsa_inps = $fattura->rivalsa_inps;
 $ritenuta_acconto = $fattura->ritenuta_acconto;
 $ritenuta_contributi = $fattura->totale_ritenuta_contributi;
+
+// SPESA TRASPORTO
+if (!empty($riga_spesa_trasporto)) {
+    echo '
+    <tr data-id="'.$riga_spesa_trasporto->id.'" data-type="'.get_class($riga_spesa_trasporto).'">
+        <td colspan="6" class="text-right">
+            <b>
+                <span class="tip" title="'.tr('Spesa di trasporto').'">
+                    '.tr('Spesa di trasporto', [], ['upper' => true]).':
+                </span>
+            </b>
+        </td>
+
+        <td class="text-right">
+            '.moneyFormat($riga_spesa_trasporto->subtotale, 2).'
+        </td>
+
+        <td class="text-center">
+            <div class="input-group-btn">
+                <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                    <i class="fa fa-edit"></i>
+                </a>
+            </div>
+        </td>
+    </tr>';
+}
+
+// SPESA INCASSO
+if (!empty($riga_spesa_incasso)) {
+    echo '
+    <tr data-id="'.$riga_spesa_incasso->id.'" data-type="'.get_class($riga_spesa_incasso).'">
+        <td colspan="6" class="text-right">
+            <b>
+                <span class="tip" title="'.tr('Spesa di incasso').'">
+                    '.tr('Spesa di incasso', [], ['upper' => true]).':
+                </span>
+            </b>
+        </td>
+
+        <td class="text-right">
+            '.moneyFormat($riga_spesa_incasso->subtotale, 2).'
+        </td>
+
+        <td class="text-center">
+            <div class="input-group-btn">
+                <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                    <i class="fa fa-edit"></i>
+                </a>
+            </div>
+        </td>
+    </tr>';
+}
 
 // IMPONIBILE
 echo '

@@ -58,6 +58,45 @@ switch (post('op')) {
 
         $id_record = $fattura->id;
 
+        $iva_predefinita = setting('Iva predefinita');
+
+        $spese_di_trasporto = $anagrafica->spese_di_trasporto;
+        if ($spese_di_trasporto) {
+            $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
+
+            $riga = Riga::build($fattura);
+
+            $riga->descrizione = 'Spesa di trasporto';
+            $riga->note = 'Spesa di trasporto';
+            $riga->prezzo_unitario = $importo_spese_di_trasporto;
+            $riga->idiva = $iva_predefinita;
+            $riga->qta = 1;
+            $riga->idconto = setting('Piano dei conti associato spese di trasporto');
+            $riga->is_spesa_trasporto = 1;
+
+            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+
+            $riga->save();
+        }
+        $spese_di_incasso = $anagrafica->spese_di_incasso;
+        if ($spese_di_incasso) {
+            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+
+            $riga = Riga::build($fattura);
+
+            $riga->descrizione = 'Spesa di incasso';
+            $riga->note = 'Spesa di incasso';
+            $riga->prezzo_unitario = $importo_spese_di_incasso;
+            $riga->idiva = $iva_predefinita;
+            $riga->qta = 1;
+            $riga->idconto = setting('Piano dei conti associato spese di incasso');
+            $riga->is_spesa_incasso = 1;
+
+            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+
+            $riga->save();
+        }
+
         flash()->info(tr('Fattura aggiunta correttamente!'));
 
         break;

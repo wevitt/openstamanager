@@ -54,6 +54,45 @@ switch (filter('op')) {
         $ddt->idcausalet = post('idcausalet');
         $ddt->save();
 
+        $iva_predefinita = setting('Iva predefinita');
+
+        $spese_di_trasporto = $anagrafica->spese_di_trasporto;
+        if ($spese_di_trasporto) {
+            $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
+
+            $riga = Riga::build($ddt);
+
+            $riga->descrizione = tr('Spesa di trasporto');
+            $riga->note = tr('Spesa di trasporto');
+            $riga->prezzo_unitario = $importo_spese_di_trasporto;
+            $riga->idiva = $iva_predefinita;
+            $riga->qta = 1;
+            $riga->idconto = setting('Piano dei conti associato spese di trasporto');
+            $riga->is_spesa_trasporto = 1;
+
+            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+
+            $riga->save();
+        }
+        $spese_di_incasso = $anagrafica->spese_di_incasso;
+        if ($spese_di_incasso) {
+            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+
+            $riga = Riga::build($ddt);
+
+            $riga->descrizione = tr('Spesa di incasso');
+            $riga->note = tr('Spesa di incasso');
+            $riga->prezzo_unitario = $importo_spese_di_incasso;
+            $riga->idiva = $iva_predefinita;
+            $riga->qta = 1;
+            $riga->idconto = setting('Piano dei conti associato spese di incasso');
+            $riga->is_spesa_incasso = 1;
+
+            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+
+            $riga->save();
+        }
+
         flash()->info(tr('Aggiunto ddt in _TYPE_ numero _NUM_!', [
             '_TYPE_' => $dir,
             '_NUM_' => $ddt->numero,
@@ -122,6 +161,20 @@ switch (filter('op')) {
             $ddt->setScontoFinale(post('sconto_finale'), post('tipo_sconto_finale'));
 
             $ddt->save();
+
+            $spedizione = $dbo->fetchOne('SELECT id, descrizione FROM dt_spedizione WHERE id = '.prepare($ddt->idspedizione));
+            if ($spedizione['descrizione'] == 'Ritiro in magazzino') {
+                $dbo->query(
+                    'UPDATE dt_righe_ddt
+                    SET
+                    iva = 0,
+                    subtotale = 0,
+                    prezzo_unitario = 0,
+                    iva_unitaria = 0,
+                    prezzo_unitario_ivato = 0
+                    WHERE idddt = '.prepare($id_record).' AND is_spesa_trasporto = 1'
+                );
+            }
 
             $query = 'SELECT descrizione FROM dt_statiddt WHERE id='.prepare($idstatoddt);
             $rs = $dbo->fetchArray($query);
