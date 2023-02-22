@@ -487,22 +487,32 @@ if ($is_cliente or $is_fornitore or $is_tecnico) {
     echo '
                     </div>
 
+                    <div class="hidden spese-trasporto-default">';
+                        echo setting('Spese di trasporto default');
+                    echo '
+                    </div>
+
+                    <div class="hidden spese-incasso-default">';
+                        echo setting('Spese di incasso default');
+                    echo '
+                    </div>
+
                     <div class="tab-pane '.(!$is_cliente ? 'hide' : 'active').'" id="cliente">
                         <div class="row">
                             <div class="col-md-6">
-                                    {[ "type": "checkbox", "label": "'.tr('Spese di trasporto').'", "name": "spese_di_trasporto", "value": "'.$anagrafica['spese_di_trasporto'].'" ]}
+                                    {[ "type": "checkbox", "label": "'.tr('Spese di trasporto').'", "id": "spese-di-trasporto", "name": "spese_di_trasporto", "value": "'.$anagrafica['spese_di_trasporto'].'" ]}
                             </div>
                             <div class="col-md-6">
-                                    {[ "type": "number", "label": "'.tr('Importo spese di trasporto').'", "name": "importo_spese_di_trasporto", "value": "'.$anagrafica['importo_spese_di_trasporto'].'" , "icon-after": "'.currency().'" ]}
+                                    {[ "type": "number", "label": "'.tr('Importo spese di trasporto').'", "id": "importo-spese-di-trasporto", "name": "importo_spese_di_trasporto", "value": "'.$anagrafica['importo_spese_di_trasporto'].'" , "icon-after": "'.currency().'" ]}
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
-                                    {[ "type": "checkbox", "label": "'.tr('Spese di incasso').'", "name": "spese_di_incasso", "value": "'.$anagrafica['spese_di_incasso'].'" ]}
+                                    {[ "type": "checkbox", "label": "'.tr('Spese di incasso').'", "id": "spese-di-incasso", "name": "spese_di_incasso", "value": "'.$anagrafica['spese_di_incasso'].'" ]}
                             </div>
                             <div class="col-md-6">
-                                    {[ "type": "number", "label": "'.tr('Importo spese di incasso').'", "name": "importo_spese_di_incasso", "value": "'.$anagrafica['importo_spese_di_incasso'].'", "icon-after": "'.currency().'" ]}
+                                    {[ "type": "number", "label": "'.tr('Importo spese di incasso').'", "id": "importo-spese-di-incasso", "name": "importo_spese_di_incasso", "value": "'.$anagrafica['importo_spese_di_incasso'].'", "icon-after": "'.currency().'" ]}
                             </div>
                         </div>
 
@@ -852,6 +862,23 @@ if (empty($record['deleted_at'])) {
 
 <script>
 	$(document).ready( function() {
+        $('#spese-di-trasporto').change(function() {
+            if ($(this).is(':checked')) {
+                $('#importo-spese-di-trasporto').val($('.spese-trasporto-default').html());
+            } else {
+                $('#importo-spese-di-trasporto').val(0);
+            }
+        });
+
+        $('#spese-di-incasso').change(function() {
+            if ($(this).is(':checked')) {
+                $('#importo-spese-di-incasso').val($('.spese-incasso-default').html());
+            } else {
+                $('#importo-spese-di-incasso').val(0);
+            }
+        });
+
+
 		$(".colorpicker").colorpicker({ format: 'hex' }).on("changeColor", function() {
 			$("#colore_t").parent().find(".square").css("background", $("#colore_t").val());
 		});
