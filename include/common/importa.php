@@ -320,14 +320,14 @@ foreach ($righe as $i => $riga) {
 
     $attr = 'checked="checked"';
     if ($original_module['name'] == 'Preventivi') {
-        if (empty($riga['confermato']) && $riga['is_descrizione'] == 0) {
+        if (empty($riga['confermato']) && $riga['is_descrizione'] == 0 && $riga['is_spesa_incasso'] == 0 && $riga['is_spesa_trasporto'] == 0) {
             $attr = '';
         }
     }
 
     // Descrizione
     echo '
-                <tr data-local_id="'.$i.'">
+                <tr data-local_id="'.$i.'" data-is-spesa-trasporto="'.$riga->is_spesa_trasporto.'" data-is-spesa-incasso="'.$riga->is_spesa_incasso.'">
                     <td style="vertical-align:middle">
                         <input class="check" type="checkbox" '.$attr.' id="checked_'.$i.'" name="evadere['.$riga['id'].']" value="on" onclick="ricalcolaTotaleRiga('.$i.');" />
                     </td>
@@ -484,19 +484,65 @@ echo '
     </div>';
 
 echo '
+<input id="manage_spese" name="manage-spese" value="0"/>';
 
-    <!-- PULSANTI -->
-    <div class="row">
+$flag = setting('Spese di trasporto default') && setting('Spese di incasso default');
+
+    echo '
+    <div class="row '.($flag ? 'hide' : '').' ">
         <div class="col-md-12 text-right">
             <button type="submit" id="submit_btn" class="btn btn-primary pull-right">
-                <i class="fa fa-plus"></i> '.$options['button'].'
+                <i class="fa fa-plus"></i> '.$options['button'].' submit
             </button>
         </div>
     </div>
 </form>';
 
+if ($flag) {
+    echo '
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <button id="" class="btn btn-primary pull-right btn-confirm">
+                <i class="fa fa-plus"></i> '.$options['button'].' no form
+            </button>
+        </div>
+    </div>';
+}
+
 echo '
-<script>$(document).ready(init)</script>';
+<script>
+    $(document).ready(function() {
+        $(".btn-confirm").on("click", function() {
+            var spese_trasporto = $("tr[data-is-spesa-trasporto=1]").find("input[type=checkbox]").prop("checked");
+            var spese_incasso = $("tr[data-is-spesa-incasso=1]").find("input[type=checkbox]").prop("checked");
+
+            if (!spese_trasporto && !spese_incasso) {
+                $("#submit_btn").click();
+            } else {
+                swal({
+                    title: "'.tr('Attenzione').'",
+                    text: "'.tr('Sicuro di voler importare le spese?').'",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "'.tr('Sì').'",
+                    cancelButtonText: "'.tr('No').'",
+                }).then((result) => { //click su si
+                    $("#manage_spese").val(1);
+
+                    $("#submit_btn").click();
+                }).catch((err) => { //click su no
+                    $("tr[data-is-spesa-trasporto=1]").find("input[type=checkbox]").prop("checked", false);
+                    $("tr[data-is-spesa-incasso=1]").find("input[type=checkbox]").prop("checked", false);
+
+                    $("#manage_spese").val(0);
+
+                    $("#submit_btn").click();
+                });
+            }
+        });
+    });
+</script>';
 
 // Individuazione scorte
 $articoli = $documento->articoli->groupBy('idarticolo');
@@ -686,3 +732,7 @@ echo '
         }
     });
 </script>';
+
+
+echo '
+<script>$(document).ready(init)</script>';

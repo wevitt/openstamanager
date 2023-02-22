@@ -840,39 +840,73 @@ switch (post('op')) {
 
         foreach ($righe as $riga) {
             if (post('evadere')[$riga->id] == 'on') {
-                error_log("riga: " . json_encode($riga));
                 if ($riga['idordine'] != 0) {
                     $idOrdini[] = $riga->idordine;
                 }
 
-                $qta = post('qta_da_evadere')[$riga->id];
-                $articolo = ArticoloOriginale::find($riga->idarticolo);
+                if (post('manage-spese') == 0 && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) {
+                    error_log("QUESTA E' UNA SPESA MA NON DEVO GESTIRLA");
+                } else {
+                    if (empty(post('create_document')) && (($riga->is_spesa_trasporto || $riga->is_spesa_incasso))) {
+                        error_log("QUESTA E' UNA SPESA E DEVO GESTIRLA");
+                        if ($riga->is_spesa_trasporto) { //controllo se già esiste spesa trasposrto
+                            error_log("E' UNA SPESA TRASPORTO");
+                            $riga_spesa_trasporto = $dbo->fetchArray(
+                                'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_trasporto` = 1'
+                            );
 
-                $copia = $riga->copiaIn($fattura, $qta);
+                            if ($riga_spesa_trasporto != null) {
+                                error_log("GIA ESISTE, ELIMINO");
+                                $riga_trasporto = Riga::find($riga_spesa_trasporto[0]['id']);
 
-                $copia->id_conto = ($documento->direzione == 'entrata' ? ($articolo->idconto_vendita ?: $id_conto) : ($articolo->idconto_acquisto ?: $id_conto));
-                $copia->calcolo_ritenuta_acconto = $calcolo_ritenuta_acconto;
-                $copia->id_ritenuta_acconto = $id_ritenuta_acconto;
-                $copia->id_rivalsa_inps = $id_rivalsa_inps;
-                $copia->ritenuta_contributi = $ritenuta_contributi;
+                                //delete riga
+                                $riga_trasporto->delete();
+                            } else {
+                                error_log("NON ESISTE, CREO");
+                            }
+                        } else {
+                            error_log("E' UNA SPESA INCASSO");
+                            $riga_spesa_incasso = $dbo->fetchArray(
+                                'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_incasso` = 1'
+                            );
 
-                // Aggiornamento seriali dalla riga dell'ordine
-                if ($copia->isArticolo()) {
-                    $serials = is_array(post('serial')[$riga->id]) ? post('serial')[$riga->id] : [];
+                            if ($riga_spesa_incasso != null) {
+                                error_log("GIA ESISTE, ELIMINO");
+                                $riga_incasso = Riga::find($riga_spesa_incasso[0]['id']);
 
-                    $copia->serials = $serials;
+                                $riga_incasso->delete();
+                            } else {
+                                error_log("NON ESISTE, CREO");
+                            }
+                        }
+                    }
+
+                    error_log("DEVO CREARE");
+
+                    $qta = post('qta_da_evadere')[$riga->id];
+                    $articolo = ArticoloOriginale::find($riga->idarticolo);
+
+                    $copia = $riga->copiaIn($fattura, $qta);
+
+                    $copia->id_conto = ($documento->direzione == 'entrata' ? ($articolo->idconto_vendita ?: $id_conto) : ($articolo->idconto_acquisto ?: $id_conto));
+                    $copia->calcolo_ritenuta_acconto = $calcolo_ritenuta_acconto;
+                    $copia->id_ritenuta_acconto = $id_ritenuta_acconto;
+                    $copia->id_rivalsa_inps = $id_rivalsa_inps;
+                    $copia->ritenuta_contributi = $ritenuta_contributi;
+
+                    // Aggiornamento seriali dalla riga dell'ordine
+                    if ($copia->isArticolo()) {
+                        $serials = is_array(post('serial')[$riga->id]) ? post('serial')[$riga->id] : [];
+
+                        $copia->serials = $serials;
+                    }
+
+                    $copia->save();
+
+                    $totale += ($copia->prezzo_unitario * post('qta_da_evadere')[$riga->id]);
                 }
-
-                $copia->save();
-
-                $totale += ($copia->prezzo_unitario * post('qta_da_evadere')[$riga->id]);
             }
         }
-
-        error_log('totale: ' . $totale);
-
-
-        error_log("idOrdini: " . json_encode($idOrdini));
 
         //row per gli anticipi
         $acconti = $dbo->fetchArray(
@@ -880,8 +914,6 @@ switch (post('op')) {
             FROM ac_acconti
             WHERE idordine IN ('.implode(',', $idOrdini).')'
         );
-
-        error_log("acconti: " . json_encode($acconti));
 
         if ($acconti != null) {
             //foreach acconti

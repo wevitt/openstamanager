@@ -251,12 +251,16 @@ if (!empty($riga_spesa_trasporto)) {
             '.moneyFormat($riga_spesa_trasporto->subtotale, 2).'
         </td>
 
-        <td class="text-center">
-            <div class="input-group-btn">
-                <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
-                    <i class="fa fa-edit"></i>
-                </a>
-            </div>
+        <td class="text-center">';
+            if ($record['flag_completato'] == 0) {
+                echo '
+                <div class="input-group-btn">
+                    <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </div>';
+            }
+        echo '
         </td>
     </tr>';
 }
@@ -277,12 +281,16 @@ if (!empty($riga_spesa_incasso)) {
             '.moneyFormat($riga_spesa_incasso->subtotale, 2).'
         </td>
 
-        <td class="text-center">
-            <div class="input-group-btn">
-                <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
-                    <i class="fa fa-edit"></i>
-                </a>
-            </div>
+        <td class="text-center">';
+            if ($record['flag_completato'] == 0) {
+                echo '
+                <div class="input-group-btn">
+                    <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </div>';
+            }
+        echo '
         </td>
     </tr>';
 }
