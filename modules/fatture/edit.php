@@ -285,7 +285,10 @@ if ($dir == 'entrata') {
 
 $query = 'SELECT * FROM co_statidocumento';
 if (empty($record['is_fiscale'])) {
-    $query .= " WHERE descrizione = 'Bozza'";
+    // Solo le pro-forma possono avere tutti gli stati.
+    if ($record['id_segment'] !== 3) {
+        $query .= " WHERE descrizione = 'Bozza'";
+    }
 
     $plugin = $dbo->fetchArray("SELECT id FROM zz_plugins WHERE name='Fatturazione Elettronica' AND idmodule_to = ".prepare($id_module));
     echo '<script>$("#link-tab_'.$plugin[0]['id'].'").addClass("disabled");</script>';

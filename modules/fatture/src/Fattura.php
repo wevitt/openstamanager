@@ -607,8 +607,10 @@ class Fattura extends Document
             // Registrazione scadenze
             $this->registraScadenze($this->stato['descrizione'] == 'Pagato');
 
-            // Registrazione movimenti
-            $this->gestoreMovimenti->registra();
+            // Registrazione movimenti. Non per le fatture pro forma
+            if ($this->id_segment !== 3) {
+                $this->gestoreMovimenti->registra();
+            }
         } // Stato qualunque -> Bozza o Annullato
         elseif (in_array($this->stato['descrizione'], ['Bozza', 'Annullata'])) {
             // Rimozione delle scadenza
