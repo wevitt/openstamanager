@@ -52,6 +52,7 @@ switch (post('op')) {
         $iva_predefinita = setting('Iva predefinita');
 
         $spese_di_trasporto = $anagrafica->spese_di_trasporto;
+
         if ($spese_di_trasporto) {
             $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
 

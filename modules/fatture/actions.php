@@ -838,73 +838,87 @@ switch (post('op')) {
         $idOrdini = [];
         $totale = 0;
 
+        error_log($righe);
+
         foreach ($righe as $riga) {
-            if (post('evadere')[$riga->id] == 'on') {
+            error_log((post('manage-spese') && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) ||
+            (post('evadere')[$riga->id] == 'on'));
+            if (
+                (post('manage-spese') && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) ||
+                (post('evadere')[$riga->id] == 'on')
+            ) {
+                error_log("1");
+
                 if ($riga['idordine'] != 0) {
                     $idOrdini[] = $riga->idordine;
                 }
 
-                if (post('manage-spese') == 0 && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) {
-                    error_log("QUESTA E' UNA SPESA MA NON DEVO GESTIRLA");
-                } else {
-                    if (empty(post('create_document')) && (($riga->is_spesa_trasporto || $riga->is_spesa_incasso))) {
-                        error_log("QUESTA E' UNA SPESA E DEVO GESTIRLA");
-                        if ($riga->is_spesa_trasporto) { //controllo se già esiste spesa trasposrto
-                            error_log("E' UNA SPESA TRASPORTO");
-                            $riga_spesa_trasporto = $dbo->fetchArray(
-                                'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_trasporto` = 1'
-                            );
+                if (empty(post('create_document')) && (($riga->is_spesa_trasporto || $riga->is_spesa_incasso))) {
+                    error_log("1, if");
+                    error_log("QUESTA E' UNA SPESA E DEVO GESTIRLA");
+                    if ($riga->is_spesa_trasporto) { //controllo se già esiste spesa trasposrto
+                        error_log("E' UNA SPESA TRASPORTO");
+                        $riga_spesa_trasporto = $dbo->fetchArray(
+                            'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_trasporto` = 1'
+                        );
 
-                            if ($riga_spesa_trasporto != null) {
-                                error_log("GIA ESISTE, ELIMINO");
-                                $riga_trasporto = Riga::find($riga_spesa_trasporto[0]['id']);
+                        if ($riga_spesa_trasporto != null) {
+                            error_log("GIA ESISTE, ELIMINO");
+                            $riga_trasporto = Riga::find($riga_spesa_trasporto[0]['id']);
 
-                                //delete riga
-                                $riga_trasporto->delete();
-                            } else {
-                                error_log("NON ESISTE, CREO");
-                            }
+                            //delete riga
+                            $riga_trasporto->delete();
                         } else {
-                            error_log("E' UNA SPESA INCASSO");
-                            $riga_spesa_incasso = $dbo->fetchArray(
-                                'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_incasso` = 1'
-                            );
+                            error_log("NON ESISTE, CREO");
+                        }
+                    } else {
+                        error_log("E' UNA SPESA INCASSO");
+                        $riga_spesa_incasso = $dbo->fetchArray(
+                            'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_incasso` = 1'
+                        );
 
-                            if ($riga_spesa_incasso != null) {
-                                error_log("GIA ESISTE, ELIMINO");
-                                $riga_incasso = Riga::find($riga_spesa_incasso[0]['id']);
+                        if ($riga_spesa_incasso != null) {
+                            error_log("GIA ESISTE, ELIMINO");
+                            $riga_incasso = Riga::find($riga_spesa_incasso[0]['id']);
 
-                                $riga_incasso->delete();
-                            } else {
-                                error_log("NON ESISTE, CREO");
-                            }
+                            $riga_incasso->delete();
+                        } else {
+                            error_log("NON ESISTE, CREO");
                         }
                     }
+                }
 
-                    error_log("DEVO CREARE");
+                error_log("DEVO CREARE");
 
-                    $qta = post('qta_da_evadere')[$riga->id];
-                    $articolo = ArticoloOriginale::find($riga->idarticolo);
+                $qta = post('qta_da_evadere')[$riga->id];
+                $articolo = ArticoloOriginale::find($riga->idarticolo);
 
-                    $copia = $riga->copiaIn($fattura, $qta);
+                $copia = $riga->copiaIn($fattura, $qta);
 
+                if ($riga->is_spesa_trasporto || $riga->is_spesa_incasso) {
+                    $prezzo = ($riga->is_spesa_trasporto) ? post('spese_di_trasporto') : post('spese_di_incasso');
+                    $id_iva = $originale->idiva_vendita ? $originale->idiva_vendita : setting('Iva predefinita');
+                    $copia->setPrezzoUnitario($prezzo, $id_iva);
+
+                    error_log('prezzo: ' . $prezzo);
+                } else {
                     $copia->id_conto = ($documento->direzione == 'entrata' ? ($articolo->idconto_vendita ?: $id_conto) : ($articolo->idconto_acquisto ?: $id_conto));
                     $copia->calcolo_ritenuta_acconto = $calcolo_ritenuta_acconto;
                     $copia->id_ritenuta_acconto = $id_ritenuta_acconto;
                     $copia->id_rivalsa_inps = $id_rivalsa_inps;
                     $copia->ritenuta_contributi = $ritenuta_contributi;
-
-                    // Aggiornamento seriali dalla riga dell'ordine
-                    if ($copia->isArticolo()) {
-                        $serials = is_array(post('serial')[$riga->id]) ? post('serial')[$riga->id] : [];
-
-                        $copia->serials = $serials;
-                    }
-
-                    $copia->save();
-
-                    $totale += ($copia->prezzo_unitario * post('qta_da_evadere')[$riga->id]);
                 }
+
+                // Aggiornamento seriali dalla riga dell'ordine
+                if ($copia->isArticolo()) {
+                    $serials = is_array(post('serial')[$riga->id]) ? post('serial')[$riga->id] : [];
+
+                    $copia->serials = $serials;
+                }
+
+                $copia->save();
+
+                $totale += ($copia->prezzo_unitario * post('qta_da_evadere')[$riga->id]);
             }
         }
 
@@ -999,7 +1013,6 @@ switch (post('op')) {
             }
         }
 
-        error_log("fine");
         // Modifica finale dello stato
         if (post('create_document') == 'on') {
             $fattura->idstatodocumento = post('id_stato');
