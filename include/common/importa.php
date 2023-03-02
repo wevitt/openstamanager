@@ -26,6 +26,12 @@ if (empty($documento)) {
     return;
 }
 
+if (!empty($documento_finale)) {
+    $righe_totali_doc_finale = $documento_finale->getRighe();
+    $riga_spesa_incasso = $righe_totali_doc_finale->where('is_spesa_incasso', '=', 1)->first();
+    $riga_spesa_trasporto = $righe_totali_doc_finale->where('is_spesa_trasporto', '=', 1)->first();
+}
+
 // Informazioni utili
 $dir = $documento->direzione;
 $original_module = Modules::get($documento->module);
@@ -283,11 +289,11 @@ echo '
     <div class="box-body">
         <div class="row">
             <div class="col-md-6">
-                {[ "type": "number", "label": "'.tr('Spese di traporto').'", "name": "spese_di_trasporto", "value": "'.$riga_trasporto['subtotale'].'", "icon-after": "'.currency().'"]}
+                {[ "type": "number", "label": "'.tr('Spese di traporto').'", "name": "spese_di_trasporto", "value": "'.$riga_trasporto['prezzo_unitario'].'", "icon-after": "'.currency().'"]}
             </div>
 
             <div class="col-md-6">
-                {[ "type": "number", "label": "'.tr('Spese di incasso').'", "name": "spese_di_incasso", "value": "'.$riga_incasso['subtotale'].'", "icon-after": "'.currency().'"]}
+                {[ "type": "number", "label": "'.tr('Spese di incasso').'", "name": "spese_di_incasso", "value": "'.$riga_incasso['prezzo_unitario'].'", "icon-after": "'.currency().'"]}
             </div>
         </div>
     </div>
@@ -507,7 +513,10 @@ echo '
     </div>';
 
 echo '
-<input id="manage_spese" name="manage-spese" value="1"/>';
+<input class="hide" id="name_module" value="'.$name.'"/>
+<input class="hide" id="manage_spese" name="manage-spese" value="1"/>
+<input class="hide" id="riga_spesa_trasporto" name="riga-spesa-trasporto" value="'.(!empty($riga_spesa_trasporto) ? $riga_spesa_trasporto->prezzo_unitario : -1).'"/>
+<input class="hide" id="riga_spesa_incasso" name="riga-spesa-incasso" value="'.(!empty($riga_spesa_incasso) ? $riga_spesa_incasso->prezzo_unitario : -1).'"/>';
 
 $flag = setting('Spese di trasporto default') && setting('Spese di incasso default');
 
@@ -515,7 +524,7 @@ $flag = setting('Spese di trasporto default') && setting('Spese di incasso defau
     <div class="row '.($flag ? 'hide' : '').' ">
         <div class="col-md-12 text-right">
             <button type="submit" id="submit_btn" class="btn btn-primary pull-right">
-                <i class="fa fa-plus"></i> '.$options['button'].' submit
+                <i class="fa fa-plus"></i> '.$options['button'].'
             </button>
         </div>
     </div>
@@ -526,7 +535,7 @@ if ($flag) {
     <div class="row">
         <div class="col-md-12 text-right">
             <button id="" class="btn btn-primary pull-right btn-confirm">
-                <i class="fa fa-plus"></i> '.$options['button'].' no form
+                <i class="fa fa-plus"></i> '.$options['button'].'
             </button>
         </div>
     </div>';
@@ -536,23 +545,39 @@ echo '
 <script>
     $(document).ready(function() {
         $(".btn-confirm").on("click", function() {
-                swal({
-                title: "'.tr('Attenzione').'",
-                text: "'.tr('Vuoi importare le spese di incasso?').'",
-                type: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#DD6B55",
-                confirmButtonText: "'.tr('Sì').'",
-                cancelButtonText: "'.tr('No').'",
-            }).then((result) => { //click su si
-                $("#manage_spese").val(1);
+            spesa_di_trasporto = $("#riga_spesa_trasporto").val();
+            spesa_di_incasso = $("#riga_spesa_incasso").val();
+            name_module = $("#name_module").val();
 
-                $("#submit_btn").click();
-            }).catch((err) => { //click su no
+            if (name_module == "Ordini fornitore") {
                 $("#manage_spese").val(0);
-
                 $("#submit_btn").click();
-            });
+            } else {
+                msg = "";
+                if (spesa_di_trasporto == -1 && spesa_di_incasso == -1) {
+                    msg = "'.tr("Vuoi importare le spese di incasso e di trasporto?").'";
+                } else {
+                    msg = "'.tr("Spese di incasso e/o trasporto già presenti. Vuoi sovrascriverle?").'";
+                }
+
+                swal({
+                    title: "'.tr('Attenzione').'",
+                    text: msg,
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "'.tr('Sì').'",
+                    cancelButtonText: "'.tr('No').'",
+                }).then((result) => { //click su si
+                    $("#manage_spese").val(1);
+
+                    $("#submit_btn").click();
+                }).catch((err) => { //click su no
+                    $("#manage_spese").val(0);
+
+                    $("#submit_btn").click();
+                });
+            }
         });
     });
 </script>';

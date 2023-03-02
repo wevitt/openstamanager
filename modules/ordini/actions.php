@@ -57,6 +57,9 @@ switch (post('op')) {
         $iva_predefinita = setting('Iva predefinita');
 
         $spese_di_trasporto = $anagrafica->spese_di_trasporto;
+
+        $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$ordine->idpagamento)['prc'];
+
         if ($spese_di_trasporto) {
             $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
 
@@ -66,7 +69,7 @@ switch (post('op')) {
             $riga->note = 'Spesa di trasporto';
             $riga->prezzo_unitario = $importo_spese_di_trasporto;
             $riga->idiva = $iva_predefinita;
-            $riga->qta = 1;
+            $riga->qta = intval(100 / $prc);
             //$riga->idconto = setting('Piano dei conti associato spese di trasporto');
             $riga->is_spesa_trasporto = 1;
 
@@ -85,7 +88,7 @@ switch (post('op')) {
             $riga->note = 'Spesa di incasso';
             $riga->prezzo_unitario = $importo_spese_di_incasso;
             $riga->idiva = $iva_predefinita;
-            $riga->qta = 1;
+            $riga->qta = intval(100 / $prc);
             //$riga->idconto = setting('Piano dei conti associato spese di incasso');
             $riga->is_spesa_incasso = 1;
 
@@ -159,6 +162,24 @@ switch (post('op')) {
             $ordine->setScontoFinale(post('sconto_finale'), post('tipo_sconto_finale'));
 
             $ordine->save();
+
+            //update spese incasso/trasporto in base a idpagamento
+            $righe = $ordine->getRighe();
+
+            $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
+            $riga_spese_trasporto = $righe->where('is_spesa_trasporto', 1)->first();
+
+            $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$ordine->idpagamento)['prc'];
+
+            $riga_spese_incasso->qta = intval(100 / $prc);
+            $riga_spese_trasporto->qta = intval(100 / $prc);
+
+            $riga_spese_incasso->setPrezzoUnitario($riga_spese_incasso->prezzo_unitario, $riga_spese_incasso->idiva);
+            $riga_spese_trasporto->setPrezzoUnitario($riga_spese_trasporto->prezzo_unitario, $riga_spese_trasporto->idiva);
+
+            $riga_spese_incasso->save();
+            $riga_spese_trasporto->save();
+
 
             if ($dbo->query($query)) {
                 $query = 'SELECT descrizione FROM or_statiordine WHERE id='.prepare($idstatoordine);

@@ -61,6 +61,9 @@ switch (post('op')) {
         $iva_predefinita = setting('Iva predefinita');
 
         $spese_di_trasporto = $anagrafica->spese_di_trasporto;
+
+        $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$fattura->idpagamento)['prc'];
+
         if ($spese_di_trasporto) {
             $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
 
@@ -70,7 +73,7 @@ switch (post('op')) {
             $riga->note = 'Spesa di trasporto';
             $riga->prezzo_unitario = $importo_spese_di_trasporto;
             $riga->idiva = $iva_predefinita;
-            $riga->qta = 1;
+            $riga->qta = intval(100 / $prc);
             $riga->idconto = setting('Piano dei conti associato spese di trasporto');
             $riga->is_spesa_trasporto = 1;
 
@@ -88,7 +91,7 @@ switch (post('op')) {
             $riga->note = 'Spesa di incasso';
             $riga->prezzo_unitario = $importo_spese_di_incasso;
             $riga->idiva = $iva_predefinita;
-            $riga->qta = 1;
+            $riga->qta = intval(100 / $prc);
             $riga->idconto = setting('Piano dei conti associato spese di incasso');
             $riga->is_spesa_incasso = 1;
 
@@ -182,6 +185,25 @@ switch (post('op')) {
         $fattura->setScontoFinale(post('sconto_finale'), post('tipo_sconto_finale'));
 
         $results = $fattura->save();
+
+        //update spese incasso/trasporto in base a idpagamento
+        $righe = $fattura->getRighe();
+
+        $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
+        $riga_spese_trasporto = $righe->where('is_spesa_trasporto', 1)->first();
+
+        $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$fattura->idpagamento)['prc'];
+
+        $riga_spese_incasso->qta = intval(100 / $prc);
+        $riga_spese_trasporto->qta = intval(100 / $prc);
+
+        $riga_spese_incasso->setPrezzoUnitario($riga_spese_incasso->prezzo_unitario, $riga_spese_incasso->idiva);
+        $riga_spese_trasporto->setPrezzoUnitario($riga_spese_trasporto->prezzo_unitario, $riga_spese_trasporto->idiva);
+
+        $riga_spese_incasso->save();
+        $riga_spese_trasporto->save();
+
+
         $message = '';
 
         foreach ($results as $numero => $result) {
@@ -900,7 +922,13 @@ switch (post('op')) {
                     $id_iva = $originale->idiva_vendita ? $originale->idiva_vendita : setting('Iva predefinita');
                     $copia->setPrezzoUnitario($prezzo, $id_iva);
 
-                    error_log('prezzo: ' . $prezzo);
+                    if ($copia->idconto == 0) {
+                        if ($riga->is_spesa_trasporto) {
+                            $copia->id_conto = setting('Piano dei conti associato spese di trasporto');
+                        } else {
+                            $copia->id_conto = setting('Piano dei conti associato spese di incasso');
+                        }
+                    }
                 } else {
                     $copia->id_conto = ($documento->direzione == 'entrata' ? ($articolo->idconto_vendita ?: $id_conto) : ($articolo->idconto_acquisto ?: $id_conto));
                     $copia->calcolo_ritenuta_acconto = $calcolo_ritenuta_acconto;
