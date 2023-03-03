@@ -69,3 +69,4 @@ $assets = [
 // Indica se i messaggi di posta elettronica devono essere inviati con
 // l'iestruzione reply_to impostata con l'indirizzo email dell'utente collegato
 $force_reply_to_sender = true;
+$force_mail_from_sender = true;
