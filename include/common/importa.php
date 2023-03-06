@@ -544,7 +544,8 @@ if ($flag) {
 echo '
 <script>
     $(document).ready(function() {
-        $("body").on("click", "#submit_btn", function() {
+        $("body").on("click", "#submit_btn", function(e) {
+            e.preventDefault();
             spesa_di_trasporto = $("#riga_spesa_trasporto").val();
             spesa_di_incasso = $("#riga_spesa_incasso").val();
             name_module = $("#name_module").val();
