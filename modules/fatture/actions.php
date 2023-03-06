@@ -60,10 +60,9 @@ switch (post('op')) {
 
         $iva_predefinita = setting('Iva predefinita');
 
-        $spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->spese_di_trasporto : 0;
-
         $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$fattura->idpagamento)['prc'];
 
+        $spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->spese_di_trasporto : 0;
         $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
         $riga = Riga::build($fattura);
         $riga->descrizione = 'Spesa di trasporto';

@@ -51,44 +51,31 @@ switch (post('op')) {
 
         $iva_predefinita = setting('Iva predefinita');
 
-        $spese_di_trasporto = $anagrafica->spese_di_trasporto;
-
         $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$preventivo->idpagamento)['prc'];
 
-        if ($spese_di_trasporto) {
-            $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
+        $spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->spese_di_trasporto : 0;
+        $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
+        $riga = Riga::build($preventivo);
+        $riga->descrizione = 'Spesa di trasporto';
+        $riga->note = 'Spesa di trasporto';
+        $riga->prezzo_unitario = $importo_spese_di_trasporto;
+        $riga->idiva = $iva_predefinita;
+        $riga->qta = intval(100 / $prc);
+        $riga->is_spesa_trasporto = 1;
+        $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+        $riga->save();
 
-            $riga = Riga::build($preventivo);
-
-            $riga->descrizione = 'Spesa di trasporto';
-            $riga->note = 'Spesa di trasporto';
-
-            $riga->prezzo_unitario = $importo_spese_di_trasporto;
-            $riga->idiva = $iva_predefinita;
-            $riga->qta = intval(100 / $prc);
-            $riga->is_spesa_trasporto = 1;
-
-            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
-
-            $riga->save();
-        }
-        $spese_di_incasso = $anagrafica->spese_di_incasso;
-        if ($spese_di_incasso) {
-            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
-
-            $riga = Riga::build($preventivo);
-
-            $riga->descrizione = 'Spesa di incasso';
-            $riga->note = 'Spesa di incasso';
-            $riga->prezzo_unitario = $importo_spese_di_incasso;
-            $riga->idiva = $iva_predefinita;
-            $riga->qta = intval(100 / $prc);
-            $riga->is_spesa_incasso = 1;
-
-            $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
-
-            $riga->save();
-        }
+        $spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->spese_di_incasso : 0;
+        $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+        $riga = Riga::build($preventivo);
+        $riga->descrizione = 'Spesa di incasso';
+        $riga->note = 'Spesa di incasso';
+        $riga->prezzo_unitario = $importo_spese_di_incasso;
+        $riga->idiva = $iva_predefinita;
+        $riga->qta = intval(100 / $prc);
+        $riga->is_spesa_incasso = 1;
+        $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+        $riga->save();
 
         if (isAjaxRequest()) {
             echo json_encode(['id' => $id_record, 'text' => 'Contratto '.$preventivo->numero.' del '.dateFormat($preventivo->data_bozza).' - '.$preventivo->nome]);
