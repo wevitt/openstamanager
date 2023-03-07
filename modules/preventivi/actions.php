@@ -53,8 +53,7 @@ switch (post('op')) {
 
         $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$preventivo->idpagamento)['prc'];
 
-        $spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->spese_di_trasporto : 0;
-        $importo_spese_di_trasporto = $anagrafica->importo_spese_di_trasporto;
+        $importo_spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->importo_spese_di_trasporto : 0;
         $riga = Riga::build($preventivo);
         $riga->descrizione = 'Spesa di trasporto';
         $riga->note = 'Spesa di trasporto';
@@ -65,8 +64,7 @@ switch (post('op')) {
         $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
         $riga->save();
 
-        $spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->spese_di_incasso : 0;
-        $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+        $importo_spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->importo_spese_di_incasso : 0;
         $riga = Riga::build($preventivo);
         $riga->descrizione = 'Spesa di incasso';
         $riga->note = 'Spesa di incasso';
@@ -125,22 +123,49 @@ switch (post('op')) {
 
             $preventivo->save();
 
+            $anagrafica = Anagrafica::find($id_anagrafica);
+            $iva_predefinita = setting('Iva predefinita');
+
             //update spese incasso/trasporto in base a idpagamento
             $righe = $preventivo->getRighe();
 
-            $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
-            $riga_spese_trasporto = $righe->where('is_spesa_trasporto', 1)->first();
-
             $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$preventivo->idpagamento)['prc'];
 
-            $riga_spese_incasso->qta = intval(100 / $prc);
-            $riga_spese_trasporto->qta = intval(100 / $prc);
+            $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
+            if (empty($riga_spese_incasso)) {
+                $importo_spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->importo_spese_di_incasso : 0;
+                $riga = Riga::build($preventivo);
+                $riga->descrizione = 'Spesa di incasso';
+                $riga->note = 'Spesa di incasso';
+                $riga->prezzo_unitario = $importo_spese_di_incasso;
+                $riga->idiva = $iva_predefinita;
+                $riga->qta = intval(100 / $prc);
+                $riga->is_spesa_incasso = 1;
+                $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+                $riga->save();
+            } else {
+                $riga_spese_incasso->qta = intval(100 / $prc);
+                $riga_spese_incasso->setPrezzoUnitario($riga_spese_incasso->prezzo_unitario, $riga_spese_incasso->idiva);
+                $riga_spese_incasso->save();
+            }
 
-            $riga_spese_incasso->setPrezzoUnitario($riga_spese_incasso->prezzo_unitario, $riga_spese_incasso->idiva);
-            $riga_spese_trasporto->setPrezzoUnitario($riga_spese_trasporto->prezzo_unitario, $riga_spese_trasporto->idiva);
-
-            $riga_spese_incasso->save();
-            $riga_spese_trasporto->save();
+            $riga_spese_trasporto = $righe->where('is_spesa_trasporto', 1)->first();
+            if (empty($riga_spese_trasporto)) {
+                $importo_spese_di_trasporto = ($anagrafica->spese_di_trasporto) ? $anagrafica->importo_spese_di_trasporto : 0;
+                $riga = Riga::build($preventivo);
+                $riga->descrizione = 'Spesa di trasporto';
+                $riga->note = 'Spesa di trasporto';
+                $riga->prezzo_unitario = $importo_spese_di_trasporto;
+                $riga->idiva = $iva_predefinita;
+                $riga->qta = intval(100 / $prc);
+                $riga->is_spesa_trasporto = 1;
+                $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
+                $riga->save();
+            } else {
+                $riga_spese_trasporto->qta = intval(100 / $prc);
+                $riga_spese_trasporto->setPrezzoUnitario($riga_spese_trasporto->prezzo_unitario, $riga_spese_trasporto->idiva);
+                $riga_spese_trasporto->save();
+            }
 
             flash()->info(tr('Preventivo modificato correttamente!'));
         }
