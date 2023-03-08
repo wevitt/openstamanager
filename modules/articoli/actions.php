@@ -498,28 +498,31 @@ switch (post('op')) {
         $articolo = $dbo->fetchOne('SELECT prezzo_vendita, idiva_vendita FROM mg_articoli WHERE id='.prepare($id_articolo_concatenato));
         $prezzo = floatval($articolo['prezzo_vendita']);
 
-        $iva = $dbo->fetchOne('SELECT percentuale FROM co_iva WHERE id='.prepare($articolo['idiva_vendita']))['percentuale'];
-        $iva = ($iva) ? $iva : 0;
+        $iva = $dbo->fetchOne('SELECT id, percentuale FROM co_iva WHERE id='.prepare($articolo['idiva_vendita']));
 
         $dbo->insert('mg_articoli_concatenati', [
             'id_articolo' => $id_articolo,
             'id_articolo_concatenato' => $id_articolo_concatenato,
             'prezzo' => $prezzo,
-            'iva' => $iva,
-            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva),
+            'idiva' => $iva['id'],
+            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva['percentuale']),
         ]);
 
         break;
 
     case 'update_concatenato':
         $id = post('id');
-        $iva = post('iva');
+        //$iva = post('iva');
         $prezzo = post('prezzo');
+
+        //get iva by mg_articoli_concatenati
+        $idiva = $dbo->fetchOne('SELECT idiva FROM mg_articoli_concatenati WHERE id='.prepare($id))['idiva'];
+        $iva = $dbo->fetchOne('SELECT id, percentuale FROM co_iva WHERE id='.prepare($idiva));
 
         $dbo->update('mg_articoli_concatenati', [
             'prezzo' => $prezzo,
-            'iva' => $iva,
-            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva),
+            //'iva' => $iva,
+            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva['percentuale']),
         ], [
             'id' => $id,
         ]);

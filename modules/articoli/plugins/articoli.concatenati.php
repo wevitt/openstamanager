@@ -46,8 +46,11 @@ echo '
 <table class="table table-hover table-condensed table-bordered" id="tbl-concatenati">
     <thead>
         <tr>
-            <th class="text-center" width="200">'.tr('Codice articolo concatenato').'</th>
-            <th class="text-center" width="350">'.tr('Descrizone articolo concatenato').'</th>
+            <!--<th width="5" class="text-center">
+                <input id="check_all" type="checkbox"/>
+            </th>-->
+            <th class="text-center" width="100">'.tr('Cod. articolo concatenato').'</th>
+            <th class="text-center" width="450">'.tr('Descrizone articolo concatenato').'</th>
             <th class="text-center" width="95">'.tr('Prezzo').'</th>
             <th class="text-center" width="95">'.tr('Prezzo ivato').'</th>
             <th class="text-center" width="40"></th>
@@ -57,7 +60,11 @@ echo '
         foreach($concatenati as $concatenato) {
             echo '
             <tr>
-                <td>'.$concatenato['id_articolo_concatenato'].'</td>
+            <!--<td class="text-center">
+                <input class="check" type="checkbox"/>
+            </td>-->
+            </td>
+                <td><a href="'.base_path().'/controller.php?id_module='.$id_module.'&id_record='.$concatenato['id_articolo_concatenato'].'" target="_blank">'.$concatenato['id_articolo_concatenato'].'</a></td>
                 <td>'.$concatenato['descrizione_concatenato'].'</td>
                 <td class="text-right">'.moneyFormat($concatenato['prezzo']).'</td>
                 <td class="text-right">'.moneyFormat($concatenato['prezzo_ivato']).'</td>
@@ -78,11 +85,11 @@ echo '
     </tbody>
 </table>
 
-<div class="btn-group">
+<!--<div class="btn-group">
     <button type="button" class="btn btn-xs btn-default disabled" id="elimina_righe" onclick="rimuoviArticolo(getSelectData());">
         <i class="fa fa-trash"></i>
     </button>
-</div>
+</div>-->
 
 
 <script>
@@ -132,4 +139,42 @@ echo '
 
         });
     }
+
+    /*function rimuoviRiga(id) {
+        swal({
+            title: "'.tr('Rimuovere queste righe?').'",
+            html: "'.tr('Sei sicuro di volere rimuovere queste righe dal documento?').' '.tr("L'operazione è irreversibile").'.",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonText: "'.tr('Sì').'"
+        }).then(function () {
+            $.ajax({
+                url: globals.rootdir + "/actions.php",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    id_module: globals.id_module,
+                    id_record: globals.id_record,
+                    op: "remove_concatenato",
+                    righe: id,
+                },
+                success: function (response) {
+                    location.reload();
+                },
+                error: function() {
+                    location.reload();
+                }
+            });
+        }).catch(swal.noop);
+    }
+
+    function getSelectData() {
+        let data=new Array();
+        $(\'#righe\').find(\'.check:checked\').each(function (){
+            data.push($(this).closest(\'tr\').data(\'id\'));
+        });
+
+        return data;
+    }*/
+
 </script>';

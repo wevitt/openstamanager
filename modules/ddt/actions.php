@@ -281,6 +281,24 @@ switch (filter('op')) {
             $originale = ArticoloOriginale::find(post('idarticolo'));
             $articolo = Articolo::build($ddt, $originale);
             $articolo->id_dettaglio_fornitore = post('id_dettaglio_fornitore') ?: null;
+
+            //check if the item have linked items
+            $concatenati = $dbo->fetchArray('SELECT * FROM mg_articoli_concatenati WHERE id_articolo='.prepare($articolo->idarticolo));
+
+            foreach ($concatenati as $concatenato) {
+                $concatenato_originale = ArticoloOriginale::find($concatenato['id_articolo_concatenato']);
+                $riga_concatenato = Articolo::build($ddt, $concatenato_originale);
+
+                try {
+                    $riga_concatenato->qta = post('qta');
+                } catch (UnexpectedValueException $e) {
+                    flash()->error(tr('Alcuni serial number sono già stati utilizzati!'));
+                }
+
+                $riga_concatenato->setPrezzoUnitario($concatenato['prezzo'], $concatenato['idiva']);
+
+                $riga_concatenato->save();
+            }
         }
 
         $articolo->descrizione = post('descrizione');

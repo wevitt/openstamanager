@@ -26,10 +26,11 @@ echo '
 <div class="row">
     <div id="prezzo" class="col-md-6">
         {[ "type": "number", "label": "'.tr('Prezzo').'", "name": "prezzo", "value": "'.$articolo_concatenato['prezzo'].'", "icon-after": "'.currency().'" ]}
-    </div>
-    <div id="iva" class="col-md-6">
+    </div>';
+    /*<div id="iva" class="col-md-6">
         {[ "type": "number", "label": "'.tr('Iva').'", "name": "iva", "value": "'.$articolo_concatenato['iva'].'", "icon-after": "%" ]}
-    </div>
+    </div>*/
+echo '
 </div>
 
 <div class="row">
@@ -50,7 +51,7 @@ echo '
                 data: {
                     op: "update_concatenato",
                     prezzo: $("#prezzo").find("input").val(),
-                    iva: $("#iva").find("input").val(),
+                    //iva: $("#iva").find("input").val(),
                     id: $("#id").val(),
                 },
                 success: function(data){
