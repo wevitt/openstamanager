@@ -657,7 +657,8 @@ switch (post('op')) {
             if (floatval($disponibile['da_stornare']) - floatval($acconto_riga['importo_fatturato']) >= -1 * floatval(post('prezzo_unitario'))) {
                 $dbo->query(
                     'UPDATE ac_acconti_righe
-                    SET importo_fatturato = '.prepare(floatval(post('prezzo_unitario'))).'
+                    SET importo_fatturato = '.prepare(floatval(post('prezzo_unitario'))).',
+                        idiva = '.prepare(post('idiva')).'
                     WHERE idriga_fattura = '.prepare(post('idriga')).' AND idfattura = '.prepare($id_record)
                 );
             } else {
@@ -977,6 +978,12 @@ switch (post('op')) {
                 error_log("siamo dentro");
                 $acconto = $acconti[0];
 
+                $ivaAnticipo = $dbo->fetchOne(
+                    'SELECT idiva
+                    FROM ac_acconti_righe
+                    WHERE idacconto = '.prepare($acconto['id']).' AND tipologia = "Anticipo"'
+                )['idiva'];
+
                 //get acconto_righe
                 $acconto_righe = $dbo->fetchOne(
                     'SELECT idacconto, idfattura, sum(importo_fatturato) as da_stornare
@@ -1013,11 +1020,10 @@ switch (post('op')) {
 
                     error_log("rigaAcconto: " . json_encode($rigaAcconto));
 
-                    $iva_predefinita = setting('Iva predefinita');
                     $iva = $dbo->fetchOne(
                         'SELECT id, descrizione, percentuale
                         FROM co_iva
-                        WHERE id = '.prepare($iva_predefinita)
+                        WHERE id = '.prepare($ivaAnticipo)
                     );
 
                     //aggiungo la riga fattura dell'acconto
@@ -1030,7 +1036,7 @@ switch (post('op')) {
 
                     $riga->descrizione = 'Storno acconto fattura '.$fattura->numero_esterno;
 
-                    $riga->id_iva = $iva['id'];
+                    $riga->idiva = $ivaAnticipo;
                     $riga->desc_iva = $iva['descrizione'];
 
                     $riga->idconto = $rigaAcconto['idconto'];
@@ -1048,8 +1054,8 @@ switch (post('op')) {
                     $riga->save();
 
                     $dbo->query(
-                        'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
-                        VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($id_record).', '.prepare($riga->id).', '.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
+                        'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, idiva, importo_fatturato, tipologia)
+                        VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($id_record).', '.prepare($riga->id).','.prepare($riga->idiva).','.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
                     );
                 }
             }

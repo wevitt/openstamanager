@@ -200,7 +200,7 @@ switch (post('op')) {
 
                                 $riga->descrizione = 'Storno acconto fattura '.$fattura->numero_esterno;
 
-                                $riga->id_iva = $iva['id'];
+                                $riga->idiva = $iva['id'];
                                 $riga->desc_iva = $iva['descrizione'];
 
                                 $riga->idconto = $rigaAcconto['idconto'];
@@ -219,8 +219,8 @@ switch (post('op')) {
                                 $riga->save();
 
                                 $dbo->query(
-                                    'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
-                                    VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($acconto_righe['idfattura']).', '.prepare($riga->id).','.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
+                                    'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, idiva, importo_fatturato, tipologia)
+                                    VALUES ('.prepare($acconto_righe['idacconto']).', '.prepare($acconto_righe['idfattura']).', '.prepare($riga->id).','.prepare($riga->idiva).','.prepare($importo_fatturato).', '.prepare(tr('Storno da acconto')).')'
                                 );
                             }
                         }

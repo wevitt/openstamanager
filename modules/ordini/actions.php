@@ -820,12 +820,10 @@ switch (post('op')) {
 
         $riga->descrizione = post('descrizione');
 
-        $riga->id_iva = post('id_iva');
+        $riga->idiva = post('id_iva');
         $riga->desc_iva = post('desc_iva');
 
         $riga->idconto = post('id_conto');
-
-        error_log(post('anticipo'));
 
         $riga->costo_unitario = 0;
         $riga->subtotale = floatval(post('anticipo'));
@@ -851,8 +849,8 @@ switch (post('op')) {
         $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
 
         $dbo->query(
-            'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, importo_fatturato, tipologia)
-            VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($riga->id).','.prepare($anticipo).', '.prepare('Anticipo').')'
+            'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, idiva, importo_fatturato, tipologia)
+            VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($riga->id).','.prepare($riga->idiva).','.prepare($anticipo).', '.prepare('Anticipo').')'
         );
 
 
