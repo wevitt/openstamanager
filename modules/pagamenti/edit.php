@@ -119,6 +119,9 @@ SELECT `co_contratti`.`id`, `co_contratti`.`data_bozza`, `co_contratti`.`numero`
 UNION
 SELECT `co_preventivi`.`id`, `co_preventivi`.`data_bozza`, `co_preventivi`.`numero`, 0 AS numero_esterno , "Preventivo" AS tipo_documento, 0 AS dir, NULL AS `deleted_at` FROM `co_preventivi` WHERE `co_preventivi`.`idpagamento` = '.prepare($id_record).'
 
+UNION
+SELECT vb_venditabanco.id, vb_venditabanco.data, vb_venditabanco.numero, vb_venditabanco.numero_esterno, "Vendita a banco" AS tipo_documento, 0 AS dir, NULL AS `deleted_at` FROM `vb_venditabanco` WHERE `vb_venditabanco`.`idpagamento` = '.prepare($id_record).'
+
 ORDER BY `data`');
 
 
