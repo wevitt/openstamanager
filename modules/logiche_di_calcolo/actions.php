@@ -30,7 +30,6 @@ switch (post('op')) {
         if (!empty($rs)) {
             flash()->error(tr('Esiste gia\' una logica di calcolo per questo listino di origine e di destinazione!'));
         } else {
-            error_log("Aggiunta nuova logica di calcolo!");
             //insert into mg_logiche di calcolo
             $dbo->query(
                 'INSERT INTO `mg_logiche_calcolo` (`id_listino_origine`, `id_listino_destinazione`, `formula_da_applicare`)

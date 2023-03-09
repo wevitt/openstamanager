@@ -88,8 +88,6 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             AND '.((!empty($id_sezionale)) ? 'vb_venditabanco.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, vb_venditabanco.id
         ORDER BY numero, data_registrazione';
-
-        error_log($query);
 } else {
     $query = '
         SELECT

@@ -121,16 +121,10 @@ switch (post('op')) {
                             }
 
                             $copia->save();
-                            error_log('prezzo unitario: ' . $copia->prezzo_unitario);
 
                             $totale += ($copia->prezzo_unitario * $qta);
                         }
                     }
-
-                    error_log('totale: ' . $totale);
-
-
-                    error_log("idOrdini: " . json_encode($idOrdini));
 
                     //row per gli anticipi
                     $acconti = $dbo->fetchArray(
@@ -139,12 +133,9 @@ switch (post('op')) {
                         WHERE idordine IN ('.implode(',', $idOrdini).')'
                     );
 
-                    error_log("acconti: " . json_encode($acconti));
-
                     if ($acconti != null) {
                         //foreach acconti
                         foreach ($acconti as $acconto) {
-                            error_log("siamo dentro");
                             $acconto = $acconti[0];
 
                             //get acconto_righe
@@ -155,15 +146,10 @@ switch (post('op')) {
                                 GROUP BY idacconto'
                             );
 
-                            error_log("acconto_righe: " . json_encode($acconto_righe));
                             if ($acconto_righe['da_stornare']) {
                                 $importo_rimasto = 0;
 
-                                error_log("da stornare: " . floatval($acconto_righe['da_stornare']));
-                                error_log("totale: " . $totale);
                                 $calcolo = $totale - floatval($acconto_righe['da_stornare']);
-                                error_log("sottrazione: " . $calcolo);
-
 
                                 if ($calcolo >= 0) {
                                     $totale -= floatval($acconto_righe['da_stornare']);
@@ -173,15 +159,11 @@ switch (post('op')) {
                                     $totale = 0;
                                 }
 
-                                error_log("importo_fatturato: " . $importo_fatturato);
-
                                 $fatturaAcconto = Fattura::find($acconto_righe['idfattura']);
                                 $rigaAcconto = $dbo->fetchOne(
                                     'SELECT * FROM co_righe_documenti
                                     WHERE iddocumento = '.prepare($fatturaAcconto->id)
                                 );
-
-                                error_log("rigaAcconto: " . json_encode($rigaAcconto));
 
                                 $iva_predefinita = setting('Iva predefinita');
                                 $iva = $dbo->fetchOne(
@@ -210,11 +192,8 @@ switch (post('op')) {
                                 $riga->prezzo_unitario = $importo_fatturato;
                                 $riga->prezzo_unitario_ivato = floatval($importo_fatturato) * (1 + (floatval($iva['percentuale']) / 100));
 
-                                error_log("id_ordine: " . $acconto['idordine']);
                                 $riga->idordine = $acconto['idordine'];
                                 $riga->qta = 1;
-
-                                error_log("riga: " . json_encode($riga));
 
                                 $riga->save();
 
@@ -225,8 +204,6 @@ switch (post('op')) {
                             }
                         }
                     }
-
-                    error_log("fine");
                 }
             }
         }

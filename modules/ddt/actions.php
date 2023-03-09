@@ -463,60 +463,41 @@ switch (filter('op')) {
 
         $righe = $documento->getRighe();
 
-        error_log("# righe: ".count($righe));
-        error_log($righe);
-
         foreach ($righe as $riga) {
             if (
                 (post('manage-spese') && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) ||
                 (post('evadere')[$riga->id] == 'on' and !empty(post('qta_da_evadere')[$riga->id]))
             ) {
                 if (empty(post('create_document')) && (($riga->is_spesa_trasporto || $riga->is_spesa_incasso))) {
-                    error_log("QUESTA E' UNA SPESA E DEVO GESTIRLA");
                     if ($riga->is_spesa_trasporto) { //controllo se già esiste spesa trasposrto
-                        error_log("E' UNA SPESA TRASPORTO");
                         $riga_spesa_trasporto = $dbo->fetchArray(
                             'SELECT * FROM `dt_righe_ddt` WHERE `idddt` = '.prepare($id_record).' AND `is_spesa_trasporto` = 1'
                         );
 
                         if ($riga_spesa_trasporto != null) {
-                            error_log("GIA ESISTE, ELIMINO");
                             $riga_trasporto = Riga::find($riga_spesa_trasporto[0]['id']);
                             $riga_trasporto->delete();
-                        } else {
-                            error_log("NON ESISTE, CREO");
                         }
                     } else {
-                        error_log("E' UNA SPESA INCASSO");
                         $riga_spesa_incasso = $dbo->fetchArray(
                             'SELECT * FROM `dt_righe_ddt` WHERE `idddt` = '.prepare($id_record).' AND `is_spesa_incasso` = 1'
                         );
 
                         if ($riga_spesa_incasso != null) {
-                            error_log("GIA ESISTE, ELIMINO");
                             $riga_incasso = Riga::find($riga_spesa_incasso[0]['id']);
                             $riga_incasso->delete();
-                        } else {
-                            error_log("NON ESISTE, CREO");
                         }
                     }
                 }
-
-                error_log("DEVO CREARE");
 
                 $qta = post('qta_da_evadere')[$riga->id];
 
                 $copia = $riga->copiaIn($ddt, $qta, $evadi_qta_parent);
 
-                error_log("trasporto: " . $riga->is_spesa_trasporto);
-                error_log("incasso: " . $riga->is_spesa_incasso);
-
                 if ($riga->is_spesa_trasporto || $riga->is_spesa_incasso) {
                     $prezzo = ($riga->is_spesa_trasporto) ? post('spese_di_trasporto') : post('spese_di_incasso');
                     $id_iva = $originale->idiva_vendita ? $originale->idiva_vendita : setting('Iva predefinita');
                     $copia->setPrezzoUnitario($prezzo, $id_iva);
-
-                    error_log('prezzo: ' . $prezzo);
                 } else if ($copia->isArticolo()) { // Aggiornamento seriali dalla riga dell'ordine
                     if ($documento->tipo->descrizione=='Ddt in uscita' || $documento->tipo->descrizione=='Ddt in entrata') {
                         // TODO: estrarre il listino corrispondente se presente

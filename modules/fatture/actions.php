@@ -894,58 +894,40 @@ switch (post('op')) {
         $idOrdini = [];
         $totale = 0;
 
-        error_log($righe);
 
         foreach ($righe as $riga) {
-            error_log((post('manage-spese') && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) ||
-            (post('evadere')[$riga->id] == 'on'));
             if (
                 (post('manage-spese') && ($riga->is_spesa_trasporto || $riga->is_spesa_incasso)) ||
                 (post('evadere')[$riga->id] == 'on')
             ) {
-                error_log("1");
-
                 if ($riga['idordine'] != 0) {
                     $idOrdini[] = $riga->idordine;
                 }
 
                 if (empty(post('create_document')) && (($riga->is_spesa_trasporto || $riga->is_spesa_incasso))) {
-                    error_log("1, if");
-                    error_log("QUESTA E' UNA SPESA E DEVO GESTIRLA");
                     if ($riga->is_spesa_trasporto) { //controllo se già esiste spesa trasposrto
-                        error_log("E' UNA SPESA TRASPORTO");
                         $riga_spesa_trasporto = $dbo->fetchArray(
                             'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_trasporto` = 1'
                         );
 
                         if ($riga_spesa_trasporto != null) {
-                            error_log("GIA ESISTE, ELIMINO");
                             $riga_trasporto = Riga::find($riga_spesa_trasporto[0]['id']);
 
                             //delete riga
                             $riga_trasporto->delete();
-                        } else {
-                            error_log("NON ESISTE, CREO");
                         }
                     } else {
-                        error_log("E' UNA SPESA INCASSO");
                         $riga_spesa_incasso = $dbo->fetchArray(
                             'SELECT * FROM `co_righe_documenti` WHERE `iddocumento` = '.prepare($id_record).' AND `is_spesa_incasso` = 1'
                         );
 
                         if ($riga_spesa_incasso != null) {
-                            error_log("GIA ESISTE, ELIMINO");
                             $riga_incasso = Riga::find($riga_spesa_incasso[0]['id']);
 
                             $riga_incasso->delete();
-                        } else {
-                            error_log("NON ESISTE, CREO");
                         }
                     }
                 }
-
-                error_log("DEVO CREARE");
-
                 $qta = post('qta_da_evadere')[$riga->id];
                 $articolo = ArticoloOriginale::find($riga->idarticolo);
 
@@ -994,7 +976,6 @@ switch (post('op')) {
         if ($acconti != null) {
             //foreach acconti
             foreach ($acconti as $acconto) {
-                error_log("siamo dentro");
                 $acconto = $acconti[0];
 
                 $ivaAnticipo = $dbo->fetchOne(
@@ -1011,15 +992,10 @@ switch (post('op')) {
                     GROUP BY idacconto'
                 );
 
-                error_log("acconto_righe: " . json_encode($acconto_righe));
                 if ($acconto_righe['da_stornare']) {
                     $importo_rimasto = 0;
 
-                    error_log("da stornare: " . floatval($acconto_righe['da_stornare']));
-                    error_log("totale: " . $totale);
                     $calcolo = $totale - floatval($acconto_righe['da_stornare']);
-                    error_log("sottrazione: " . $calcolo);
-
 
                     if ($calcolo >= 0) {
                         $totale -= floatval($acconto_righe['da_stornare']);
@@ -1029,15 +1005,11 @@ switch (post('op')) {
                         $totale = 0;
                     }
 
-                    error_log("importo_fatturato: " . $importo_fatturato);
-
                     $fatturaAcconto = Fattura::find($acconto_righe['idfattura']);
                     $rigaAcconto = $dbo->fetchOne(
                         'SELECT * FROM co_righe_documenti
                         WHERE iddocumento = '.prepare($fatturaAcconto->id)
                     );
-
-                    error_log("rigaAcconto: " . json_encode($rigaAcconto));
 
                     $iva = $dbo->fetchOne(
                         'SELECT id, descrizione, percentuale
@@ -1067,8 +1039,6 @@ switch (post('op')) {
 
                     $riga->idordine = $documento->id;
                     $riga->qta = 1;
-
-                    error_log("riga: " . json_encode($riga));
 
                     $riga->save();
 
