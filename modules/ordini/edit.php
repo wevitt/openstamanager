@@ -184,6 +184,25 @@ echo '
                 </div>
             </div>
 
+            <?php
+                $acconto_righe = $dbo->fetchOne(
+                    'SELECT idacconto, idfattura, sum(importo_fatturato) as da_stornare
+                    FROM ac_acconti_righe
+                    WHERE idacconto = '.prepare($ac_acconti['id']).'
+                    GROUP BY idacconto'
+                );
+            ?>
+
+            <?php if ($record['stato'] == 'Evaso' || $record['stato'] == 'Parzialmente evaso' || $record['stato'] == 'Fatturato' || $record['stato'] == 'Parzialmente fatturato') { ?>
+                <div class="row">
+                    <div class="col-md-6" style="display:flex; align-items:center;">
+                        <div style="width:100%">
+                            {[ "type": "number", "label": "<?php echo tr('Anticipo ancora da stornare'); ?>", "required":0, "readonly": "1", "value": "<?php echo $acconto_righe['da_stornare']; ?>", "icon-after": "<?php echo currency(); ?>" ]}
+                        </div>
+                    </div>
+                </div>
+            <?php } ?>
+
             <div class="row">
 				<div class="col-md-12">
                     {[ "type": "ckeditor", "use_full_ckeditor": 0, "label": "<?php echo tr('Condizioni generali di fornitura'); ?>", "name": "condizioni_fornitura", "class": "autosize", "value": "$condizioni_fornitura$" ]}
