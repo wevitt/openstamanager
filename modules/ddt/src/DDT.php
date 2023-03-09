@@ -228,6 +228,7 @@ class DDT extends Document
 
         if (setting('Cambia automaticamente stato ddt fatturati')) {
             $righe = $this->getRighe();
+            $righe = $righe->where('is_spesa_incasso', 0)->where('is_spesa_trasporto', 0);
             $qta = $righe->sum('qta');
             $qta_evasa = $righe->sum('qta_evasa');
             $parziale = $qta != $qta_evasa;
@@ -235,6 +236,7 @@ class DDT extends Document
             $fattura = Fattura::find($trigger->iddocumento);
             if (!empty($fattura)) {
                 $righe_fatturate = $fattura->getRighe()->where('idddt', '=', $this->id);
+                $righe_fatturate = $righe_fatturate->where('is_spesa_incasso', 0)->where('is_spesa_trasporto', 0);
                 $qta_fatturate = $righe_fatturate->sum('qta');
                 $parziale_fatturato = $qta != $qta_fatturate;
             }
