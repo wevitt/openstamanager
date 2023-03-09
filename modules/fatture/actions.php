@@ -984,6 +984,10 @@ switch (post('op')) {
                     WHERE idacconto = '.prepare($acconto['id']).' AND tipologia = "Anticipo"'
                 )['idiva'];
 
+                if ($ivaAnticipo == null) {
+                    $ivaAnticipo = setting('Iva predefinita');
+                }
+
                 //get acconto_righe
                 $acconto_righe = $dbo->fetchOne(
                     'SELECT idacconto, idfattura, sum(importo_fatturato) as da_stornare
