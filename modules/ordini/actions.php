@@ -211,26 +211,6 @@ switch (post('op')) {
             }
         }
 
-        $anticipo = post('anticipo');
-        //get ac_anticipo
-        $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
-        if (!empty($ac_acconti)) {
-            if ($anticipo == 0) {
-                $dbo->query('DELETE FROM ac_acconti WHERE idordine='.prepare($id_record));
-            } else {
-                $dbo->query(
-                    'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
-                );
-            }
-        } else {
-            if ($anticipo > 0) {
-                $dbo->query(
-                    'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
-                    VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
-                );
-            }
-        }
-
         break;
 
     case 'manage_barcode':
@@ -786,6 +766,30 @@ switch (post('op')) {
 
         break;
 
+    case 'add-anticipo':
+        $id_record = post('id_record');
+        $anticipo = post('anticipo');
+
+        $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+        if (!empty($ac_acconti)) {
+            if ($anticipo == 0) {
+                $dbo->query('DELETE FROM ac_acconti WHERE idordine='.prepare($id_record));
+            } else {
+                $dbo->query(
+                    'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
+                );
+            }
+        } else {
+            if ($anticipo > 0) {
+                $dbo->query(
+                    'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
+                    VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
+                );
+            }
+        }
+
+        break;
+
     case 'crea-fattura-anticipo':
         $class = post('class');
         $id_documento = post('id_documento');
@@ -816,6 +820,9 @@ switch (post('op')) {
 
         $fattura->save();
 
+        $id_iva = post('id_iva');
+        $iva = $dbo->fetchOne('SELECT id, percentuale, descrizione FROM co_iva WHERE id='.prepare($id_iva));
+
         //inserimento righe fattura
         $riga = RigaFattura::build($fattura);
 
@@ -826,15 +833,15 @@ switch (post('op')) {
 
         $riga->descrizione = post('descrizione');
 
-        $riga->idiva = post('id_iva');
-        $riga->desc_iva = post('desc_iva');
+        $riga->idiva = $id_iva;
+        $riga->desc_iva = $iva->descrizione;
 
         $riga->idconto = post('id_conto');
 
         $riga->costo_unitario = 0;
-        $riga->subtotale = floatval(post('anticipo'));
         $riga->prezzo_unitario = floatval(post('anticipo'));
-        $riga->prezzo_unitario_ivato = floatval(post('totale'));
+
+        $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
 
         $riga->idordine = $documento->id;
         $riga->qta = 1;

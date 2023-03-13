@@ -75,6 +75,10 @@ $iva = $dbo->fetchOne(
                 {[ "type": "select", "label": "<?php echo tr('Conto'); ?>", "name": "id_conto", "required": 1, "value": "<?php echo $piano['id']; ?>", "ajax-source": "<?php echo ($dir == 'entrata' ? 'conti-vendite' : 'conti-acquisti-totali'); ?>" ]}
             </div>
 
+            <div class="col-md-6">
+                {[ "type": "select", "label": "<?php echo tr('Iva'); ?>", "name": "id_iva", "required": 1, "value": "<?php echo $iva['id']; ?>", "ajax-source": "iva" ]}
+            </div>
+
             <div class="col-md-12">
                 {[ "type": "textarea", "label": "<?php echo tr('Note della fattura'); ?>", "name": "note", "required": 0 ]}
             </div>
@@ -94,8 +98,6 @@ $iva = $dbo->fetchOne(
                 <th><?php echo tr('Descrizione'); ?></th>
                 <th width="10%" class="text-center"><?php echo tr('Q.tà'); ?></th>
                 <th width="15%"><?php echo tr('Prezzo unitario'); ?></th>
-                <th width="20%" class="text-center"><?php echo tr('IVA'); ?></th>
-                <th width="15%" class="text-center"><?php echo tr('Totale imponibile'); ?></th>
             </tr>
         </thead>
         <tbody id="righe_previste">
@@ -103,16 +105,10 @@ $iva = $dbo->fetchOne(
                 //replace in valore_anticipo , with .
                 $anticipo = str_replace('.', '', $valore_anticipo);
                 $anticipo = str_replace(',', '.', $anticipo);
-
-                $anticipo_ivato = (floatval($anticipo) * (floatval($iva['percentuale']) + 100))/100;
             ?>
             <tr>
                 {[ "type": "hidden", "name": "descrizione", "value": "<?php echo $descrizione; ?>" ]}
                 {[ "type": "hidden", "name": "anticipo", "value": "<?php echo $anticipo; ?>" ]}
-                {[ "type": "hidden", "name": "id_iva", "value": "<?php echo $iva['id']; ?>" ]}
-                {[ "type": "hidden", "name": "desc_iva", "value": "<?php echo $iva['descrizione']; ?>" ]}
-                {[ "type": "hidden", "name": "iva_perc", "value": "<?php echo $iva['percentuale']; ?>" ]}
-                {[ "type": "hidden", "name": "totale", "value": "<?php echo $anticipo_ivato; ?>" ]}
 
                 <td style="vertical-align:middle">
                     <?php echo $descrizione; ?>
@@ -122,12 +118,6 @@ $iva = $dbo->fetchOne(
                 </td>
                 <td class="text-center" style="vertical-align:middle">
                     <?php echo $valore_anticipo . ' ' . currency(); ?>
-                </td>
-                <td class="text-center" style="vertical-align:middle">
-                    <?php echo numberFormat($iva['percentuale'], 4) . '%'; ?>
-                </td>
-                <td style="vertical-align:middle" class="text-right">
-                    <?php echo numberFormat($anticipo_ivato, 4) . ' ' . currency(); ?>
                 </td>
             </tr>
         </tbody>
