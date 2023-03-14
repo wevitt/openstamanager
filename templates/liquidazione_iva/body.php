@@ -47,6 +47,9 @@ $totale_iva = $totale_iva_esigibile - $totale_iva_detraibile;
 if ($periodo == 'Trimestrale' && $totale_iva > 0) {
     $maggiorazione = $totale_iva * 0.01;
     $totale_iva_maggiorata = $totale_iva + $maggiorazione;
+} else {
+    $maggiorazione = 0;
+    $totale_iva_maggiorata = $totale_iva_periodo_precedente + $totale_iva;
 }
 
 echo '
@@ -60,7 +63,7 @@ echo '
         <th class="text-right" width="20%">Imponibile</th>
         <th class="text-right" width="20%">Imposta</th>
     </tr>
-</thead> 
+</thead>
 <tbody>
     <tr>
         <th class="text-center" colspan="5">IVA ESIGIBILE DEL PERIODO</th>
@@ -83,7 +86,7 @@ echo '
         <td class=text-right>'.moneyFormat($subtotale_iva_esigibile).'</td>
         <td class=text-right>'.moneyFormat($totale_iva_esigibile).'</td>
     </tr>
-    
+
 <tr>
     <th class="text-center" colspan="5">IVA NON ESIGIBILE DEL PERIODO</th>
 </tr>';
@@ -140,7 +143,7 @@ echo '
         <th class="text-right" width="20%">Imponibile</th>
         <th class="text-right" width="20%">Imposta</th>
     </tr>
-</thead> 
+</thead>
 <tbody>
     <tr>
         <th class="text-center" colspan="5">IVA DETRAIBILE DEL PERIODO</th>
@@ -239,11 +242,11 @@ echo '
             echo ' <td>CREDITO PERIODO PRECEDENTE</td>';
         }
         echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo_precedente)).'</td>
-    </tr>    
+    </tr>
     <tr>
         <td>TOTALE IVA SU VENDITE ESIGIBILE</td>
         <td class=text-right>'.moneyFormat($totale_iva_esigibile).'</td>
-    </tr>    
+    </tr>
     <tr>
         <td>TOTALE IVA OGGETTIVAMENTE NON A DEBITO SU VENDITE</td>
         <td class=text-right>'.moneyFormat($totale_iva_nonesigibile).'</td>
@@ -291,15 +294,27 @@ echo '
     <tr>
         <td>MAGGIORAZIONE 1,00%</td>
         <td class=text-right>'.moneyFormat($maggiorazione).'</td>
-    </tr>
-    <tr>
-        <td>IVA A DEBITO CON MAGGIORAZIONE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_maggiorata).'</td>
-    </tr>
-    <tr>
-        <td>IMPORTO DA VERSARE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_maggiorata).'</td>
-    </tr>
+    </tr>';
+        if ($totale_iva >= 0) {
+            echo '<tr>';
+                echo '<td>IVA A DEBITO CON MAGGIORAZIONE</td>';
+                echo '<td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata * $maggiorazione)).'</td>';
+            echo '</tr>';
+            echo '<tr>';
+                echo ' <td>IMPORTO DA VERSARE</td>';
+                echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata)).'</td>';
+            echo '</tr>';
+        } else {
+            echo '<tr>';
+                echo ' <td>IMPORTO DA VERSARE</td>';
+                echo ' <td class=text-right>'.moneyFormat(0).'</td>';
+            echo '</tr>';
+            echo '<tr>';
+                echo ' <td>TOTALE A CREDITO</td>';
+                echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata)).'</td>';
+            echo '</tr>';
+        }
+    echo '
     <tr>
         <td>CREDITO INFRANNUALE DI IMPOSTA CHIESTO A RIMBORSO</td>
         <td class=text-right></td>
