@@ -976,8 +976,7 @@ switch (post('op')) {
         if ($acconti != null) {
             //foreach acconti
             foreach ($acconti as $acconto) {
-                $acconto = $acconti[0];
-
+                //iva acconto
                 $ivaAnticipo = $dbo->fetchOne(
                     'SELECT idiva
                     FROM ac_acconti_righe
@@ -997,8 +996,6 @@ switch (post('op')) {
                 );
 
                 if ($acconto_righe['da_stornare']) {
-                    $importo_rimasto = 0;
-
                     $calcolo = $totale - floatval($acconto_righe['da_stornare']);
 
                     if ($calcolo >= 0) {

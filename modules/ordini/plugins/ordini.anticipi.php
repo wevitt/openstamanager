@@ -19,84 +19,107 @@
 
 include_once __DIR__.'/../../../core.php';
 
-$ac_acconti = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
-if (!empty($ac_acconti)) {
-    //select ac_acconti_righe
-    $ac_acconti_righe = $dbo->fetchArray('SELECT * FROM ac_acconti_righe WHERE idacconto='.prepare($ac_acconti['id']));
-} else {
-    $ac_acconti_righe = [];
-}
+$id_modulo_fatture = Modules::get('Fatture di vendita')['id'];
+
 ?>
 
-<div class="hide" id="root-dir"><?= $rootdir ?></div>
-<div class="hide" id="fattura-anticipo-dir"><?= $structure->fileurl('fattura_anticipo.php') ?></div>
-
-<div class="row">
+<div class="row" style="margin-bottom:10px;">
     <div class="col-md-6" style="display:flex; align-items:center;">
         <div style="width:100%">
-            {[ "type": "number", "label": "<?php echo tr('Anticipo sull\'ordine'); ?>", "name": "anticipo", "required":0, "readonly": "<?php echo (count($ac_acconti_righe) == 0) ? 0 : 1; ?>", "value": "<?php echo $ac_acconti['importo']; ?>", "help": "<?php echo tr('<span>Anticipo sull\'ordine</span>'); ?>", "icon-after": "<?php echo currency(); ?>" ]}
+            {[ "type": "number", "label": "<?php echo tr('Anticipo sull\'ordine'); ?>", "name": "anticipo", "required":"0", "value": "0", "help": "<?php echo tr('<span>Anticipo sull\'ordine</span>'); ?>", "icon-after": "<?php echo currency(); ?>" ]}
         </div>
-        <?php if ($record['stato'] == 'Accettato' ) { ?>
-            <?php if (count($ac_acconti_righe) == 0) { ?>
-                <button type="button" class="btn btn-sm btn-info tip" style="margin-top:8px; margin-left:5px" title="<?php echo tr('Crea fattura anticipo'); ?>" onclick="creaFatturaAnticipo(this)">
-                    <i class="fa fa-plus"></i><?php echo tr('Crea fattura anticipo'); ?>
-                </button>
-            <?php } else { ?>
-                <?php
-                    $fattura_acconto = $dbo->fetchOne(
-                        'SELECT crd.iddocumento
-                        FROM co_righe_documenti crd
-                        LEFT JOIN ac_acconti_righe aar ON crd.iddocumento = aar.idfattura
-                        LEFT JOIN ac_acconti aa ON aa.id = aar.idacconto
-                        WHERE aa.idordine ='.prepare($id_record)
-                    );
-                ?>
-                <a class="btn btn-sm btn-info tip" target= "_blank" style="margin-top:8px; margin-left:5px" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $fattura_acconto['iddocumento']; ?>">
-                    <i class="fa fa-chevron-left"></i><?php echo tr(' Vai a fattura anticipo'); ?>
-                </a>
-            <?php } ?>
-        <?php } ?>
     </div>
+
+    <?php if ($record['stato'] == 'Bozza') { ?>
+        <div class="col-md-6">
+            <button type="submit" class="btn btn-primary salva-anticipo" style="margin-top:24px;">
+                <?= tr('Aggiungi') ?>
+            </button>
+        </div>
+    <?php } ?>
 </div>
 
 <?php
-    $acconto_righe = $dbo->fetchOne(
-        'SELECT idacconto, idfattura, sum(importo_fatturato) as da_stornare
-        FROM ac_acconti_righe
-        WHERE idacconto = '.prepare($ac_acconti['id']).'
-        GROUP BY idacconto'
-    );
+    $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
 ?>
 
-<?php if ($record['stato'] == 'Evaso' || $record['stato'] == 'Parzialmente evaso' || $record['stato'] == 'Fatturato' || $record['stato'] == 'Parzialmente fatturato') { ?>
-    <div class="row">
-        <div class="col-md-6" style="display:flex; align-items:center;">
-            <div style="width:100%">
-                {[ "type": "number", "label": "<?php echo tr('Anticipo ancora da stornare'); ?>", "id":"anticipo", "required":0, "readonly": "1", "value": "<?php echo $acconto_righe['da_stornare']; ?>", "icon-after": "<?php echo currency(); ?>" ]}
-            </div>
-        </div>
-    </div>
-<?php } ?>
+<table class="table table-striped table-hover table-condensed table-bordered">
+    <thead>
+        <tr>
+            <th width="10%"><?php echo tr('Id'); ?></th>
+            <th width="40%"><?php echo tr('Descrizione'); ?></th>
+            <th width="40%"><?php echo tr('Importo'); ?></th>
+            <th width="10%"><?php echo tr('Azioni'); ?></th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($ac_acconti as $riga) { ?>
+            <?php
+                $acconto_righe = $dbo->fetchArray(
+                    'SELECT *
+                    FROM ac_acconti_righe
+                    WHERE idacconto = '.prepare($riga['id'])
+                );
 
-<?php if ($record['stato'] != 'Accettato' ) { ?>
-    <div class="row">
-        <div class="col-md-12">
-            <button type="submit" class="btn btn-primary pull-right" onclick="salvaAnticipo()">
-                <?= tr('Salva') ?>
-            </button>
-        </div>
-    </div>
-<?php } ?>
-
-
+                error_log(json_encode($acconto_righe));
+            ?>
+            <tr style="background-color: #e9ecef;">
+                <td class="id-acconto"><?= $riga['id'] ?></td>
+                <td><?= tr('Acconto versato') ?></td>
+                <td class="importo"><?= moneyFormat($riga['importo'], 2) ?></td>
+                <td class="text-center">
+                    <?php if ($record['stato'] != 'Bozza') { ?>
+                        <?php if (empty($acconto_righe)) { ?>
+                            <a class="btn btn-sm btn-success tip" title="<?php echo tr('Crea fattura anticipo'); ?>" onclick="creaFatturaAnticipo(this)">
+                                <i class="fa fa-plus"></i>
+                            </a>
+                        <?php } else { ?>
+                            <a class="btn btn-sm btn-warning tip" title="<?php echo tr('Vai a fatture anticipo') ?>" target= "_blank" href="/controller.php?id_module=<?php echo $id_modulo_fatture; ?>&id_record=<?php echo $acconto_righe['idfattura']; ?>">
+                                <i class="fa fa-chevron-left"></i>
+                            </a>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <a class="btn btn-sm btn-danger tip elimina-anticipo" title="<?php echo tr('Elimina'); ?>">
+                            <i class="fa fa-trash"></i>
+                        </a>
+                    <?php } ?>
+                </td>
+            </tr>
+            <?php $totale = 0 ?>
+            <?php foreach ($acconto_righe as $acconto_riga) { ?>
+                <?php $totale = $totale + $acconto_riga['importo_fatturato'] ?>
+                <tr>
+                    <td><i style="margin-left:15px;" class="fa fa-arrow-right"></i></td>
+                    <td><?= $acconto_riga['tipologia'] ?></td>
+                    <td colspan="2"><?= moneyFormat($acconto_riga['importo_fatturato'], 2) ?></td>
+                </tr>
+            <?php } ?>
+            <?php if (!empty($acconto_righe)) { ?>
+                <tr>
+                    <td colspan="2" class="text-right"><?= tr('Totale fatturato:') ?></td>
+                    <td colspan="2"><?= moneyFormat($totale, 2) ?></td>
+                </tr>
+            <?php } ?>
+        <?php } ?>
+    </tbody>
+</table>
 
 <script>
-	async function salvaAnticipo() {
-		anticipo = $("#anticipo").val();
-        rootdir = $("#root-dir").html();
+    $(document).ready(function() {
+        $('body').on('click', '.salva-anticipo', function() {
+            salvaAnticipo();
+        });
+
+        $('body').on('click', '.elimina-anticipo', function() {
+            eliminaAnticipo($(this).closest("tr").find(".id-acconto").text(), $(this).closest("tr"));
+        });
+    });
+
+    async function salvaAnticipo() {
+        anticipo = $("#anticipo").val();
 
         $.ajax({
-            url: rootdir + "/modules/ordini/actions.php",
+            url: globals.rootdir + "/modules/ordini/actions.php",
             type: "post",
             data: {
                 op: "add-anticipo",
@@ -107,5 +130,30 @@ if (!empty($ac_acconti)) {
                 location.reload();
             },
         });
-	}
+    }
+
+    async function eliminaAnticipo(id_anticipo, $row) {
+        swal({
+            title: "Attezione",
+            text: "Sei sicuro di voler eliminare questo acconto?",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Sì",
+            cancelButtonText: "No",
+        }).then(function () {
+            $.ajax({
+                url: globals.rootdir + "/modules/ordini/actions.php",
+                type: "post",
+                data: {
+                    op: "delete-anticipo",
+                    id_anticipo: id_anticipo,
+                },
+                success: function(data){
+                    //remove row
+                    $row.remove();
+                },
+            });
+        });
+    }
 </script>

@@ -770,23 +770,19 @@ switch (post('op')) {
         $id_record = post('id_record');
         $anticipo = post('anticipo');
 
-        $ac_acconti = $dbo->fetchArray('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
-        if (!empty($ac_acconti)) {
-            if ($anticipo == 0) {
-                $dbo->query('DELETE FROM ac_acconti WHERE idordine='.prepare($id_record));
-            } else {
-                $dbo->query(
-                    'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
-                );
-            }
-        } else {
-            if ($anticipo > 0) {
-                $dbo->query(
-                    'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
-                    VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
-                );
-            }
+        if ($anticipo > 0) {
+            $dbo->query(
+                'INSERT INTO ac_acconti(idanagrafica, idordine, importo)
+                VALUES('.prepare(post('idanagrafica')).', '.prepare($id_record).', '.prepare($anticipo).')'
+            );
         }
+
+        break;
+
+    case 'delete-anticipo':
+        $id_anticipo = post('id_anticipo');
+
+        $dbo->query('DELETE FROM ac_acconti WHERE id='.prepare($id_anticipo));
 
         break;
 
@@ -848,10 +844,11 @@ switch (post('op')) {
 
         $riga->save();
 
-        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+        $id_acconto = post('id_acconto');
+        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE id='.prepare($id_acconto));
         if (!empty($acconto)) {
             $acconto = $dbo->query(
-                'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE idordine='.prepare($id_record)
+                'UPDATE ac_acconti SET importo='.prepare($anticipo).' WHERE id='.prepare($id_acconto)
             );
         } else {
             $acconto = $dbo->query(
@@ -859,14 +856,12 @@ switch (post('op')) {
                 VALUES('.prepare($documento->idanagrafica).', '.prepare($id_record).', '.prepare($anticipo).')'
             );
         }
-        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE idordine='.prepare($id_record));
+        $acconto = $dbo->fetchOne('SELECT * FROM ac_acconti WHERE id='.prepare($id_acconto));
 
         $dbo->query(
             'INSERT INTO ac_acconti_righe (idacconto, idfattura, idriga_fattura, idiva, importo_fatturato, tipologia)
             VALUES ('.prepare($acconto['id']).', '.prepare($fattura['id']).', '.prepare($riga->id).','.prepare($riga->idiva).','.prepare($anticipo).', '.prepare('Anticipo').')'
         );
-
-
 
         // Messaggio informativo
         $message = tr('Anticipo inserito!');

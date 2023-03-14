@@ -37,6 +37,7 @@ $options = [
     'totale_documento' => $documento->totale,
     'numero_esterno' => $documento->numero_esterno,
     'value' => $_GET['value'],
+    'id_acconto' => $_GET['id_acconto'],
     'data' => Translator::dateToLocale($documento->data),
     'select-options' => [
         'articoli' => [

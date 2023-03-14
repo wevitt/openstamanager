@@ -109,6 +109,7 @@ $iva = $dbo->fetchOne(
             <tr>
                 {[ "type": "hidden", "name": "descrizione", "value": "<?php echo $descrizione; ?>" ]}
                 {[ "type": "hidden", "name": "anticipo", "value": "<?php echo $anticipo; ?>" ]}
+                {[ "type": "hidden", "name": "id_acconto", "value": "<?php echo $options['id_acconto']; ?> ]"]}
 
                 <td style="vertical-align:middle">
                     <?php echo $descrizione; ?>

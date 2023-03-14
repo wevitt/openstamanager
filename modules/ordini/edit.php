@@ -23,8 +23,6 @@ $block_edit = $record['flag_completato'];
 
 $module = Modules::get($id_module);
 
-$id_modulo_fatture = Modules::get('Fatture di vendita')['id'];
-
 if ($module['name'] == 'Ordini cliente') {
     $dir = 'entrata';
 } else {
@@ -307,8 +305,11 @@ function creaFatturaAnticipo(button) {
     $(button).tooltipster("close")
 
     // Apertura modal
-    value = $("#anticipo").val();
-    openModal(title, "'.$structure->fileurl('fattura_anticipo.php').'?id_module='.$id_module.'&id_record='.$id_record.'&value=" + value);
+    importo = $(button).closest("tr").find(".importo").text();
+    importo = importo.replace(" €", "");
+
+    id_acconto = $(button).closest("tr").find(".id-acconto").text();
+    openModal(title, "'.$structure->fileurl('fattura_anticipo.php').'?id_module='.$id_module.'&id_record='.$id_record.'&value=" + importo + "&id_acconto=" + id_acconto);
 }
 
 function gestioneArticolo(button) {
