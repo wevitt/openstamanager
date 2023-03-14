@@ -28,11 +28,11 @@ $anno_precedente_end = (new Carbon($date_end))->subYears(1)->format('Y-m-d');
 
 $periodo = $dbo->fetchOne('SELECT valore FROM zz_settings WHERE nome="Liquidazione iva"');
 if ($periodo['valore'] == 'Mensile') {
-    $periodo_precedente_start = (new Carbon($date_start))->subMonth()->startOfMonth()->format('Y-m-d');
-    $periodo_precedente_end = (new Carbon($date_end))->subMonth()->endOfMonth()->format('Y-m-d');
+    $periodo_precedente_start = (new Carbon($date_start))->startOfYear()->format('Y-m-d');
+    $periodo_precedente_end = (new Carbon($date_end))->startOfMonth()->subMonth()->endOfMonth()->format('Y-m-d');
 } else {
-    $periodo_precedente_start = (new Carbon($date_start))->subMonths(3)->startOfMonth()->format('Y-m-d');
-    $periodo_precedente_end = (new Carbon($date_end))->subMonths(3)->endOfMonth()->format('Y-m-d');
+    $periodo_precedente_start = (new Carbon($date_start))->startOfYear()->format('Y-m-d');
+    $periodo_precedente_end = (new Carbon($date_end))->startOfMonth()->subMonths(3)->endOfMonth()->format('Y-m-d');
 }
 
 $id_proforma_vendita = $dbo->fetchOne("SELECT id FROM zz_segments WHERE id_module = 14 AND name='Fatture pro-forma'")['id'];
@@ -159,9 +159,9 @@ $iva_vendite = $dbo->fetchArray('
                 co_statidocumento
             WHERE
                 descrizione = "Bozza" OR descrizione = "Annullata"
-                AND co_documenti.id_segment != '.prepare($id_proforma_vendita).'
-                AND co_documenti.id_segment != '.prepare($id_proforma_acquisti).'
         ) AND co_documenti.data_competenza >= '.prepare($date_start . ' 00:00:00').' AND co_documenti.data_competenza <= '.prepare($date_end . ' 23:59:59').'
+        AND co_documenti.id_segment != '.prepare($id_proforma_vendita).'
+        AND co_documenti.id_segment != '.prepare($id_proforma_acquisti).'
         GROUP BY cod_iva, aliquota, descrizione
     UNION
         SELECT
@@ -306,6 +306,7 @@ $iva_vendite_periodo_precedente = $dbo->fetchArray('
         ) AND co_documenti.data_competenza >= '.prepare($periodo_precedente_start . ' 00:00:00').' AND co_documenti.data_competenza <= '.prepare($periodo_precedente_end . ' 23:59:59').'
         AND co_documenti.id_segment != '.prepare($id_proforma_vendita).'
         AND co_documenti.id_segment != '.prepare($id_proforma_acquisti).'
+        AND co_documenti.split_payment = 0
         GROUP BY cod_iva, aliquota, descrizione
     UNION
         SELECT
@@ -515,14 +516,14 @@ $iva_acquisti = $dbo->fetchArray('
         co_iva.descrizione AS descrizione,
         SUM(((co_righe_documenti.iva + iva_rivalsainps) * (1 - co_iva.indetraibile / 100)) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
-        FROM
+    FROM
         co_iva
         INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
         INNER JOIN co_documenti ON co_documenti.id = co_righe_documenti.iddocumento
         INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
-        WHERE
+    WHERE
         co_tipidocumento.dir = "uscita" AND co_righe_documenti.is_descrizione = 0 AND idstatodocumento NOT IN(SELECT id FROM co_statidocumento WHERE descrizione = "Bozza" OR descrizione = "Annullata") AND co_documenti.data_competenza >= '.prepare($periodo_precedente_start . ' 00:00:00').' AND co_documenti.data_competenza <= '.prepare($periodo_precedente_end . ' 23:59:59').'
         AND co_documenti.id_segment != '.prepare($id_proforma_vendita).'
         AND co_documenti.id_segment != '.prepare($id_proforma_acquisti).'
-        GROUP BY
+    GROUP BY
         co_iva.id;');

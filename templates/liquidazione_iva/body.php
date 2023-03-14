@@ -42,14 +42,15 @@ $totale_iva_vendite_periodo_precedente = sum(array_column($iva_vendite_periodo_p
 $totale_iva_acquisti_periodo_precedente = sum(array_column($iva_acquisti_periodo_precedente, 'iva'));
 $totale_iva_periodo_precedente = $totale_iva_vendite_periodo_precedente - $totale_iva_acquisti_periodo_precedente;
 
-$totale_iva = $totale_iva_esigibile - $totale_iva_detraibile;
+$totale_iva = $totale_iva_periodo_precedente + $totale_iva_esigibile - $totale_iva_detraibile;
+$totale_iva_periodo = $totale_iva_esigibile - $totale_iva_detraibile;
 
 if ($periodo == 'Trimestrale' && $totale_iva > 0) {
     $maggiorazione = $totale_iva * 0.01;
     $totale_iva_maggiorata = $totale_iva + $maggiorazione;
 } else {
     $maggiorazione = 0;
-    $totale_iva_maggiorata = $totale_iva_periodo_precedente + $totale_iva;
+    $totale_iva_maggiorata = $totale_iva;
 }
 
 echo '
@@ -280,12 +281,12 @@ echo '
         <td class=text-right></td>
     </tr>
     <tr>';
-        if ($totale_iva >= 0) {
+        if ($totale_iva_periodo >= 0) {
             echo ' <td>IVA A DEBITO</td>';
         } else {
             echo ' <td>IVA A CREDITO</td>';
         }
-        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva)).'</td>
+        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo)).'</td>
     </tr>
     <tr>
         <td>CREDITO SPECIALE DI IMPOSTA</td>
