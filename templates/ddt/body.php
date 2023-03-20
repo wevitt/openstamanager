@@ -22,7 +22,7 @@ include_once __DIR__.'/../../core.php';
 $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
 
 // Creazione righe fantasma
-$autofill = new \Util\Autofill($options['pricing'] ? 7 : 4);
+$autofill = new \Util\Autofill($options['pricing'] ? 7 : 4, 40, 24);
 $rows_per_page = 16;
 if (!empty($options['last-page-footer'])) {
     $rows_per_page += 10;
