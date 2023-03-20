@@ -32,7 +32,7 @@ if ($module->name == 'Fatture di vendita' && $services_enable) {
     $codici_scarto = ['EC02','ERR','ERVAL','NS'];
     $codici_invio = ['GEN','QUEUE'];
     $data_limite = (new Carbon())->subMonths(6);
-    $data_limite_invio = (new Carbon())->subDays(10);
+    $data_limite_invio = (new Carbon())->subDays(5);
     $data_setting = Carbon::createFromFormat('d/m/Y', setting('Data inizio controlli su stati FE'))->format('Y-m-d');
 
 
