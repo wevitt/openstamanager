@@ -42,7 +42,7 @@ echo '
 		</div>
 
 		<div class="col-md-4">
-			{[ "type": "text", "label": "'.tr('BIC').'", "name": "bic", "class": "alphanumeric-mask", "minlength": 8, "maxlength": 11, "value": "$bic$", "help": "'.$help_codice_bic.'" ]}
+			{[ "type": "text", "label": "'.tr('BIC').'", "name": "bic", "required": "1", "class": "alphanumeric-mask", "minlength": 8, "maxlength": 11, "value": "$bic$", "help": "'.$help_codice_bic.'" ]}
 		</div>
 	</div>
 
@@ -76,6 +76,7 @@ echo '
     var branch_code = input("branch_code");
     var bank_code = input("bank_code");
     var id_nazione = input("id_nazione");
+    var bic = input("bic");
 
     var components = [branch_code, bank_code, id_nazione];
 
@@ -83,7 +84,7 @@ echo '
         iban.trigger("keyup");
     });
 
-    iban.on("change", function () {
+    iban.on("keyup", function () {
         if (!iban.isDisabled()){
             let value = iban.get();
             for (const component of components){
@@ -95,9 +96,8 @@ echo '
     });
 
     for (const component of components){
-        component.on("change", function () {
+        component.on("keyup", function () {
             let i = input(this);
-
             if (!i.isDisabled()) {
                 iban.setDisabled(i.get() !== "")
 
@@ -118,6 +118,12 @@ echo '
             dataType: "json",
             success: function (response) {
                 compilaCampi(response);
+
+                if (response.id_nazione.text === "Italia"){
+                    bic.setRequired(false);
+                } else {
+                    bic.setRequired(true);
+                }
             },
             error: function() {
                 toastr["error"]("<?php echo tr('Formato IBAN non valido'); ?>");
