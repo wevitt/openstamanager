@@ -34,9 +34,10 @@ if ($module->name == 'Fatture di vendita' && $services_enable) {
     $data_limite = (new Carbon())->subMonths(6);
     $data_limite_invio = (new Carbon())->subDays(5);
     $data_setting = Carbon::createFromFormat('d/m/Y', setting('Data inizio controlli su stati FE'))->format('Y-m-d');
+    $idReverseChargeInterno = 14;
+    $idSegmentoProForma = 3;
 
-
-    $documenti = Fattura::where('data', '>', $data_limite)->where('data', '>', $data_setting)->whereIn('codice_stato_fe', ['EC02','ERR','ERVAL','NS','GEN','QUEUE'])->get();
+    $documenti = Fattura::where('data', '>', $data_limite)->where('data', '>', $data_setting)->where('idtipodocumento', '!=', $idReverseChargeInterno)->where('id_segment', '!=', $idSegmentoProForma)->whereIn('codice_stato_fe', ['EC02','ERR','ERVAL','NS','GEN','QUEUE'])->get();
 
     foreach ($documenti as $documento) {
 
