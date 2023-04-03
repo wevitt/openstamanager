@@ -35,7 +35,7 @@ $module = Modules::get($id_module);
        <div class="panel-body">
            <div class="row">
                 <div class="col-md-6">
-                    {[ "type": "text", "label": "<?php echo tr('Listino di origine'); ?>", "name": "listino_di_origine", "readonly":1, "value": "<?php echo $record['listino_origine']; ?>" ]}
+                    {[ "type": "text", "label": "<?php echo tr('Listino di origine'); ?>", "name": "listino_di_origine", "readonly":1, "value": "<?php echo $record['listino_origine'] ?? tr('Prezzo di acquisto standard'); ?>" ]}
                 </div>
 
                 <div class="col-md-6">

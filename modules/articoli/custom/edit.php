@@ -21,7 +21,9 @@ include_once __DIR__.'/../../core.php';
 
 use Modules\Iva\Aliquota;
 
-?><form action="" method="post" id="edit-form" enctype="multipart/form-data">
+?>
+
+<form action="" method="post" id="edit-form" enctype="multipart/form-data">
 	<input type="hidden" name="backto" value="record-edit">
 	<input type="hidden" name="op" value="update">
 
@@ -306,6 +308,120 @@ echo '
                     </div>
                 </div>
             </div>
+
+            <?php
+                //id prezzo di acquisto standard = 99999 perchè se no da problemi
+                //con la select (non mostra il campo selezionato quando id = 0)
+                $queryListiniOrigine = '
+                    SELECT
+                    IF(id_listino_origine = 0, 99999, id_listino_origine) as id,
+                    IF(mg_listini.nome is null, \'Prezzo di acquisto standard\', mg_listini.nome) as descrizione,
+                    prezzo_unitario
+                    FROM mg_logiche_calcolo
+                    LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
+                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine
+                    and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                    GROUP BY id_listino_origine';
+
+                $listini_origine = $dbo->fetchArray($queryListiniOrigine);
+            ?>
+            <?php if ($listini_origine) { ?>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <?php echo tr('Logiche di calcolo'); ?>
+                        </h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="clearfix"></div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <?php
+                                    $queryLogiche = '
+                                        SELECT id_listino_origine, id_listino_destinazione, mg_listini.nome as descrizione_destinazione,
+                                        formula_da_applicare, prezzo_unitario, prezzo_vendita
+                                        FROM mg_logiche_calcolo
+                                        LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_destinazione
+                                        LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_destinazione
+                                        and mg_listini_articoli.id_articolo = '.prepare($id_record).'
+                                        LEFT JOIN mg_articoli on mg_articoli.id = '.prepare($id_record);
+
+                                    $logiche = $dbo->fetchArray($queryLogiche);
+
+                                    $prezzo_listino_origine = 0;
+
+                                    if (count($listini_origine) == 1) {
+                                        $prezzo_listino_origine = $listini_origine[0]['prezzo_unitario'];
+                                    }
+
+                                ?>
+
+                                <div class="hidden" id="listini-origine">
+                                    <?php echo json_encode($listini_origine); ?>
+                                </div>
+                                <div class="hidden" id="logiche">
+                                    <?php echo json_encode($logiche); ?>
+                                </div>
+                                <div class="hidden" id="input-template">
+                                    {[ "type": "number", "id": "", "name": "", "value": "", "icon-after": "<?php echo currency(); ?>"]}
+                                </div>
+
+                                <?php if (count($listini_origine) > 0) { ?>
+                                    <?php if (count($listini_origine) > 1) { ?>
+                                        {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
+                                    <?php } else { ?>
+                                        {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
+                                    <?php } ?>
+                                    {[ "type": "number", "label": "<?php echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
+
+                                    <!-- crea tabella per logiche di calcolo -->
+                                    <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th><?php echo tr('Listino di destinazione') ?></th>
+                                                <th><?php echo tr('Operazione') ?></th>
+                                                <th><?php echo tr('Valore') ?></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <?php
+                                                if (count($listini_origine) == 1) {
+                                                    foreach ($logiche as $logica) {
+                                                        $descrizione = $logica['descrizione_destinazione'];
+                                                        $prezzo = $logica['prezzo_unitario'];
+                                                        //if descrizione is null
+                                                        if (empty($descrizione)) {
+                                                            $descrizione = tr('Prezzo di vendita');
+                                                            $prezzo = $logica['prezzo_vendita'];
+                                                        }
+                                                        if (empty($prezzo)) {
+                                                            $prezzo = 0;
+                                                        }
+                                                        $prezzo = str_replace('.', ',', $prezzo);
+
+
+                                                        echo '
+                                                        <tr>
+                                                            <td>'.$descrizione.'</td>
+                                                            <td>'.$logica['formula_da_applicare'].'%</td>
+                                                            <td>
+                                                                {[ "type": "number", "id": "listino[' . $logica['id_listino_destinazione'] . ']", "name": "listino[' . $logica['id_listino_destinazione'] . ']", "value": "' . $prezzo . '", "icon-after": "' . currency() . '"]}
+                                                            </td>
+                                                        </tr>';
+                                                    }
+                                                }
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php } ?>
         </div>
     </div>
 
@@ -518,34 +634,52 @@ $(document).ready(function(){
         var id_listino_di_origine = $(this).val();
 
         var tbody = $('#tbl-logiche tbody');
-        //clear tbody
         tbody.html('');
 
         var logiche = JSON.parse($('#logiche').html());
         var listiniOrigine = JSON.parse($('#listini-origine').html());
 
-        //foreach listiniOrigine
         $.each(listiniOrigine, function (i, listinoOrigine) {
             if (listinoOrigine.id == id_listino_di_origine) {
+                if (listinoOrigine.prezzo_unitario == null) {
+                    if (id_listino_di_origine == '99999') { //caso prezzo di acquisto standard
+                        listinoOrigine.prezzo_unitario = $('input[name="prezzo_acquisto"]').val();
+                        listinoOrigine.prezzo_unitario = listinoOrigine.prezzo_unitario.replace(/\./g, '');
+                        listinoOrigine.prezzo_unitario = listinoOrigine.prezzo_unitario.replace(',', '.');
+                    } else {
+                        listinoOrigine.prezzo_unitario = 0;
+                    }
+                }
+
                 $('#prezzo_di_partenza').val(parseFloat(listinoOrigine.prezzo_unitario).toFixed(4));
             }
         });
 
         var $inputTemplate = $('#input-template');
 
-        //foreach logiche
+        if (id_listino_di_origine == '99999') { //caso prezzo di acquisto standard
+            id_listino_di_origine = 0;
+        }
+
+        console.log('3-id_listino_di_origine: ' + id_listino_di_origine);
         $.each(logiche, function (i, logica) {
             if (logica.id_listino_origine == id_listino_di_origine) {
                 descrizione_destinazione = logica.descrizione_destinazione;
                 prezzo = logica.prezzo_unitario;
+
                 if (descrizione_destinazione == null) {
                     descrizione_destinazione= 'Prezzo di vendita';
                     prezzo = logica.prezzo_vendita;
-
                 }
 
                 if (prezzo == null) {
+                    /*if (id_listino_di_origine == 0) { //caso prezzo di acquisto standard
+                        prezzo = parseFloat($('#prezzo_di_partenza').val()) + (parseFloat($('#prezzo_di_partenza').val()) * parseFloat(logica.formula_da_applicare) / 100);
+                    } else {
+                        prezzo = 0;
+                    }*/
                     prezzo = 0;
+
                 }
 
                 $inputTemplate.find('input').attr('name', 'listino[' + logica.id_listino_destinazione + ']');
