@@ -59,6 +59,7 @@
         "symfony/translation": "^3.3",
         "symfony/var-dumper": "^3.3",
         "thenetworg/oauth2-azure": "^2.0",
+        "tox82/server-timing-helper": "^1.0",
         "voku/stringy": "~6.0",
         "wdog/sdd_ita": "dev-master",
         "willdurand/geocoder": "^4.2"
