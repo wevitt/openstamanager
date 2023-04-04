@@ -319,7 +319,7 @@ echo '
                     prezzo_unitario
                     FROM mg_logiche_calcolo
                     LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
-                    LEFT JOIN mg_listini_articoli ON mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine
+                    LEFT JOIN mg_listini_articoli ON (mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine OR 99999  = mg_listini_articoli.id_listino)
                     and mg_listini_articoli.id_articolo = '.prepare($id_record).'
                     GROUP BY id_listino_origine';
 
@@ -370,11 +370,19 @@ echo '
 
                                 <?php if (count($listini_origine) > 0) { ?>
                                     <?php if (count($listini_origine) > 1) { ?>
+                                        <?php $label = tr('Prezzo di partenza'); ?>
                                         {[ "type": "select", "label": "<?php echo tr('Listino di origine') ?>", "id": "listino_di_origine", "name": "listino_origine", "value": "", "values": "query=<?php echo $queryListiniOrigine ?>"]}
                                     <?php } else { ?>
+                                        <?php
+                                            $label = tr('Prezzo di partenza') . ' (' . $listini_origine[0]['descrizione'] . ')';
+                                            if (empty($prezzo_listino_origine)) {
+                                                $prezzo_listino_origine = $record['prezzo_acquisto'];
+                                            }
+                                        ?>
+
                                         {[ "type": "hidden", "id": "listino_di_origine", "name": "listino_origine", "value": "<?php echo $listini_origine[0]['id']?>"]}
                                     <?php } ?>
-                                    {[ "type": "number", "label": "<?php echo tr('Prezzo di partenza') ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
+                                    {[ "type": "number", "label": "<?php echo $label ?>", "id": "prezzo_di_partenza", "name": "prezzo_di_partenza", "value": "<?php echo $prezzo_listino_origine ?>", "icon-after": "<?php echo currency(); ?>"]}
 
                                     <!-- crea tabella per logiche di calcolo -->
                                     <table id="tbl-logiche" class="table table-bordered table-condensed table-striped">
@@ -661,7 +669,6 @@ $(document).ready(function(){
             id_listino_di_origine = 0;
         }
 
-        console.log('3-id_listino_di_origine: ' + id_listino_di_origine);
         $.each(logiche, function (i, logica) {
             if (logica.id_listino_origine == id_listino_di_origine) {
                 descrizione_destinazione = logica.descrizione_destinazione;
