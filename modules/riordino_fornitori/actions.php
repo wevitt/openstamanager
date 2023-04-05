@@ -16,10 +16,6 @@ switch (post('op')) {
         $id_fornitori = post('idanagrafica');
         $inBozza = post('inBozza');
 
-        error_log('ordinare: ' . json_encode($ordinare));
-        error_log('qta_ordinare: ' . json_encode($qta_ordinare));
-        error_log('idanagrafica: ' . json_encode($id_fornitori));
-
         // Lista degli articoli da ordinare
         $articoli = [];
         foreach ($ordinare as $id_articolo => $value) {
@@ -48,7 +44,6 @@ switch (post('op')) {
             if ($inBozza == 0 || empty($ordine)) {
                 $ordine = Ordine::build($anagrafica, $tipo, date('Y-m-d'));
             }
-
 
             // Selezione IVA del fornitore
             $id_iva = $anagrafica->idiva_acquisti ?: setting('Iva predefinita');

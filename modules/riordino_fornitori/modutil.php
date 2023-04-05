@@ -60,77 +60,51 @@ function getArticoliDaOrdinare()
                 INNER JOIN an_anagrafiche ON or_ordini.idanagrafica = an_anagrafiche.idanagrafica
                 INNER JOIN an_sedi ON or_ordini.id_sede_partenza = an_sedi.id
                 INNER JOIN or_statiordine ON or_ordini.idstatoordine=or_statiordine.id
-                WHERE ((or_righe_ordini.qta - or_righe_ordini.qta_evasa) > 0) AND or_ordini.idstatoordine NOT IN (8,5)
+                WHERE ((or_righe_ordini.qta - or_righe_ordini.qta_evasa) > 0)
                 AND or_ordini.idtipoordine = 2 AND or_statiordine.impegnato = 1
                 GROUP BY or_righe_ordini.idarticolo
             )
             AND (or_righe_ordini.qta - or_righe_ordini.qta_evasa) > 0
             AND or_righe_ordini.confermato = 1
             AND or_statiordine.impegnato = 1
-            AND    or_righe_ordini.idarticolo!=0
-            AND  mg_articoli.servizio = 0
+            AND or_righe_ordini.idarticolo!=0
+            AND mg_articoli.servizio = 0
+            AND or_ordini.idstatoordine NOT IN (8,5)
             GROUP BY or_righe_ordini.idarticolo, Magazzino
             HAVING qta_mancante > 0"
     );
 
-    /*$articoli_da_ordinare = $dbo->fetchArray(
-        "SELECT
-            or_ordini.id_sede_partenza,
-            or_ordini.id AS id,
-            or_righe_ordini.idarticolo,
-            mg_articoli.descrizione,
-            or_ordini.numero,
-            or_ordini.numero_esterno,
-
-            or_ordini.data,
-            SUM(IF((SELECT dir FROM or_tipiordine WHERE or_tipiordine.id = or_ordini.idtipoordine) = 'entrata', or_righe_ordini.qta - or_righe_ordini.qta_evasa, 0)) AS qta_non_consegnata_cliente,
-            SUM(IF((SELECT dir FROM or_tipiordine WHERE or_tipiordine.id = or_ordini.idtipoordine) = 'uscita', or_righe_ordini.qta - or_righe_ordini.qta_evasa, 0)) AS qta_ordinata_fornitore,
-            IF(mg_articoli_sedi.threshold_qta IS NULL, 0, mg_articoli_sedi.threshold_qta) AS minimo_sede,
-            (SELECT SUM(qta) FROM mg_movimenti WHERE idarticolo = or_righe_ordini.idarticolo AND idsede = or_ordini.id_sede_partenza GROUP BY idsede) AS disponibilita_sede,
-            mg_articoli.qta AS disponibilita_totale,
-            SUM(IF((SELECT dir FROM or_tipiordine WHERE or_tipiordine.id = or_ordini.idtipoordine) = 'entrata', or_righe_ordini.qta - or_righe_ordini.qta_evasa, 0)) +
-            IF(mg_articoli_sedi.threshold_qta IS NULL, 0, mg_articoli_sedi.threshold_qta) -
-            SUM(IF((SELECT dir FROM or_tipiordine WHERE or_tipiordine.id = or_ordini.idtipoordine) = 'uscita', or_righe_ordini.qta - or_righe_ordini.qta_evasa, 0)) -
-            (SELECT SUM(qta) FROM mg_movimenti WHERE idarticolo = or_righe_ordini.idarticolo AND idsede = or_ordini.id_sede_partenza GROUP BY idsede) AS qta_mancante,
-
-            or_righe_ordini.um,
-            IF(
-                or_ordini.id_sede_partenza = 0,
-                CONCAT_WS(' - ', 'Sede legale', CONCAT(citta, ' (', indirizzo, ')')),
-                (
-                    SELECT CONCAT_WS(' - ', nomesede, CONCAT(citta, ' (', indirizzo, ')'))
-                    FROM an_sedi WHERE idanagrafica='1' AND or_ordini.id_sede_partenza = an_sedi.id
-                )
-            ) AS Magazzino
-            FROM or_ordini
-            INNER JOIN or_righe_ordini ON or_ordini.id = or_righe_ordini.idordine
-            INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = 1
-            INNER JOIN or_statiordine ON or_ordini.idstatoordine=or_statiordine.id
-            INNER JOIN mg_articoli ON or_righe_ordini.idarticolo = mg_articoli.id
-            LEFT JOIN mg_articoli_sedi ON mg_articoli.id = mg_articoli_sedi.id_articolo AND mg_articoli_sedi.id_sede = or_ordini.id_sede_partenza
-
-            WHERE or_righe_ordini.idarticolo IN (SELECT or_righe_ordini.idarticolo
-                FROM or_righe_ordini
-                INNER JOIN or_ordini ON or_ordini.id = or_righe_ordini.idordine
-                INNER JOIN mg_articoli ON mg_articoli.id = or_righe_ordini.idarticolo
-                INNER JOIN an_anagrafiche ON or_ordini.idanagrafica = an_anagrafiche.idanagrafica
-                INNER JOIN an_sedi ON or_ordini.id_sede_partenza = an_sedi.id
-                INNER JOIN or_statiordine ON or_ordini.idstatoordine=or_statiordine.id
-                WHERE ((or_righe_ordini.qta - or_righe_ordini.qta_evasa) > 0) AND or_ordini.idstatoordine = 7
-                AND or_ordini.idtipoordine = 2 AND or_statiordine.impegnato = 1
-                GROUP BY or_righe_ordini.idarticolo
-            )
-            AND (or_righe_ordini.qta - or_righe_ordini.qta_evasa) > 0
-            AND or_righe_ordini.confermato = 1
-            AND or_statiordine.impegnato = 1
-            AND    or_righe_ordini.idarticolo!=0
-            AND  mg_articoli.servizio = 0
-            AND id_articolo = '277'
-            GROUP BY or_righe_ordini.idarticolo, Magazzino
-            HAVING qta_mancante > 0"
-    );*/
-
     return $articoli_da_ordinare;
+}
+
+/**
+ * Restituisce i fornitori per gli articoli.
+ *
+ * @param array $articoli
+ * @return array
+ */
+function getFornitoriArticoli($articoli)
+{
+    $dbo = database();
+
+    foreach ($articoli as $articolo) {
+        if (empty($ret[$articolo['idarticolo']])) {
+            $results = $dbo->fetchArray(
+                'SELECT idanagrafica as id, ragione_sociale as descrizione
+                FROM an_anagrafiche ana
+                WHERE ana.idanagrafica = 1
+                UNION
+                SELECT idanagrafica as id, ragione_sociale as descrizione
+                FROM mg_fornitore_articolo fa
+                INNER JOIN an_anagrafiche a ON fa.id_fornitore = a.idanagrafica
+                WHERE id_articolo='.$articolo['idarticolo']
+            );
+
+            $ret[$articolo['idarticolo']] = $results;
+        }
+    }
+
+    return $ret;
 }
 
 /**
