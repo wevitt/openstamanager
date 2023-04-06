@@ -9,6 +9,8 @@ $id_fornitore = get('idfornitore');
 $tipo_fornitore = get('fornitore');
 
 $module_ordini = Modules::get('Ordini cliente');
+$module_articoli = Modules::get('Articoli');
+
 $plugin_distinte = $dbo->fetchNum("SELECT * FROM zz_plugins WHERE name='Distinta base'");
 $fornitori = getFornitori();
 $articoli_da_ordinare = getArticoliDaOrdinare();
@@ -25,7 +27,7 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
         </div>
         <div class="col-md-3 col-sm-6">
             <select class="superselect openstamanager-input select-input" id="search-fornitore">
-                <option value="0"><?php echo tr('Tutti i fornitori')?></option>
+                <option value=""><?php echo tr('Tutti i fornitori')?></option>
                 <?php foreach ($fornitori as $fornitore) { ?>
                     <option value="<?php echo $fornitore['id']?>">
                         <?php echo $fornitore['descrizione']?>
@@ -54,7 +56,7 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($articoli_da_ordinare as $articolo) { ?>
+            <?php foreach ($articoli_da_ordinare as $i => $articolo) { ?>
                 <tr data-id="<?php echo $articolo['idarticolo']?>" data-sede="<?php echo $articolo['id_sede_partenza']?>">
                     <td>
                         <input type="checkbox" class="check" name="<?php echo 'ordinare['.$articolo['idarticolo'].']'?>"
@@ -65,7 +67,10 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
                             <?php echo $articolo['numero']?>
                         </a>
                     </td>
-                    <td class="descrizione"><?php echo $articolo['descrizione'] ?></td>
+                    <td class="descrizione">
+                        <a href="<?php echo base_path().'/editor.php?id_module='.$module_articoli['id'].'&id_record='.$articolo['idarticolo']?>" target="_blank">
+                            <?php echo $articolo['descrizione'] ?></td>
+                        </a>
                     <td><?php echo $articolo['Magazzino'] ?></td>
                     <td><?php echo Translator::numberToLocale($articolo['minimo_sede']).' '.$articolo['um']?></td>
                     <td><?php echo Translator::numberToLocale($articolo['disponibilita_sede']).' '.$articolo['um']?></td>
@@ -85,8 +90,8 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
                     </td>
                     <td class="fornitori">
                         <div>
-                            <select class="superselect openstamanager-input select-input" name="<?php echo 'idanagrafica['.$articolo['idarticolo'].']'?>">
-                                <option value="0"><?php echo tr('') ?></option>
+                            <select class="superselect openstamanager-input select-input" id="select_<?php echo $i;?>" name="idanagrafica[<?php echo $articolo['idarticolo']?>]">
+                                <option value=""><?php echo tr('') ?></option>
                                 <?php foreach ($fornitori_articoli[$articolo['idarticolo']] as $fornitore_articolo) { ?>
                                     <option value="<?php echo $fornitore_articolo['id'] ?>">
                                         <?php echo $fornitore_articolo['descrizione'] ?>
@@ -178,6 +183,7 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
                 while(i < options.length && found == false){
                     if(options[i].value == value){
                         found = true;
+                        $(this).find('.fornitori select').val(value).change();
                     }
                     i++;
                 }
@@ -225,23 +231,22 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
             });
         });
 
+        $('body').on('click', '.select2-selection__clear', function() {
+            var id = $(this).closest(".select2-container").prev().attr("id");
+            $('#' + id).val('').change();
+        });
     });
-</script>
 
-<?php
-
-echo '
-<script>
     function crea_ordine(){
         if($(".check:checked").length != 0) {
             if($("#form_crea_ordine").parsley().validate()) {
                 swal({
-                    title: "'.tr("Creazione ordine fornitore").'",
-                    html: "'.tr("Desideri inserire gli articoli in eventuali ordini aperti?").'",
+                    title: "<?php echo tr("Creazione ordine fornitore");?>",
+                    html: "<?php echo tr("Desideri inserire gli articoli in eventuali ordini aperti?");?>",
                     type: "warning",
                     showCancelButton: true,
-                    confirmButtonText: "'.tr('Si').'",
-                    cancelButtonText: "'.tr('No').'"
+                    confirmButtonText: "<?php echo tr('Si')?>",
+                    cancelButtonText: "<?php echo tr('No');?>"
                 }).then(function (result) {
                     $("#inBozza").val(1);
                     swalStep2();
@@ -251,20 +256,19 @@ echo '
                 });
             }
         } else {
-            swal("'.tr('Errore').'", "'.tr('Nessun articolo selezionato!').'", "error");
+            swal("<?php echo tr('Errore');?>", "<?php echo tr('Nessun articolo selezionato!');?>", "error");
         }
     }
 
     function swalStep2() {
         swal({
-            title: "'.tr("Creazione ordine fornitore").'",
-            html: "'.tr("Desideri procedere alla creazione dell'Ordine fornitore per questi articoli?").'",
+            title: "<?php echo tr("Creazione ordine fornitore");?>",
+            html: "<?php echo tr("Desideri procedere alla creazione dell'Ordine fornitore per questi articoli?");?>",
             type: "warning",
             showCancelButton: true,
-            confirmButtonText: "'.tr('Procedi').'"
+            confirmButtonText: "<?php echo tr('Procedi');?>"
         }).then(function (result) {
             $("#form_crea_ordine").submit();
         });
     }
-
-</script>';
+</script>
