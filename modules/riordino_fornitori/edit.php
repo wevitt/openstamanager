@@ -37,7 +37,6 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
         </div>
     </div>
 
-
     <!-- Articoli da ordinare -->
     <table class="table table-condensed table-striped table-bordered" id="table" style="border-left: 10px solid #297fcc;">
         <thead>
@@ -52,7 +51,7 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
                 <th><?php echo tr('Q.tà da consegnare')?></th>
                 <th><?php echo tr('Q.tà ordinata')?></th>
                 <th style="width:7%"><?php echo tr('Q.tà mancante')?></th>
-                <th style="width:15%"><?php echo tr('Fornitore') ?></th>
+                <th style="width:15%"><?php echo tr('Azioni') ?></th>
             </tr>
         </thead>
         <tbody>
@@ -89,17 +88,38 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
                             value="<?php echo number_format($articolo['qta_mancante'], 2) ?>">
                     </td>
                     <td class="fornitori">
-                        <div>
-                            <select class="superselect openstamanager-input select-input" id="select_<?php echo $i;?>" name="idanagrafica[<?php echo $articolo['idarticolo']?>]">
-                                <option value=""><?php echo tr('') ?></option>
-                                <?php foreach ($fornitori_articoli[$articolo['idarticolo']] as $fornitore_articolo) { ?>
-                                    <option value="<?php echo $fornitore_articolo['id'] ?>">
-                                        <?php echo $fornitore_articolo['descrizione'] ?>
-                                    </option>
-                                <?php } ?>
-                            </select>
+                        <?php
+                            //Se nel magazzino centrale si riesce a coprire la qta mancante allora aggiungo
+                            //btn spostamento tra depositi
+
+                            $spostamento_tra_depositi = false;
+                            if ($articolo['id_sede_partenza'] > 0) {
+                                if ($articolo['disponibilita_totale'] > $articolo['qta_mancante']) {
+                                    $spostamento_tra_depositi = true;
+                                }
+                            }
+                        ?>
+                        <div style="display: flex">
+                            <div style="width:75%">
+                                <select class="superselect openstamanager-input select-input" id="select_<?php echo $i;?>" name="idanagrafica[<?php echo $articolo['idarticolo']?>]">
+                                    <option value=""><?php echo tr('') ?></option>
+                                    <?php foreach ($fornitori_articoli[$articolo['idarticolo']] as $fornitore_articolo) { ?>
+                                        <option value="<?php echo $fornitore_articolo['id'] ?>">
+                                            <?php echo $fornitore_articolo['descrizione'] ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <?php if ($spostamento_tra_depositi) { ?>
+                                <div style="width:25%">
+                                    <span class="input-group-addon after no-padding">
+                                        <button type="button" class="btn" data-toggle="tooltip" title="Spostamento tra depositi">
+                                            <i class="fa fa-truck"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            <?php } ?>
                         </div>
-                        <!--{[ "type": "select", "class": "", "label": "", "name": "<?php echo 'idanagrafica['.$articolo['idarticolo'].']'?>", "values": "query=<?php echo $query;?>", "value": "<?php echo $id_fornitore ?? 0 ?>" ]}-->
                     </td>
                 </tr>
             <?php } ?>
@@ -237,38 +257,27 @@ $fornitori_articoli = getFornitoriArticoli($articoli_da_ordinare);
         });
     });
 
-    function crea_ordine(){
-        if($(".check:checked").length != 0) {
-            if($("#form_crea_ordine").parsley().validate()) {
-                swal({
-                    title: "<?php echo tr("Creazione ordine fornitore");?>",
-                    html: "<?php echo tr("Desideri inserire gli articoli in eventuali ordini aperti?");?>",
-                    type: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "<?php echo tr('Si')?>",
-                    cancelButtonText: "<?php echo tr('No');?>"
-                }).then(function (result) {
-                    $("#inBozza").val(1);
-                    swalStep2();
-                }).catch(function (result) {
-                    $("#inBozza").val(0);
-                    swalStep2();
-                });
-            }
-        } else {
-            swal("<?php echo tr('Errore');?>", "<?php echo tr('Nessun articolo selezionato!');?>", "error");
+    function crea_ordine() {
+    if ($(".check:checked").length != 0) {
+        if ($("#form_crea_ordine").parsley().validate()) {
+            swal({
+                title: "<?php echo tr("Creazione ordine fornitore");?>",
+                html:
+                    '<div class="swal-checkbox-container">' +
+                        '<label for="check-bozza"><?php echo tr("Desideri inserire gli articoli in eventuali ordini aperti?");?></label>' +
+                        '<input id="check-bozza" type="checkbox">' +
+                    '</div>',
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: "<?php echo tr('Si')?>",
+                cancelButtonText: "<?php echo tr('No');?>"
+            }).then(function (result) {
+                $('#inBozza').val(($('#check-bozza').is(":checked")) ? '1' : '0');
+                $("#form_crea_ordine").submit();
+            });
         }
+    } else {
+        swal("<?php echo tr('Errore');?>", "<?php echo tr('Nessun articolo selezionato!');?>", "error");
     }
-
-    function swalStep2() {
-        swal({
-            title: "<?php echo tr("Creazione ordine fornitore");?>",
-            html: "<?php echo tr("Desideri procedere alla creazione dell'Ordine fornitore per questi articoli?");?>",
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonText: "<?php echo tr('Procedi');?>"
-        }).then(function (result) {
-            $("#form_crea_ordine").submit();
-        });
-    }
+}
 </script>
