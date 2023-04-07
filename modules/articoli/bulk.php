@@ -35,6 +35,71 @@ $id_preventivi = Modules::get($module_preventivi)['id'];
 $id_segment = $_SESSION['module_'.$id_preventivi]['id_segment'];
 
 switch (post('op')) {
+    case 'change-logiche-calcolo':
+        $listino_di_origine = post('listino_di_origine');
+        $percentuale = post('percentuale');
+
+        $logiche_destinazione = $dbo->fetchArray(
+            'SELECT id_listino_destinazione as id FROM mg_logiche_calcolo WHERE id_listino_origine = '.prepare($listino_di_origine)
+        );
+
+        foreach ($id_records as $id) {
+            $listino_origine_articolo = $dbo->fetchOne(
+                'SELECT * FROM mg_listini_articoli WHERE id_articolo = '.$id.' AND id_listino = '.$listino_di_origine
+            );
+
+            error_log('listino_origine_articolo: ' . json_encode($listino_origine_articolo));
+            $iva_articolo = $dbo->fetchOne(
+                'SELECT co_iva.percentuale
+                FROM co_iva
+                INNER JOIN mg_articoli ON mg_articoli.idiva_vendita = co_iva.id
+                WHERE mg_articoli.id = '.prepare($id)
+            )['percentuale'];
+
+            error_log('iva_articolo: ' . json_encode($iva_articolo));
+            if (!empty($listino_origine_articolo)) {
+                error_log($listino_origine_articolo['prezzo_unitario'].' + ('.floatval($listino_origine_articolo['prezzo_unitario']).' * '.floatval($percentuale).' / 100)');
+                $new_prezzo_unitario = $listino_origine_articolo['prezzo_unitario'] + (floatval($listino_origine_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
+                $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
+
+                error_log('$listino_origine_articolo["prezzo_unitario"]: ' . $$listino_origine_articolo['prezzo_unitario']);
+                error_log('new_prezzo_unitario: ' . $new_prezzo_unitario);
+                error_log('new_prezzo_unitario_ivato: ' . $new_prezzo_unitario_ivato);
+                //update mg_listini_articoli
+                $dbo->query(
+                    'UPDATE mg_listini_articoli
+                    SET prezzo_unitario = '.prepare($new_prezzo_unitario).',
+                    prezzo_unitario_ivato = '.prepare($new_prezzo_unitario_ivato).'
+                    WHERE id_articolo = '.prepare($id).' AND id_listino = '.prepare($listino_di_origine)
+                );
+            }
+
+            foreach ($logiche_destinazione as $logica_destinazione) {
+                $listino_destinazione_articolo = $dbo->fetchOne(
+                    'SELECT * FROM mg_listini_articoli WHERE id_articolo = '.$id.' AND id_listino = '.$logica_destinazione['id']
+                );
+
+                error_log('listino_destinazione_articolo: ' . json_encode($listino_destinazione_articolo));
+                if (!empty($listino_destinazione_articolo)) {
+                    $new_prezzo_unitario = $listino_destinazione_articolo['prezzo_unitario'] + (floatval($listino_destinazione_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
+                    $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
+
+                    error_log('$listino_destinazione_articolo["prezzo_unitario"]: ' . $$listino_destinazione_articolo['prezzo_unitario']);
+                    error_log('new_prezzo_unitario: ' . $new_prezzo_unitario);
+                    error_log('new_prezzo_unitario_ivato: ' . $new_prezzo_unitario_ivato);
+                    //update mg_listini_articoli
+                    $dbo->query(
+                        'UPDATE mg_listini_articoli
+                        SET prezzo_unitario = '.prepare($new_prezzo_unitario).',
+                        prezzo_unitario_ivato = '.prepare($new_prezzo_unitario_ivato).'
+                        WHERE id_articolo = '.prepare($id).' AND id_listino = '.prepare($logica_destinazione['id'])
+                    );
+                }
+            }
+        }
+
+        break;
+
     case 'change-acquisto':
         foreach ($id_records as $id) {
             $articolo = Articolo::find($id);
@@ -415,6 +480,19 @@ $operations['export-csv'] = [
         'button' => tr('Procedi'),
         'class' => 'btn btn-lg btn-success',
         'blank' => true,
+    ],
+];
+
+$operations['change-logiche-calcolo'] = [
+    'text' => '<span><i class="fa fa-refresh"></i> '.tr('Aggiorna con logiche di calcolo').'</span>',
+    'data' => [
+        'title' => tr('Aggiornare il prezzo di acquisto con le logiche di calcolo?'),
+        'msg' => tr('Inserire la percentuale senza segno.').'<br><br>
+        {[ "type": "select", "label": "'.tr('Listino di origine ').'", "name": "listino_di_origine", "required": 1, "ajax-source": "logiche-di-origine" ]}<br>
+        {[ "type": "number", "label": "'.tr('Percentuale magg. ').'", "name": "percentuale", "required": 1, "icon-after": "%" ]}',
+        'button' => tr('Procedi'),
+        'class' => 'btn btn-lg btn-warning',
+        'blank' => false,
     ],
 ];
 

@@ -207,6 +207,17 @@ switch ($resource) {
 
         break;
 
+    case 'logiche-di-origine':
+        $query = 'SELECT
+            IF(id_listino_origine = 0, 99999, id_listino_origine) as id,
+            IF(mg_listini.nome is null, \'Prezzo di acquisto standard\', mg_listini.nome) as descrizione
+            FROM mg_logiche_calcolo
+            LEFT JOIN mg_listini ON mg_listini.id = mg_logiche_calcolo.id_listino_origine
+            LEFT JOIN mg_listini_articoli ON (mg_listini_articoli.id_listino = mg_logiche_calcolo.id_listino_origine OR 99999  = mg_listini_articoli.id_listino)
+            GROUP BY id_listino_origine';
+
+        break;
+
     case 'categorie':
         $query = 'SELECT id, nome AS descrizione FROM mg_categorie |where| ORDER BY nome';
 
