@@ -48,3 +48,25 @@ function aggiorna_sedi_movimenti($module, $id)
         $dbo->query('UPDATE mg_movimenti SET idsede='.prepare($idsede).' WHERE reference_type='.prepare('Modules\Interventi\Intervento').' AND reference_id='.prepare($id));
     }
 }
+
+/**
+ * Funzione per aggiornare lo storico dei prezzi degli articoli.
+ *
+ * @param int   $id_articolo  id articolo
+ * @param float $prezzo       nuovo prezzo dell'articolo
+ * @param int   $id_listino   id del listino
+ * @param int   $id_fornitore id del fornitore
+ *
+ * @return void
+ */
+function Aggiorna_storico($id_articolo, $prezzo, $id_listino = null, $id_fornitore = null) {
+    $dbo = database();
+    $id_utente = Auth::user()['id'];
+
+    error_log("sono dentro: " . $prezzo);
+
+    $dbo->query(
+        'INSERT INTO mg_storico_prezzi_articoli (idarticolo, idutente, idfornitore, idlistino, prezzo)
+        VALUES (' .prepare($id_articolo).', '.prepare($id_utente).', '.prepare($id_fornitore).', '.prepare($id_listino).', '.prepare($prezzo).')'
+    );
+}

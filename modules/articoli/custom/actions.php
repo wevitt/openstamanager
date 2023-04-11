@@ -75,6 +75,8 @@ switch (post('op')) {
 
         $articolo->save();
 
+        Aggiorna_storico($articolo->id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
+
         // Aggiornamento delle varianti per i campi comuni
         Combinazione::sincronizzaVarianti($articolo);
 
@@ -116,6 +118,8 @@ switch (post('op')) {
         $listino_origine = post('listino_origine');
 
         if (!empty($listino_origine)) {
+            $articolo = Articolo::find($id_record);
+
             $prezzo_di_partenza = post('prezzo_di_partenza');
             $listini_di_destinazione = post('listino');
 
@@ -144,6 +148,8 @@ switch (post('op')) {
                 'dir' => 'entrata',
             ]);
 
+            Aggiorna_storico($id_record, $prezzo_di_partenza, $listino_origine, $articolo->id_fornitore);
+
             //inserisce i listini di destinazione o prezzo di vendita
             foreach ($listini_di_destinazione as $id_listino => $prezzo) {
                 $prezzo = floatval($prezzo);
@@ -167,6 +173,9 @@ switch (post('op')) {
                         'sconto_percentuale' => 0,
                         'dir' => 'entrata',
                     ]);
+
+                    Aggiorna_storico($id_record, $prezzo, $id_listino, $articolo->id_fornitore);
+
                 }
             }
         }
@@ -218,6 +227,8 @@ switch (post('op')) {
         $articolo->note = post('note');
 
         $articolo->save();
+
+        Aggiorna_storico($articolo->id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
 
         // Aggiorno le soglie minime per le sedi
         $gestisciMagazzini = $dbo->fetchOne('SELECT * FROM zz_settings WHERE nome = "Gestisci soglia minima per magazzino"');
@@ -488,6 +499,51 @@ switch (post('op')) {
                 'idsede' => $idsede_partenza,
             ]);
         }
+
+        break;
+
+    case 'add_concatenato':
+        $id_articolo = post('id_articolo');
+        $id_articolo_concatenato = post('id_articolo_concatenato');
+
+        $articolo = $dbo->fetchOne('SELECT prezzo_vendita, idiva_vendita FROM mg_articoli WHERE id='.prepare($id_articolo_concatenato));
+        $prezzo = floatval($articolo['prezzo_vendita']);
+
+        $iva = $dbo->fetchOne('SELECT id, percentuale FROM co_iva WHERE id='.prepare($articolo['idiva_vendita']));
+
+        $dbo->insert('mg_articoli_concatenati', [
+            'id_articolo' => $id_articolo,
+            'id_articolo_concatenato' => $id_articolo_concatenato,
+            'prezzo' => $prezzo,
+            'idiva' => $iva['id'],
+            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva['percentuale']),
+        ]);
+
+        break;
+
+    case 'update_concatenato':
+        $id = post('id');
+        //$iva = post('iva');
+        $prezzo = post('prezzo');
+
+        //get iva by mg_articoli_concatenati
+        $idiva = $dbo->fetchOne('SELECT idiva FROM mg_articoli_concatenati WHERE id='.prepare($id))['idiva'];
+        $iva = $dbo->fetchOne('SELECT id, percentuale FROM co_iva WHERE id='.prepare($idiva));
+
+        $dbo->update('mg_articoli_concatenati', [
+            'prezzo' => $prezzo,
+            //'iva' => $iva,
+            'prezzo_ivato' => $prezzo + ($prezzo / 100 * $iva['percentuale']),
+        ], [
+            'id' => $id,
+        ]);
+
+        break;
+
+    case 'remove_concatenato':
+        $id = post('id');
+
+        $dbo->query('DELETE FROM mg_articoli_concatenati WHERE id='.prepare($id));
 
         break;
 }
