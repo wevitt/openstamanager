@@ -38,6 +38,8 @@ switch (post('op')) {
     case 'change-logiche-calcolo':
         $listino_di_origine = post('listino_di_origine');
         $percentuale = post('percentuale');
+        $tipologia = post('tipologia');
+        $arrotondamento = post('arrotondamento');
 
         $logiche_destinazione = $dbo->fetchArray(
             'SELECT id_listino_destinazione as id FROM mg_logiche_calcolo WHERE id_listino_origine = '.prepare($listino_di_origine)
@@ -48,7 +50,6 @@ switch (post('op')) {
                 'SELECT * FROM mg_listini_articoli WHERE id_articolo = '.$id.' AND id_listino = '.$listino_di_origine
             );
 
-            error_log('listino_origine_articolo: ' . json_encode($listino_origine_articolo));
             $iva_articolo = $dbo->fetchOne(
                 'SELECT co_iva.percentuale
                 FROM co_iva
@@ -56,15 +57,16 @@ switch (post('op')) {
                 WHERE mg_articoli.id = '.prepare($id)
             )['percentuale'];
 
-            error_log('iva_articolo: ' . json_encode($iva_articolo));
             if (!empty($listino_origine_articolo)) {
-                error_log($listino_origine_articolo['prezzo_unitario'].' + ('.floatval($listino_origine_articolo['prezzo_unitario']).' * '.floatval($percentuale).' / 100)');
                 $new_prezzo_unitario = $listino_origine_articolo['prezzo_unitario'] + (floatval($listino_origine_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
                 $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
 
-                error_log('$listino_origine_articolo["prezzo_unitario"]: ' . $$listino_origine_articolo['prezzo_unitario']);
-                error_log('new_prezzo_unitario: ' . $new_prezzo_unitario);
-                error_log('new_prezzo_unitario_ivato: ' . $new_prezzo_unitario_ivato);
+                if ($tipologia == 'ivato') {
+                    $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
+                } else {
+                    $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                }
+
                 //update mg_listini_articoli
                 $dbo->query(
                     'UPDATE mg_listini_articoli
@@ -79,14 +81,16 @@ switch (post('op')) {
                     'SELECT * FROM mg_listini_articoli WHERE id_articolo = '.$id.' AND id_listino = '.$logica_destinazione['id']
                 );
 
-                error_log('listino_destinazione_articolo: ' . json_encode($listino_destinazione_articolo));
                 if (!empty($listino_destinazione_articolo)) {
                     $new_prezzo_unitario = $listino_destinazione_articolo['prezzo_unitario'] + (floatval($listino_destinazione_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
                     $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
 
-                    error_log('$listino_destinazione_articolo["prezzo_unitario"]: ' . $$listino_destinazione_articolo['prezzo_unitario']);
-                    error_log('new_prezzo_unitario: ' . $new_prezzo_unitario);
-                    error_log('new_prezzo_unitario_ivato: ' . $new_prezzo_unitario_ivato);
+                    if ($tipologia == 'ivato') {
+                        $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
+                    } else {
+                        $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                    }
+
                     //update mg_listini_articoli
                     $dbo->query(
                         'UPDATE mg_listini_articoli
@@ -489,7 +493,9 @@ $operations['change-logiche-calcolo'] = [
         'title' => tr('Aggiornare il prezzo di acquisto con le logiche di calcolo?'),
         'msg' => tr('Inserire la percentuale senza segno.').'<br><br>
         {[ "type": "select", "label": "'.tr('Listino di origine ').'", "name": "listino_di_origine", "required": 1, "ajax-source": "logiche-di-origine" ]}<br>
-        {[ "type": "number", "label": "'.tr('Percentuale magg. ').'", "name": "percentuale", "required": 1, "icon-after": "%" ]}',
+        {[ "type": "number", "label": "'.tr('Percentuale magg. ').'", "name": "percentuale", "required": 1, "icon-after": "%" ]}
+        {[ "type": "select", "label": "'.tr('Arrotonda prezzo:').'", "name": "tipologia", "values": "list=\"0\":\"Non arrotondare\",\"imponibile\":\"Imponibile\",\"ivato\":\"Ivato\"", "value": 0 ]}<br>
+        {[ "type": "select", "label": "'.tr('Arrotondamento:').'", "name": "arrotondamento", "values": "list=\"0.1\":\"0,10 €\",\"1\":\"1,00 €\",\"10\":\"10,00 €\",\"100\":\"100,00 €\"" ]}',
         'button' => tr('Procedi'),
         'class' => 'btn btn-lg btn-warning',
         'blank' => false,
