@@ -46,6 +46,8 @@ switch (post('op')) {
         );
 
         foreach ($id_records as $id) {
+            $articolo = Articolo::find($id);
+
             $listino_origine_articolo = $dbo->fetchOne(
                 'SELECT * FROM mg_listini_articoli WHERE id_articolo = '.$id.' AND id_listino = '.$listino_di_origine
             );
@@ -61,10 +63,12 @@ switch (post('op')) {
                 $new_prezzo_unitario = $listino_origine_articolo['prezzo_unitario'] + (floatval($listino_origine_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
                 $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
 
-                if ($tipologia == 'ivato') {
-                    $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
-                } else {
-                    $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                if (!empty($tipologia) && !empty($arrotondamento)) {
+                    if ($tipologia == 'ivato') {
+                        $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
+                    } else {
+                        $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                    }
                 }
 
                 //update mg_listini_articoli
@@ -74,6 +78,8 @@ switch (post('op')) {
                     prezzo_unitario_ivato = '.prepare($new_prezzo_unitario_ivato).'
                     WHERE id_articolo = '.prepare($id).' AND id_listino = '.prepare($listino_di_origine)
                 );
+
+                Aggiorna_storico($id, $new_prezzo_unitario, $listino_di_origine, $articolo->id_fornitore);
             }
 
             foreach ($logiche_destinazione as $logica_destinazione) {
@@ -85,10 +91,12 @@ switch (post('op')) {
                     $new_prezzo_unitario = $listino_destinazione_articolo['prezzo_unitario'] + (floatval($listino_destinazione_articolo['prezzo_unitario']) * floatval($percentuale) / 100);
                     $new_prezzo_unitario_ivato = $new_prezzo_unitario + ($new_prezzo_unitario * floatval($iva_articolo) / 100);
 
-                    if ($tipologia == 'ivato') {
-                        $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
-                    } else {
-                        $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                    if (!empty($tipologia) && !empty($arrotondamento)) {
+                        if ($tipologia == 'ivato') {
+                            $new_prezzo_unitario_ivato = ceil($new_prezzo_unitario_ivato / $arrotondamento) * $arrotondamento;
+                        } else {
+                            $new_prezzo_unitario = ceil($new_prezzo_unitario / $arrotondamento) * $arrotondamento;
+                        }
                     }
 
                     //update mg_listini_articoli
@@ -98,6 +106,8 @@ switch (post('op')) {
                         prezzo_unitario_ivato = '.prepare($new_prezzo_unitario_ivato).'
                         WHERE id_articolo = '.prepare($id).' AND id_listino = '.prepare($logica_destinazione['id'])
                     );
+
+                    Aggiorna_storico($id, $new_prezzo_unitario, $logica_destinazione['id'], $articolo->id_fornitore);
                 }
             }
         }
@@ -112,6 +122,8 @@ switch (post('op')) {
             $new_prezzo_acquisto = $articolo->prezzo_acquisto + ($articolo->prezzo_acquisto * $percentuale / 100);
             $articolo->prezzo_acquisto = $new_prezzo_acquisto;
             $articolo->save();
+
+            Aggiorna_storico($id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
 
             if (!empty($articolo->id_fornitore)) {
                 $prezzo_predefinito = DettaglioPrezzo::dettaglioPredefinito($articolo->id, $articolo->id_fornitore, 'uscita')->first();
@@ -160,6 +172,8 @@ switch (post('op')) {
 
                 $articolo->setPrezzoVendita($new_prezzo_vendita, $articolo->idiva_vendita);
                 $articolo->save();
+
+                Aggiorna_storico($id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
             } else {
                 $articoli_coeff++;
             }
@@ -180,6 +194,8 @@ switch (post('op')) {
             $articolo->coefficiente = $coefficiente;
             $articolo->prezzo_vendita = $articolo->prezzo_acquisto*$coefficiente;
             $articolo->save();
+
+            Aggiorna_storico($id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
         }
 
         flash()->info(tr('Coefficienti di vendita aggiornati!'));
