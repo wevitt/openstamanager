@@ -20,6 +20,7 @@
 include_once __DIR__.'/../../core.php';
 
 $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
+$show_descrizione_riga = setting('Mostra descrizione righe nella stampa del ddt');
 
 // Creazione righe fantasma
 $autofill = new \Util\Autofill($options['pricing'] ? 7 : 4, 40, 24);
@@ -67,6 +68,12 @@ foreach ($righe as $riga) {
         $r = $riga->toArray();
 
         $autofill->count($r['descrizione']);
+        error_log('descrizione: ' . $r['descrizione']);
+        if ($show_descrizione_riga) {
+            $descrizione = $r['descrizione'];
+        } else {
+            $descrizione = explode('Rif.', $r['descrizione'])[0];
+        }
 
         echo '
         <tr>
@@ -87,56 +94,58 @@ foreach ($righe as $riga) {
             </td>
 
             <td>
-                '.nl2br($r['descrizione']);
+                '.nl2br($descrizione);
 
-        //Riferimenti odrini/ddt righe
-        if ($riga->referenceTargets()->count()) {
-            $source = $source_type::find($riga->id);
-            $riferimenti = $source->referenceTargets;
+        if ($show_descrizione_riga) {
+            //Riferimenti odrini/ddt righe
+            if ($riga->referenceTargets()->count()) {
+                $source = $source_type::find($riga->id);
+                $riferimenti = $source->referenceTargets;
 
-            foreach ($riferimenti as $riferimento) {
-                $documento_riferimento = $riferimento->target->getDocument();
-                echo '
-                <br><small>'.$riferimento->target->descrizione.'<br>'.tr('Rif. _DOCUMENT_', [
-                    '_DOCUMENT_' => strtolower($documento_riferimento->getReference()),
-                ]).'</small>';
+                foreach ($riferimenti as $riferimento) {
+                    $documento_riferimento = $riferimento->target->getDocument();
+                    echo '
+                    <br><small>'.$riferimento->target->descrizione.'<br>'.tr('Rif. _DOCUMENT_', [
+                        '_DOCUMENT_' => strtolower($documento_riferimento->getReference()),
+                    ]).'</small>';
+                }
             }
-        }
 
-        if ($riga->isArticolo()) {
-            // Codice articolo
-            $text = tr('COD. _COD_', [
-                '_COD_' => $riga->codice,
-            ]);
-            echo '
-                    <br><small>'.$text.'</small>';
-
-            $autofill->count($text, true);
-
-            // Seriali
-            $seriali = $riga->serials;
-            if (!empty($seriali)) {
-                $text = tr('SN').': '.implode(', ', $seriali);
+            if ($riga->isArticolo()) {
+                // Codice articolo
+                $text = tr('COD. _COD_', [
+                    '_COD_' => $riga->codice,
+                ]);
                 echo '
                         <br><small>'.$text.'</small>';
 
                 $autofill->count($text, true);
+
+                // Seriali
+                $seriali = $riga->serials;
+                if (!empty($seriali)) {
+                    $text = tr('SN').': '.implode(', ', $seriali);
+                    echo '
+                            <br><small>'.$text.'</small>';
+
+                    $autofill->count($text, true);
+                }
             }
-        }
 
-        // Aggiunta dei riferimenti ai documenti
-        /*
-        if (setting('Riferimento dei documenti nelle stampe') && $riga->hasOriginal()) {
-            $ref = $riga->getOriginal()->getDocument()->getReference();
+            // Aggiunta dei riferimenti ai documenti
+            /*
+            if (setting('Riferimento dei documenti nelle stampe') && $riga->hasOriginal()) {
+                $ref = $riga->getOriginal()->getDocument()->getReference();
 
-            if (!empty($ref)) {
-                echo '
-                    <br><small>'.$ref.'</small>';
+                if (!empty($ref)) {
+                    echo '
+                        <br><small>'.$ref.'</small>';
 
-                $autofill->count($ref, true);
+                    $autofill->count($ref, true);
+                }
             }
+            */
         }
-        */
 
         echo '
             </td>';

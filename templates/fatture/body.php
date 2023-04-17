@@ -25,6 +25,7 @@ $v_iva = [];
 $v_totale = [];
 
 $prezzi_ivati = setting('Utilizza prezzi di vendita comprensivi di IVA');
+$show_descrizione_riga = setting('Mostra descrizione righe nella stampa della fattura');
 
 // Creazione righe fantasma
 $autofill = new \Util\Autofill(6, 40, 24);
@@ -72,18 +73,23 @@ foreach ($righe as $riga) {
         // Descrizione della riga
         $descrizione = $riga->descrizione;
 
-        // Aggiunta riferimento più profondo per DDT attraverso Interventi
-        if ($riga->hasOriginalComponent() && $riga->original_document_type == Intervento::class) {
-            $riga_origine = $riga->getOriginalComponent();
+        if ($show_descrizione_riga) {
+            // Aggiunta riferimento più profondo per DDT attraverso Interventi
+            if ($riga->hasOriginalComponent() && $riga->original_document_type == Intervento::class) {
+                $riga_origine = $riga->getOriginalComponent();
 
-            if ($riga_origine->hasOriginalComponent()) {
-                $riferimento = $riga_origine->getOriginalComponent()
-                    ->getDocument()->getReference();
+                if ($riga_origine->hasOriginalComponent()) {
+                    $riferimento = $riga_origine->getOriginalComponent()
+                        ->getDocument()->getReference();
 
-                $descrizione .= "\n".tr('Rif. _DOCUMENT_', [
-                    '_DOCUMENT_' => strtolower($riferimento),
-                ]);
+                    $descrizione .= "\n".tr('Rif. _DOCUMENT_', [
+                        '_DOCUMENT_' => strtolower($riferimento),
+                    ]);
+                }
             }
+        } else {
+            // tolgo i riferimenti
+            $descrizione = explode('Rif.', $descrizione)[0];
         }
 
         echo '
@@ -98,81 +104,83 @@ foreach ($righe as $riga) {
                 <td>
                     '.nl2br(strip_tags($descrizione));
 
-        if ($riga->isArticolo()) {
-            // Codice articolo
-            $text = tr('COD. _COD_', [
-                '_COD_' => $riga->codice,
-            ]);
-            echo '
-                    <br><small>'.$text.'</small>';
-
-            $autofill->count($text, true);
-
-            // Seriali
-            $seriali = $riga->serials;
-            if (!empty($seriali)) {
-                $text = tr('SN').': '.implode(', ', $seriali);
+        if ($show_descrizione_riga) {
+            if ($riga->isArticolo()) {
+                // Codice articolo
+                $text = tr('COD. _COD_', [
+                    '_COD_' => $riga->codice,
+                ]);
                 echo '
                         <br><small>'.$text.'</small>';
 
                 $autofill->count($text, true);
+
+                // Seriali
+                $seriali = $riga->serials;
+                if (!empty($seriali)) {
+                    $text = tr('SN').': '.implode(', ', $seriali);
+                    echo '
+                            <br><small>'.$text.'</small>';
+
+                    $autofill->count($text, true);
+                }
             }
-        }
 
-        // Aggiunta dei riferimenti ai documenti
-        if (!empty($record['ref_documento'])) {
-            $data = $dbo->fetchArray("SELECT IF(numero_esterno != '', numero_esterno, numero) AS numero, data FROM co_documenti WHERE id = ".prepare($record['ref_documento']));
+            // Aggiunta dei riferimenti ai documenti
+            if (!empty($record['ref_documento'])) {
+                $data = $dbo->fetchArray("SELECT IF(numero_esterno != '', numero_esterno, numero) AS numero, data FROM co_documenti WHERE id = ".prepare($record['ref_documento']));
 
-            $text = tr('Rif. fattura _NUM_ del _DATE_', [
-                '_NUM_' => $data[0]['numero'],
-                '_DATE_' => Translator::dateToLocale($data[0]['data']),
-            ]);
-
-            echo '
-            <br><small>'.$text.'</small>';
-
-            $autofill->count($text, true);
-        }
-
-        // Aggiunta dei riferimenti ai documenti
-        /*
-        if (setting('Riferimento dei documenti nelle stampe') && $riga->hasOriginal()) {
-            $ref = $riga->getOriginal()->getDcocument()->getReference();
-            if (!empty($riga->getOriginal()->getDcocument()->numero_cliente)) {
-                $ref .= '<br>'.tr('_DOC_ num. _NUM_ del _DATE_', [
-                    '_DOC_' => 'Rif. Vs. ordine cliente',
-                    '_NUM_' => $riga->getOriginalComponent()->getDocument()->numero_cliente,
-                    '_DATE_' => dateFormat($riga->getOriginalComponent()->getDocument()->data_cliente),
+                $text = tr('Rif. fattura _NUM_ del _DATE_', [
+                    '_NUM_' => $data[0]['numero'],
+                    '_DATE_' => Translator::dateToLocale($data[0]['data']),
                 ]);
-            }
-            if (!empty($ref)) {
+
                 echo '
-                    <br><small>'.$ref.'</small>';
+                <br><small>'.$text.'</small>';
 
-                $autofill->count($ref, true);
+                $autofill->count($text, true);
             }
-        }*/
 
-        // Informazioni su CIG, CUP, ...
-        if ($riga->hasOriginalComponent()) {
-            $documento_originale = $riga->getOriginalComponent()->getDocument();
+            // Aggiunta dei riferimenti ai documenti
+            /*
+            if (setting('Riferimento dei documenti nelle stampe') && $riga->hasOriginal()) {
+                $ref = $riga->getOriginal()->getDcocument()->getReference();
+                if (!empty($riga->getOriginal()->getDcocument()->numero_cliente)) {
+                    $ref .= '<br>'.tr('_DOC_ num. _NUM_ del _DATE_', [
+                        '_DOC_' => 'Rif. Vs. ordine cliente',
+                        '_NUM_' => $riga->getOriginalComponent()->getDocument()->numero_cliente,
+                        '_DATE_' => dateFormat($riga->getOriginalComponent()->getDocument()->data_cliente),
+                    ]);
+                }
+                if (!empty($ref)) {
+                    echo '
+                        <br><small>'.$ref.'</small>';
 
-            $num_item = $documento_originale['num_item'];
-            $codice_commessa = $documento_originale['codice_commessa'];
-            $codice_cig = $documento_originale['codice_cig'];
-            $codice_cup = $documento_originale['codice_cup'];
-            $id_documento_fe = $documento_originale['id_documento_fe'];
+                    $autofill->count($ref, true);
+                }
+            }*/
 
-            $extra_riga = replace('_ID_DOCUMENTO__NUMERO_RIGA__CODICE_COMMESSA__CODICE_CIG__CODICE_CUP_', [
-                '_ID_DOCUMENTO_' => $id_documento_fe ? 'DOC: '.$id_documento_fe : null,
-                '_NUMERO_RIGA_' => $num_item ? ', NRI: '.$num_item : null,
-                '_CODICE_COMMESSA_' => $codice_commessa ? ', COM: '.$codice_commessa : null,
-                '_CODICE_CIG_' => $codice_cig ? ', CIG: '.$codice_cig : null,
-                '_CODICE_CUP_' => $codice_cup ? ', CUP: '.$codice_cup : null,
-            ]);
+            // Informazioni su CIG, CUP, ...
+            if ($riga->hasOriginalComponent()) {
+                $documento_originale = $riga->getOriginalComponent()->getDocument();
 
-            echo '
-            <br><small>'.$extra_riga.'</small>';
+                $num_item = $documento_originale['num_item'];
+                $codice_commessa = $documento_originale['codice_commessa'];
+                $codice_cig = $documento_originale['codice_cig'];
+                $codice_cup = $documento_originale['codice_cup'];
+                $id_documento_fe = $documento_originale['id_documento_fe'];
+
+                $extra_riga = replace('_ID_DOCUMENTO__NUMERO_RIGA__CODICE_COMMESSA__CODICE_CIG__CODICE_CUP_', [
+                    '_ID_DOCUMENTO_' => $id_documento_fe ? 'DOC: '.$id_documento_fe : null,
+                    '_NUMERO_RIGA_' => $num_item ? ', NRI: '.$num_item : null,
+                    '_CODICE_COMMESSA_' => $codice_commessa ? ', COM: '.$codice_commessa : null,
+                    '_CODICE_CIG_' => $codice_cig ? ', CIG: '.$codice_cig : null,
+                    '_CODICE_CUP_' => $codice_cup ? ', CUP: '.$codice_cup : null,
+                ]);
+
+                echo '
+                <br><small>'.$extra_riga.'</small>';
+            }
         }
 
         echo '
