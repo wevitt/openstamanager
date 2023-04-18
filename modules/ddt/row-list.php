@@ -396,6 +396,22 @@ if ($totale != $netto_a_pagare) {
         </tr>';
 }
 
+$margine = $ddt->margine;
+$margine_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
+$margine_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
+
+echo '
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Costi').':
+        </td>
+        <td class="text-right">
+            '.moneyFormat($ddt->spesa).'
+        </td>
+        <td></td>
+    </tr>';
+
+
 // Provvigione
 if(!empty($ddt->provvigione)) {
     echo '
@@ -409,6 +425,27 @@ if(!empty($ddt->provvigione)) {
             <td></td>
         </tr>';
 }
+
+echo '
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Margine (_PRC_%)', [
+                '_PRC_' => numberFormat($ddt->margine_percentuale),
+        ]).':
+        </td>
+        <td class="text-right '.$margine_class.'" rowspan="2" style="vertical-align:middle;">
+            <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i> '.moneyFormat($ddt->margine).'
+        </td>
+        <td rowspan="2"></td>
+    </tr>
+
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Ricarico (_PRC_%)', [
+                '_PRC_' => numberFormat($ddt->ricarico_percentuale),
+        ]).':
+        </td>
+    </tr>';
 
 echo '
     </table>';

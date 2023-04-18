@@ -490,6 +490,21 @@ if (!empty($sconto_finale)) {
         </tr>';
 }
 
+$margine = $fattura->margine;
+$margine_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
+$margine_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
+
+echo '
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Costi').':
+        </td>
+        <td class="text-right">
+            '.moneyFormat($fattura->spesa).'
+        </td>
+        <td></td>
+    </tr>';
+
 // NETTO A PAGARE
 if ($totale != $netto_a_pagare) {
     echo '
@@ -503,6 +518,27 @@ if ($totale != $netto_a_pagare) {
             <td></td>
         </tr>';
 }
+
+echo '
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Margine (_PRC_%)', [
+                '_PRC_' => numberFormat($fattura->margine_percentuale),
+        ]).':
+        </td>
+        <td class="text-right '.$margine_class.'" rowspan="2" style="vertical-align:middle;">
+            <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i> '.moneyFormat($fattura->margine).'
+        </td>
+        <td rowspan="2"></td>
+    </tr>
+
+    <tr>
+        <td colspan="6" class="text-right">
+            '.tr('Ricarico (_PRC_%)', [
+                '_PRC_' => numberFormat($fattura->ricarico_percentuale),
+        ]).':
+        </td>
+    </tr>';
 
 // Provvigione
 if(!empty($fattura->provvigione)) {
