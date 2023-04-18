@@ -198,6 +198,14 @@ if (!empty($options['create_document'])) {
             </div>';
     }
 
+    if (in_array($final_module['name'], ['Ddt di acquisto'])) {
+        echo '
+            <div class="col-md-6">
+                {[ "type": "select", "label": "'.tr('Sede di destinazione').'", "name": "id_sede_destinazione", "required": 1, "ajax-source": "sedi-partenza", "select-options": '.json_encode(['id_module' => $id_module, 'is_sezionale' => 1]).', "value": "0" ]}
+            </div>';
+    }
+
+
     echo '
                 <div class="col-md-6">
                     {[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_segment", "required": 1, "ajax-source": "segmenti", "select-options": '.json_encode(['id_module' => $final_module['id'], 'is_sezionale' => 1]).', "value": "'.$id_segment.'" ]}
