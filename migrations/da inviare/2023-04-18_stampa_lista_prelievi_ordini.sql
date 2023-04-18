@@ -1,0 +1,2 @@
+    INSERT INTO `zz_prints` (`id_module`, `is_record`, `name`, `title`, `filename`, `directory`, `previous`, `options`, `icon`, `version`, `compatibility`, `order`, `predefined`, `default`, `enabled`, `created_at`, `updated_at`) VALUES
+(24,	1,	'Lista prelievo',	'Lista prelievo',	'Lista prelievo num. {numero} del {data}',	'ordini_lista_prelievo',	'idordine',	'{\"pricing\": true, \"last-page-footer\": true, \"hide_codice\": true}',	'fa fa-print',	'',	'',	3,	0,	1,	1,	'2022-12-21 14:51:29',	'2023-04-18 08:44:04');
