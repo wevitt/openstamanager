@@ -1,0 +1,2 @@
+INSERT INTO `zz_plugins` (`name`, `title`, `idmodule_from`, `idmodule_to`, `position`, `script`, `enabled`, `default`, `order`, `compatibility`, `version`, `options2`, `options`, `directory`, `help`, `created_at`, `updated_at`) VALUES
+('Storico prezzi',	'Storico prezzi',	21,	21,	'tab',	'articoli.storico_prezzi.php',	1,	1,	0,	'2.*',	'1.0',	'',	NULL,	'',	'',	'2022-03-07 10:22:56',	'2023-04-18 10:57:04');

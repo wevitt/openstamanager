@@ -59,14 +59,14 @@ function aggiorna_sedi_movimenti($module, $id)
  *
  * @return void
  */
-function Aggiorna_storico($id_articolo, $prezzo, $id_listino = null, $id_fornitore = null) {
+function Aggiorna_storico($id_articolo, $prezzo, $id_listino = null, $tipo_prezzo = null, $id_fornitore = null) {
     $dbo = database();
     $id_utente = Auth::user()['id'];
 
     error_log("sono dentro: " . $prezzo);
 
     $dbo->query(
-        'INSERT INTO mg_storico_prezzi_articoli (idarticolo, idutente, idfornitore, idlistino, prezzo)
-        VALUES (' .prepare($id_articolo).', '.prepare($id_utente).', '.prepare($id_fornitore).', '.prepare($id_listino).', '.prepare($prezzo).')'
+        'INSERT INTO mg_storico_prezzi_articoli (idarticolo, idutente, idfornitore, idlistino, tipo_prezzo, prezzo)
+        VALUES (' .prepare($id_articolo).', '.prepare($id_utente).', '.prepare($id_fornitore).', '.prepare($id_listino).', '.prepare($tipo_prezzo).', '.prepare($prezzo).')'
     );
 }

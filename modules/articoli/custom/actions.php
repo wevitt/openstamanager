@@ -75,8 +75,6 @@ switch (post('op')) {
 
         $articolo->save();
 
-        Aggiorna_storico($articolo->id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
-
         // Aggiornamento delle varianti per i campi comuni
         Combinazione::sincronizzaVarianti($articolo);
 
@@ -148,7 +146,7 @@ switch (post('op')) {
                 'dir' => 'entrata',
             ]);
 
-            Aggiorna_storico($id_record, $prezzo_di_partenza, $listino_origine, $articolo->id_fornitore);
+            Aggiorna_storico($id_record, $prezzo_di_partenza, $listino_origine, null, $articolo->id_fornitore);
 
             //inserisce i listini di destinazione o prezzo di vendita
             foreach ($listini_di_destinazione as $id_listino => $prezzo) {
@@ -174,7 +172,7 @@ switch (post('op')) {
                         'dir' => 'entrata',
                     ]);
 
-                    Aggiorna_storico($id_record, $prezzo, $id_listino, $articolo->id_fornitore);
+                    Aggiorna_storico($id_record, $prezzo, $id_listino, null, $articolo->id_fornitore);
 
                 }
             }
@@ -190,6 +188,14 @@ switch (post('op')) {
                 '_CODICE_' => post('codice', true),
                 '_N_' => $numero_codice,
             ]));
+        }
+
+        if ($articolo->prezzo_acquisto != post('prezzo_acquisto')) {
+            Aggiorna_storico($articolo->id, post('prezzo_acquisto'), null, 'Prezzo acquisto', $articolo->id_fornitore);
+        }
+
+        if ($articolo->prezzo_vendita != post('prezzo_vendita')) {
+            Aggiorna_storico($articolo->id, post('prezzo_vendita'), null, 'Prezzo vendita', $articolo->id_fornitore);
         }
 
         $articolo->codice = post('codice', true);
@@ -228,7 +234,6 @@ switch (post('op')) {
 
         $articolo->save();
 
-        Aggiorna_storico($articolo->id, $articolo->prezzo_vendita, null, $articolo->id_fornitore);
 
         // Aggiorno le soglie minime per le sedi
         $gestisciMagazzini = $dbo->fetchOne('SELECT * FROM zz_settings WHERE nome = "Gestisci soglia minima per magazzino"');
