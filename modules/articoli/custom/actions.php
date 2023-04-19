@@ -146,7 +146,11 @@ switch (post('op')) {
                 'dir' => 'entrata',
             ]);
 
-            Aggiorna_storico($id_record, $prezzo_di_partenza, $listino_origine, null, $articolo->id_fornitore);
+            if ($listino_origine == 99999) {
+                Aggiorna_storico($articolo->id, $prezzo_di_partenza, null, 'Prezzo acquisto', $articolo->id_fornitore);
+            } else {
+                Aggiorna_storico($id_record, $prezzo_di_partenza, $listino_origine, null, $articolo->id_fornitore);
+            }
 
             //inserisce i listini di destinazione o prezzo di vendita
             foreach ($listini_di_destinazione as $id_listino => $prezzo) {
@@ -154,6 +158,7 @@ switch (post('op')) {
 
                 if ($id_listino == 0) { //caso prezzo di vendita
                     $prezzo_vendita = $prezzo;
+                    Aggiorna_storico($articolo->id, $prezzo, null, 'Prezzo vendita', $articolo->id_fornitore);
                 } else {
                     $dbo->query(
                         'DELETE FROM mg_listini_articoli
@@ -173,7 +178,6 @@ switch (post('op')) {
                     ]);
 
                     Aggiorna_storico($id_record, $prezzo, $id_listino, null, $articolo->id_fornitore);
-
                 }
             }
         }
