@@ -16,4 +16,4 @@ ADD INDEX `idlistino` (`idlistino`);
 
 ALTER TABLE `mg_storico_prezzi_articoli`
 ADD `tipo_prezzo` varchar(30) NULL AFTER `idlistino`,
-CHANGE `updated_at` `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`
+CHANGE `updated_at` `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
