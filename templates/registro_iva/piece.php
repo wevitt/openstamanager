@@ -45,12 +45,19 @@ foreach ($record as $r) {
         echo '
             <td class="text-right">'.moneyFormat($r['subtotale']).'</td>
             <td class="text-left">'.Translator::numberToLocale($r['percentuale'], 0).'</td>
-            <td class="text-left">'.$r['descrizione'].'</td>
+            <td class="text-left">';
+    echo $r['descrizione'];
+    echo ($record['split_payment'] != 0) ? '<br>' . tr('Split payment') : '';
+    echo '</td>
             <td class="text-right">'.moneyFormat($r['iva']).'</td>
             </tr>';
 
         $iva[$r['descrizione']][] = $r['iva'];
         $totale[$r['descrizione']][] = $r['subtotale'];
+if ($record['split_payment'] != 0) {
+    $split_payment_iva[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['iva'];
+    $split_payment_totale[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['subtotale'];
+}
 
         $numero = $r['numero'];
         $data_registrazione = $r['data_registrazione'];

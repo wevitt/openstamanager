@@ -29,11 +29,15 @@ $query = 'SELECT co_movimenti.*,
     dir FROM co_movimenti
 LEFT OUTER JOIN co_documenti ON co_movimenti.iddocumento = co_documenti.id
 LEFT OUTER JOIN co_tipidocumento ON co_documenti.idtipodocumento = co_tipidocumento.id
-WHERE co_movimenti.idconto='.prepare($id_conto).' AND
-    co_movimenti.data >= '.prepare($_SESSION['period_start']).' AND
-    co_movimenti.data <= '.prepare($_SESSION['period_end']).'
+LEFT OUTER JOIN vb_venditabanco ON co_movimenti.idvendita_banco = vb_venditabanco.id
+WHERE co_movimenti.idconto='.prepare($id_conto).'
+AND (
+    co_documenti.data_competenza BETWEEN '.prepare($_SESSION['period_start']).' AND '.prepare($_SESSION['period_end']).'
+    OR vb_venditabanco.data BETWEEN '.prepare($_SESSION['period_start']).' AND '.prepare($_SESSION['period_end'] . ' 23:59:59').'
+)
 GROUP BY co_movimenti.idmastrino
 ORDER BY co_movimenti.data ASC, co_movimenti.descrizione';
+//ORDER BY co_documenti.idtipodocumento ASC, co_documenti.numero ASC, vb_venditabanco.numero_esterno ASC'; // per debug
 $movimenti = $dbo->fetchArray($query);
 
 if (!empty($movimenti)) {

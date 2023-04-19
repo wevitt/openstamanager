@@ -42,6 +42,7 @@ $maggiorazione = 0;
 
 // calcolo IVA su fatture + vendite al banco
 if (!empty($vendita_banco)){
+//debug('<hr><h4>iva_vendite_esigibile</h4>
 $iva_vendite_esigibile = $dbo->fetchArray('
     SELECT
         cod_iva,
@@ -55,24 +56,12 @@ $iva_vendite_esigibile = $dbo->fetchArray('
             co_iva.codice_natura_fe AS cod_iva,
             co_iva.percentuale AS aliquota,
             co_iva.descrizione AS descrizione,
-            SUM(
-                (iva + iva_rivalsainps) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
-            SUM(
-                (subtotale - sconto) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
-            ) AS subtotale
+            SUM(subtotale - sconto) * IF (co_tipidocumento.reversed = 0, 1, -1) AS subtotale
         FROM
             co_iva
         INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
@@ -115,6 +104,7 @@ $iva_vendite_esigibile = $dbo->fetchArray('
         descrizione;');
 
 
+//debug('<hr><h4>iva_vendite</h4>
 $iva_vendite = $dbo->fetchArray('
     SELECT
         cod_iva,
@@ -128,24 +118,12 @@ $iva_vendite = $dbo->fetchArray('
             co_iva.codice_natura_fe AS cod_iva,
             co_iva.percentuale AS aliquota,
             co_iva.descrizione AS descrizione,
-            SUM(
-                (iva + iva_rivalsainps) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
-            SUM(
-                (subtotale - sconto) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
-            ) AS subtotale
+            SUM(subtotale - sconto) * IF (co_tipidocumento.reversed = 0, 1, -1) AS subtotale
         FROM
             co_iva
         INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
@@ -187,6 +165,7 @@ $iva_vendite = $dbo->fetchArray('
         aliquota,
         descrizione;');
 
+//debug('<hr><h4>iva_vendite_anno_precedente</h4>
 $iva_vendite_anno_precedente = $dbo->fetchArray('
     SELECT
         cod_iva,
@@ -200,24 +179,12 @@ $iva_vendite_anno_precedente = $dbo->fetchArray('
             co_iva.codice_natura_fe AS cod_iva,
             co_iva.percentuale AS aliquota,
             co_iva.descrizione AS descrizione,
-            SUM(
-                (iva + iva_rivalsainps) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
-            SUM(
-                (subtotale - sconto) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
-            ) AS subtotale
+            SUM(subtotale - sconto) * IF (co_tipidocumento.reversed = 0, 1, -1) AS subtotale
         FROM
             co_iva
         INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
@@ -259,6 +226,7 @@ $iva_vendite_anno_precedente = $dbo->fetchArray('
         aliquota,
         descrizione;');
 
+//debug('<hr><h4>iva_vendite_periodo_precedente</h4>
 $iva_vendite_periodo_precedente = $dbo->fetchArray('
     SELECT
         cod_iva,
@@ -272,24 +240,12 @@ $iva_vendite_periodo_precedente = $dbo->fetchArray('
             co_iva.codice_natura_fe AS cod_iva,
             co_iva.percentuale AS aliquota,
             co_iva.descrizione AS descrizione,
-            SUM(
-                (iva + iva_rivalsainps) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
-            SUM(
-                (subtotale - sconto) *(
-                    IF(
-                        co_tipidocumento.reversed = 0,
-                        1,
-                        -1
-                    )
-                )
-            ) AS subtotale
+            SUM(subtotale - sconto) * IF (co_tipidocumento.reversed = 0, 1, -1) AS subtotale
         FROM
             co_iva
         INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
@@ -337,12 +293,17 @@ $iva_vendite_periodo_precedente = $dbo->fetchArray('
 // calcolo IVA solo su fatture
 else {
 
+//debug('<hr><h4>iva_vendite_esigibile</h4>
 $iva_vendite_esigibile = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1)) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -356,12 +317,17 @@ $iva_vendite_esigibile = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_vendite</h4>
 $iva_vendite = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1)) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -375,6 +341,7 @@ $iva_vendite = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_vendite_anno_precedente</h4>
 $iva_vendite_anno_precedente = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
@@ -394,12 +361,17 @@ $iva_vendite_anno_precedente = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_vendite_periodo_precedente</h4>
 $iva_vendite_periodo_precedente = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM((co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -414,12 +386,17 @@ $iva_vendite_periodo_precedente = $dbo->fetchArray('
         co_iva.id;');
 }
 
+//debug('<hr><h4>iva_vendite_nonesigibile</h4>
 $iva_vendite_nonesigibile = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1)) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -433,12 +410,17 @@ $iva_vendite_nonesigibile = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_acquisti_detraibile</h4>
 $iva_acquisti_detraibile = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(((co_righe_documenti.iva*(100-indetraibile)/100) + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva * (100-indetraibile)/100) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva * (100-indetraibile)/100)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -452,12 +434,17 @@ $iva_acquisti_detraibile = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_acquisti_nondetraibile</h4>
 $iva_acquisti_nondetraibile = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(((co_righe_documenti.iva*indetraibile/100) + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva * (indetraibile)/100) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva * (indetraibile)/100)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -471,12 +458,17 @@ $iva_acquisti_nondetraibile = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+//debug('<hr><h4>iva_acquisti</h4>
 $iva_acquisti = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM((co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -490,12 +482,17 @@ $iva_acquisti = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+    //debug('<hr><h4>iva_acquisti_anno_precedente</h4>
     $iva_acquisti_anno_precedente = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM((co_righe_documenti.iva + iva_rivalsainps) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -509,12 +506,17 @@ $iva_acquisti = $dbo->fetchArray('
     GROUP BY
         co_iva.id;');
 
+    //debug('<hr><h4>iva_acquisti_periodo_precedente</h4>
     $iva_acquisti_periodo_precedente = $dbo->fetchArray('
     SELECT
         co_iva.codice_natura_fe AS cod_iva,
         co_iva.percentuale AS aliquota,
         co_iva.descrizione AS descrizione,
-        SUM(((co_righe_documenti.iva + iva_rivalsainps) * (1 - co_iva.indetraibile / 100)) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS iva,
+        IF (
+            co_righe_documenti.idrivalsainps = 1,
+            (SUM(iva * (1 - co_iva.indetraibile / 100)) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+            (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+        ) AS iva,
         SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
     FROM
         co_iva
@@ -527,3 +529,5 @@ $iva_acquisti = $dbo->fetchArray('
         AND co_documenti.id_segment != '.prepare($id_proforma_acquisti).'
     GROUP BY
         co_iva.id;');
+
+//die;

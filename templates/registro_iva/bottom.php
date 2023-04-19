@@ -19,14 +19,17 @@
 
 include_once __DIR__.'/../../core.php';
 
-$totale_iva = 0;
-$totale_subtotale = 0;
+$totale_iva = sum(array_column($records, 'iva'));
+$totale_subtotale = sum(array_column($records, 'subtotale'));
 foreach ($records as $record) {
     foreach ($record as $r) {
         $totale_iva += $r['iva'];
         $totale_subtotale += $r['subtotale'];
     }
 }
+$totale_split_payment_iva = sum(array_column($records, 'split_payment'));
+$totale_split_payment_subtotale = sum(array_column($records, 'subtotale_split_payment'));
+
 echo '
     </tbody>
 </table>
@@ -66,6 +69,27 @@ foreach ($iva as $descrizione => $tot_iva) {
         </tr>';
     }
 }
+foreach ($split_payment_iva as $descrizione => $tot_iva) {
+    if (!empty($descrizione)) {
+        $somma_iva = sum($split_payment_iva[$descrizione]);
+        $somma_totale = sum($split_payment_totale[$descrizione]);
+
+        echo '
+        <tr>
+            <td>
+                '.$descrizione.'
+            </td>
+
+            <td class="text-right">
+                '.moneyFormat($somma_totale).'
+            </td>
+
+            <td class="text-right">
+                '.moneyFormat($somma_iva).'
+            </td>
+        </tr>';
+    }
+}
 
 echo '
 
@@ -74,7 +98,7 @@ echo '
                 <b>'.tr('Totale', [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">'.moneyFormat($totale_subtotale).'</td>
-            <td class="text-right">'.moneyFormat($totale_iva).'</td>
+            <td class="text-right">'.moneyFormat($totale_iva - $totale_split_payment_iva).'</td>
         </tr>
     </tbody>
 </table>';

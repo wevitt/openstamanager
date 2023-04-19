@@ -24,24 +24,41 @@ $conto_secondo = $dbo->selectOne('co_pianodeiconti2', '*', ['id' => $id_conto]);
 $conto_primo = $dbo->selectOne('co_pianodeiconti1', '*', ['id' => $conto_secondo['idpianodeiconti1']]);
 
 // Livello 3
-$query3 = 'SELECT `co_pianodeiconti3`.*, movimenti.numero_movimenti, movimenti.totale, movimenti.totale_reddito, anagrafica.idanagrafica, anagrafica.deleted_at
-    FROM `co_pianodeiconti3`
-        LEFT OUTER JOIN (
-            SELECT idanagrafica,
-                idconto_cliente,
-                idconto_fornitore,
-                deleted_at
-            FROM an_anagrafiche
-        ) AS anagrafica ON co_pianodeiconti3.id IN (anagrafica.idconto_cliente, anagrafica.idconto_fornitore)
-        LEFT OUTER JOIN (
-            SELECT COUNT(idconto) AS numero_movimenti,
-            idconto,
-            SUM(totale) AS totale,
-            SUM(totale_reddito) AS totale_reddito
-            FROM co_movimenti
-            WHERE data BETWEEN '.prepare($_SESSION['period_start']).' AND '.prepare($_SESSION['period_end']).' GROUP BY idconto
-        ) movimenti ON co_pianodeiconti3.id=movimenti.idconto
-    WHERE `idpianodeiconti2` = '.prepare($conto_secondo['id']).' ORDER BY numero ASC';
+$query3 = 'SELECT
+  `co_pianodeiconti3`.*,
+  movimenti.numero_movimenti,
+  movimenti.totale,
+  movimenti.totale_reddito,
+  anagrafica.idanagrafica,
+  anagrafica.deleted_at
+FROM `co_pianodeiconti3`
+LEFT OUTER JOIN (
+    SELECT
+        idanagrafica,
+        idconto_cliente,
+        idconto_fornitore,
+        deleted_at
+    FROM an_anagrafiche
+    ) AS anagrafica ON co_pianodeiconti3.id IN (
+    anagrafica.idconto_cliente, anagrafica.idconto_fornitore
+)
+LEFT OUTER JOIN (
+    SELECT
+        COUNT(co_movimenti.idconto) AS numero_movimenti,
+        co_movimenti.idconto,
+        SUM(totale) AS totale,
+        SUM(totale_reddito) AS totale_reddito
+    FROM co_movimenti
+    LEFT OUTER JOIN co_documenti ON co_movimenti.iddocumento = co_documenti.id
+    LEFT OUTER JOIN vb_venditabanco ON co_movimenti.idvendita_banco = vb_venditabanco.id
+    WHERE (
+        data_competenza BETWEEN '.prepare($_SESSION['period_start']).' AND '.prepare($_SESSION['period_end']).'
+        OR vb_venditabanco.data BETWEEN '.prepare($_SESSION['period_start']).' AND '.prepare($_SESSION['period_end'] . ' 23:59:59').'
+    )
+    GROUP BY idconto
+) AS movimenti ON co_pianodeiconti3.id = movimenti.idconto
+WHERE `idpianodeiconti2` = '.prepare($id_conto).'
+ORDER BY numero ASC';
 
 $terzo_livello = $dbo->fetchArray($query3);
 
