@@ -19,9 +19,14 @@
 
 include_once __DIR__.'/../../core.php';
 
-$totale_iva = sum(array_column($records, 'iva'));
-$totale_subtotale = sum(array_column($records, 'subtotale'));
-
+$totale_iva = 0;
+$totale_subtotale = 0;
+foreach ($records as $record) {
+    foreach ($record as $r) {
+        $totale_iva += $r['iva'];
+        $totale_subtotale += $r['subtotale'];
+    }
+}
 echo '
     </tbody>
 </table>

@@ -22,6 +22,7 @@ include_once __DIR__.'/../../core.php';
 $dir = $_GET['dir'];
 
 $id_sezionale = filter('id_sezionale');
+error_log("id_sezionale: ".$id_sezionale);
 $sezionale = $dbo->fetchOne('SELECT name FROM zz_segments WHERE id = '.$id_sezionale)['name'];
 
 $date_start = filter('date_start');
@@ -33,9 +34,11 @@ $vendita_banco = $dbo->fetchNum("SELECT * FROM zz_modules WHERE name='Vendita al
 $v_iva = [];
 $v_totale = [];
 
-if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
+if ((!empty($vendita_banco)) && ($tipo == 'vendite')) {
     $query = '
         SELECT
+            co_documenti.id_segment,
+            zz_segments.name as sezionale,
             co_documenti.id,
             co_documenti.data_registrazione,
             co_documenti.data,
@@ -54,6 +57,7 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
             INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
             INNER JOIN co_iva ON co_righe_documenti.idiva = co_iva.id
+            INNER JOIN zz_segments ON co_documenti.id_segment = zz_segments.id
         WHERE idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata")
             and dir = '.prepare($dir).'
             AND is_descrizione = 0
@@ -63,6 +67,8 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             GROUP BY idiva, co_documenti.id
         UNION
         SELECT
+            vb_venditabanco.id_segment,
+            zz_segments.name as sezionale,
             vb_venditabanco.id,
             vb_venditabanco.data as data_registrazione,
             vb_venditabanco.data_emissione as data,
@@ -80,6 +86,7 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             INNER JOIN vb_righe_venditabanco ON vb_venditabanco.id = vb_righe_venditabanco.idvendita
             INNER JOIN vb_stati_vendita ON vb_venditabanco.idstato = vb_stati_vendita.id
             INNER JOIN co_iva ON vb_righe_venditabanco.idiva = co_iva.id
+            INNER JOIN zz_segments ON vb_venditabanco.id_segment = zz_segments.id
             LEFT JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = vb_venditabanco.idanagrafica
         WHERE
             vb_venditabanco.data >= '.prepare($date_start . ' 00:00:00').'
@@ -87,10 +94,12 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             AND vb_stati_vendita.descrizione = "Pagato"
             AND '.((!empty($id_sezionale)) ? 'vb_venditabanco.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, vb_venditabanco.id
-        ORDER BY numero, data_registrazione';
+        ORDER BY sezionale, numero, data_registrazione';
 } else {
     $query = '
         SELECT
+            co_documenti.id_segment,
+            zz_segments.name AS sezionale,
             co_documenti.id,
             co_documenti.data_registrazione,
             co_documenti.data,
@@ -109,6 +118,7 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
             INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
             INNER JOIN co_iva ON co_righe_documenti.idiva = co_iva.id
+            INNER JOIN zz_segments ON co_documenti.id_segment = zz_segments.id
         WHERE idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata")
             and dir = '.prepare($dir).'
             AND is_descrizione = 0
@@ -116,10 +126,29 @@ if ((!empty($vendita_banco)) AND ($tipo == 'vendite')) {
             AND co_documenti.data_competenza <= '.prepare($date_end).'
             AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             GROUP BY idiva, co_documenti.id
-        ORDER BY numero, data_registrazione';
+        ORDER BY sezionale, numero, data_registrazione';
 }
 
-$records = $dbo->fetchArray($query);
+$result = $dbo->fetchArray($query);
+
+$records = [];
+foreach ($result as $r) {
+    $records[$r['sezionale']][] = [
+        'sezionale' => $r['sezionale'],
+        'data_registrazione' => $r['data_registrazione'],
+        'data' => $r['data'],
+        'numero' => $r['numero'],
+        'codice_tipo_documento_fe' => $r['codice_tipo_documento_fe'],
+        'percentuale' => $r['percentuale'],
+        'idiva' => $r['idiva'],
+        'descrizione' => $r['descrizione'],
+        'iva' => $r['iva'],
+        'subtotale' => $r['subtotale'],
+        'totale' => $r['totale'],
+        'ragione_sociale' => $r['ragione_sociale'],
+        'codice_anagrafica' => $r['codice_anagrafica'],
+    ];
+}
 
 if (empty(get('notdefinitiva'))) {
     $page = $dbo->fetchOne('SELECT first_page FROM co_stampecontabili WHERE dir='.prepare(filter('dir')).' AND  date_start='.prepare(filter('date_start')).' AND date_end='.prepare(filter('date_end')))['first_page'];
