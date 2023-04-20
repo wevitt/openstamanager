@@ -42,11 +42,15 @@ $totale_iva_vendite_periodo_precedente = sum(array_column($iva_vendite_periodo_p
 $totale_iva_acquisti_periodo_precedente = sum(array_column($iva_acquisti_periodo_precedente, 'iva'));
 $totale_iva_periodo_precedente = $totale_iva_vendite_periodo_precedente - $totale_iva_acquisti_periodo_precedente;
 
-$totale_iva = $totale_iva_esigibile - $totale_iva_detraibile;
+$totale_iva = $totale_iva_periodo_precedente + $totale_iva_esigibile - $totale_iva_detraibile;
+$totale_iva_periodo = $totale_iva_esigibile - $totale_iva_detraibile;
 
 if ($periodo == 'Trimestrale' && $totale_iva > 0) {
     $maggiorazione = $totale_iva * 0.01;
     $totale_iva_maggiorata = $totale_iva + $maggiorazione;
+} else {
+    $maggiorazione = 0;
+    $totale_iva_maggiorata = $totale_iva;
 }
 
 echo '
@@ -60,7 +64,7 @@ echo '
         <th class="text-right" width="20%">Imponibile</th>
         <th class="text-right" width="20%">Imposta</th>
     </tr>
-</thead> 
+</thead>
 <tbody>
     <tr>
         <th class="text-center" colspan="5">IVA ESIGIBILE DEL PERIODO</th>
@@ -72,18 +76,18 @@ foreach ($iva_vendite_esigibile as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 echo '
 <tr>
         <td colspan="2"></td>
         <td>TOTALI</td>
-        <td class=text-right>'.moneyFormat($subtotale_iva_esigibile, 2).'</td>
-        <td class=text-right>'.moneyFormat($totale_iva_esigibile, 2).'</td>
+        <td class=text-right>'.moneyFormat($subtotale_iva_esigibile).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_esigibile).'</td>
     </tr>
-    
+
 <tr>
     <th class="text-center" colspan="5">IVA NON ESIGIBILE DEL PERIODO</th>
 </tr>';
@@ -94,16 +98,16 @@ foreach ($iva_vendite_nonesigibile as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 echo '
 <tr>
     <td colspan="2"></td>
     <td>TOTALI</td>
-    <td class=text-right>'.moneyFormat($subtotale_iva_nonesigibile, 2).'</td>
-    <td class=text-right>'.moneyFormat($totale_iva_nonesigibile, 2).'</td>
+    <td class=text-right>'.moneyFormat($subtotale_iva_nonesigibile).'</td>
+    <td class=text-right>'.moneyFormat($totale_iva_nonesigibile).'</td>
 </tr>
 
 <tr>
@@ -115,16 +119,16 @@ foreach ($iva_vendite as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 echo '
 <tr>
     <th colspan="2"></th>
     <th>TOTALE</th>
-    <th class=text-right>'.moneyFormat($totale_subtotale_vendite, 2).'</th>
-    <th class=text-right>'.moneyFormat($totale_iva_vendite, 2).'</th>
+    <th class=text-right>'.moneyFormat($totale_subtotale_vendite).'</th>
+    <th class=text-right>'.moneyFormat($totale_iva_vendite).'</th>
 </tr>
 </tbody>
 </table>
@@ -140,7 +144,7 @@ echo '
         <th class="text-right" width="20%">Imponibile</th>
         <th class="text-right" width="20%">Imposta</th>
     </tr>
-</thead> 
+</thead>
 <tbody>
     <tr>
         <th class="text-center" colspan="5">IVA DETRAIBILE DEL PERIODO</th>
@@ -152,16 +156,16 @@ foreach ($iva_acquisti_detraibile as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 echo '
 <tr>
     <td colspan="2"></td>
     <td>TOTALI</td>
-    <td class=text-right>'.moneyFormat($subtotale_iva_detraibile, 2).'</td>
-    <td class=text-right>'.moneyFormat($totale_iva_detraibile, 2).'</td>
+    <td class=text-right>'.moneyFormat($subtotale_iva_detraibile).'</td>
+    <td class=text-right>'.moneyFormat($totale_iva_detraibile).'</td>
 </tr>
 
 
@@ -175,16 +179,16 @@ foreach ($iva_acquisti_nondetraibile as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 echo '
 <tr>
     <td colspan="2"></td>
     <td>TOTALI</td>
-    <td class=text-right>'.moneyFormat($subtotale_iva_nondetraibile, 2).'</td>
-    <td class=text-right>'.moneyFormat($totale_iva_nondetraibile, 2).'</td>
+    <td class=text-right>'.moneyFormat($subtotale_iva_nondetraibile).'</td>
+    <td class=text-right>'.moneyFormat($totale_iva_nondetraibile).'</td>
 </tr>
 
 
@@ -197,8 +201,8 @@ foreach ($iva_acquisti as $record) {
         <td>'.round($record['aliquota']).'%</td>
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
-        <td class=text-right>'.moneyFormat($record['subtotale'], 2).'</td>
-        <td class=text-right>'.moneyFormat($record['iva'], 2).'</td>
+        <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']).'</td>
     </tr>';
 }
 
@@ -206,8 +210,8 @@ echo '
 <tr>
     <th colspan="2"></th>
     <th>TOTALE</th>
-    <th class=text-right>'.moneyFormat($totale_subtotale_acquisti, 2).'</th>
-    <th class=text-right>'.moneyFormat($totale_iva_acquisti, 2).'</th>
+    <th class=text-right>'.moneyFormat($totale_subtotale_acquisti).'</th>
+    <th class=text-right>'.moneyFormat($totale_iva_acquisti).'</th>
 </tr>
 </tbody>
 </table>
@@ -230,7 +234,7 @@ echo '
         } else {
             echo ' <td>CREDITO ANNO PRECEDENTE</td>';
         }
-        echo '<td class=text-right>'.moneyFormat(abs($totale_iva_anno_precedente), 2).'</td>
+        echo '<td class=text-right>'.moneyFormat(abs($totale_iva_anno_precedente)).'</td>
     </tr>
     <tr>';
         if ($totale_iva_periodo_precedente >= 0) {
@@ -238,27 +242,27 @@ echo '
         } else {
             echo ' <td>CREDITO PERIODO PRECEDENTE</td>';
         }
-        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo_precedente), 2).'</td>
-    </tr>    
+        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo_precedente)).'</td>
+    </tr>
     <tr>
         <td>TOTALE IVA SU VENDITE ESIGIBILE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_esigibile, 2).'</td>
-    </tr>    
+        <td class=text-right>'.moneyFormat($totale_iva_esigibile).'</td>
+    </tr>
     <tr>
         <td>TOTALE IVA OGGETTIVAMENTE NON A DEBITO SU VENDITE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_nonesigibile, 2).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_nonesigibile).'</td>
     </tr>
     <tr>
         <td>TOTALE IVA SU ACQUISTI DETRAIBILI</td>
-        <td class=text-right>'.moneyFormat($totale_iva_detraibile, 2).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_detraibile).'</td>
     </tr>
     <tr>
         <td>TOTALE IVA OGGETTIVAMENTE INDETRAIBILI SU ACQUISTI</td>
-        <td class=text-right>'.moneyFormat($totale_iva_nondetraibile, 2).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_nondetraibile).'</td>
     </tr>
     <tr>
         <td>TOTALE IVA DETRAIBILI</td>
-        <td class=text-right>'.moneyFormat($totale_iva_detraibile, 2).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_detraibile).'</td>
     </tr>
     <tr>
         <td>VARIAZIONE DI IMPOSTA RELATIVE A PERIODI PRECEDENTI</td>
@@ -277,12 +281,12 @@ echo '
         <td class=text-right></td>
     </tr>
     <tr>';
-        if ($totale_iva >= 0) {
+        if ($totale_iva_periodo >= 0) {
             echo ' <td>IVA A DEBITO</td>';
         } else {
             echo ' <td>IVA A CREDITO</td>';
         }
-        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva), 2).'</td>
+        echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo)).'</td>
     </tr>
     <tr>
         <td>CREDITO SPECIALE DI IMPOSTA</td>
@@ -290,16 +294,28 @@ echo '
     </tr>
     <tr>
         <td>MAGGIORAZIONE 1,00%</td>
-        <td class=text-right>'.moneyFormat($maggiorazione, 2).'</td>
-    </tr>
-    <tr>
-        <td>IVA A DEBITO CON MAGGIORAZIONE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_maggiorata, 2).'</td>
-    </tr>
-    <tr>
-        <td>IMPORTO DA VERSARE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_maggiorata, 2).'</td>
-    </tr>
+        <td class=text-right>'.moneyFormat($maggiorazione).'</td>
+    </tr>';
+        if ($totale_iva >= 0) {
+            echo '<tr>';
+                echo '<td>IVA A DEBITO CON MAGGIORAZIONE</td>';
+                echo '<td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata * $maggiorazione)).'</td>';
+            echo '</tr>';
+            echo '<tr>';
+                echo ' <td>IMPORTO DA VERSARE</td>';
+                echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata)).'</td>';
+            echo '</tr>';
+        } else {
+            echo '<tr>';
+                echo ' <td>IMPORTO DA VERSARE</td>';
+                echo ' <td class=text-right>'.moneyFormat(0).'</td>';
+            echo '</tr>';
+            echo '<tr>';
+                echo ' <td>TOTALE A CREDITO</td>';
+                echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_maggiorata)).'</td>';
+            echo '</tr>';
+        }
+    echo '
     <tr>
         <td>CREDITO INFRANNUALE DI IMPOSTA CHIESTO A RIMBORSO</td>
         <td class=text-right></td>
