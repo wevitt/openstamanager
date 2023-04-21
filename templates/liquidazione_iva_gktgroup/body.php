@@ -31,16 +31,22 @@ $subtotale_iva_nonesigibile = sum(array_column($iva_vendite_nonesigibile, 'subto
 
 $totale_iva_detraibile = sum(array_column($iva_acquisti_detraibile, 'iva'));
 $totale_iva_nondetraibile = sum(array_column($iva_acquisti_nondetraibile, 'iva'));
+$totale_iva_parzialmente_detraibile = sum(array_column($iva_acquisti_nondetraibile, 'iva_indetraibile'));
 $subtotale_iva_detraibile = sum(array_column($iva_acquisti_detraibile, 'subtotale'));
 $subtotale_iva_nondetraibile = sum(array_column($iva_acquisti_nondetraibile, 'subtotale'));
 
 $totale_iva_vendite_anno_precedente = sum(array_column($iva_vendite_anno_precedente, 'iva'));
 $totale_iva_acquisti_anno_precedente = sum(array_column($iva_acquisti_anno_precedente, 'iva'));
 $totale_iva_anno_precedente = $totale_iva_vendite_anno_precedente - $totale_iva_acquisti_anno_precedente;
-
 $totale_iva_vendite_periodo_precedente = sum(array_column($iva_vendite_periodo_precedente, 'iva'));
 $totale_iva_acquisti_periodo_precedente = sum(array_column($iva_acquisti_periodo_precedente, 'iva'));
-$totale_iva_periodo_precedente = $totale_iva_vendite_periodo_precedente - $totale_iva_acquisti_periodo_precedente;
+
+
+if ($credito_precedente == "false") {
+    $totale_iva_periodo_precedente = -1 * $valore_credito_precedente;
+} else {
+    $totale_iva_periodo_precedente = $totale_iva_vendite_periodo_precedente - $totale_iva_acquisti_periodo_precedente;
+}
 
 $totale_iva = $totale_iva_periodo_precedente + $totale_iva_esigibile - $totale_iva_detraibile;
 $totale_iva_periodo = $totale_iva_esigibile - $totale_iva_detraibile;
@@ -157,7 +163,7 @@ foreach ($iva_acquisti_detraibile as $record) {
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
         <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
-        <td class=text-right>'.moneyFormat($record['iva']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']-($record['iva'] - $record['iva_indetraibile'])).'</td>
     </tr>';
 }
 echo '
@@ -180,7 +186,7 @@ foreach ($iva_acquisti_nondetraibile as $record) {
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
         <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
-        <td class=text-right>'.moneyFormat($record['iva']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva_indetraibile']).'</td>
     </tr>';
 }
 echo '
@@ -188,9 +194,8 @@ echo '
     <td colspan="2"></td>
     <td>TOTALI</td>
     <td class=text-right>'.moneyFormat($subtotale_iva_nondetraibile).'</td>
-    <td class=text-right>'.moneyFormat($totale_iva_nondetraibile).'</td>
+    <td class=text-right>'.moneyFormat($totale_iva_nondetraibile - $totale_iva_parzialmente_detraibile).'</td>
 </tr>
-
 
 <tr>
     <th class="text-center" colspan="5">RIEPILOGO GENERALE IVA ACQUISTI</th>
@@ -202,7 +207,7 @@ foreach ($iva_acquisti as $record) {
         <td>'.$record['cod_iva'].'</td>
         <td>'.$record['descrizione'].'</td>
         <td class=text-right>'.moneyFormat($record['subtotale']).'</td>
-        <td class=text-right>'.moneyFormat($record['iva']).'</td>
+        <td class=text-right>'.moneyFormat($record['iva']-($record['iva'] - $record['iva_indetraibile'])).'</td>
     </tr>';
 }
 
@@ -245,24 +250,28 @@ echo '
         echo ' <td class=text-right>'.moneyFormat(abs($totale_iva_periodo_precedente)).'</td>
     </tr>
     <tr>
-        <td>TOTALE IVA SU VENDITE ESIGIBILE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_esigibile).'</td>
+        <td>TOTALE IVA SU VENDITE</td>
+        <td class=text-right>'.moneyFormat($totale_iva_esigibile + $totale_iva_nonesigibile).'</td>
     </tr>
     <tr>
         <td>TOTALE IVA OGGETTIVAMENTE NON A DEBITO SU VENDITE</td>
-        <td class=text-right>'.moneyFormat($totale_iva_nonesigibile).'</td>
+        <td class=text-right>'.moneyFormat($totale_iva_nonesigibile * -1).'</td>
     </tr>
     <tr>
-        <td>TOTALE IVA SU ACQUISTI DETRAIBILI</td>
+        <td>TOTALE IVA SU VENDITE ESIGIBILE</td>
+        <td class=text-right><b>'.moneyFormat($totale_iva_esigibile).'</b></td>
+   </tr>
+    <tr>
+        <td>TOTALE IVA SU ACQUISTI</td>
         <td class=text-right>'.moneyFormat($totale_iva_detraibile).'</td>
     </tr>
     <tr>
         <td>TOTALE IVA OGGETTIVAMENTE INDETRAIBILI SU ACQUISTI</td>
-        <td class=text-right>'.moneyFormat($totale_iva_nondetraibile).'</td>
+        <td class=text-right>'.moneyFormat(($totale_iva_nondetraibile - $totale_iva_parzialmente_detraibile)* - 1).'</td>
     </tr>
     <tr>
-        <td>TOTALE IVA DETRAIBILI</td>
-        <td class=text-right>'.moneyFormat($totale_iva_detraibile).'</td>
+        <td>TOTALE IVA SU ACQUISTI ESIGIBILE</td>
+        <td class=text-right><b>'.moneyFormat($totale_iva_detraibile - ($totale_iva_nondetraibile - $totale_iva_parzialmente_detraibile)).'</b></td>
     </tr>
     <tr>
         <td>VARIAZIONE DI IMPOSTA RELATIVE A PERIODI PRECEDENTI</td>

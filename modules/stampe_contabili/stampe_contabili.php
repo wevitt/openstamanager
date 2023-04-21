@@ -86,6 +86,19 @@ echo '
 		</div>
 	</div>';
 
+    if ($nome_stampa == 'Liquidazione IVA') {
+        echo '
+        <div class="row">
+            <div class="col-md-6">
+                {[ "type": "checkbox", "label": "'.tr('Credito periodo precedente automatico').'", "value": "1", "name": "credito_precedente", "id": "credito_precedente" ]}
+            </div>
+
+            <div class="col-md-6 mostra-credito-periodo-manuale hide">
+                {[ "type": "number", "label": "'.tr('Imposta credito periodo precedente').'", "name": "valore_credito_precedente", "id": "valore_credito_precedente" ]}
+            </div>
+        </div>';
+    }
+
 	echo '
 	<div class="row">';
 		if ($nome_stampa != 'Liquidazione IVA') {
@@ -94,14 +107,15 @@ echo '
 			{[ "type": "select", "label": "'.tr('Sezionale').'", "name": "id_sezionale", "required": "1", "values":"query=SELECT zz_segments.id as id, zz_segments.name as descrizione FROM zz_segments INNER JOIN zz_modules ON zz_modules.id = zz_segments.id_module WHERE is_fiscale = 1 AND zz_modules.name = \''.(($dir == 'entrata') ? 'Fatture di vendita' : 'Fatture di acquisto').'\''.(($dir == 'entrata') ? ' OR zz_modules.name = \'Vendita al banco\'' : '').' UNION SELECT \'0\' AS id, \'Tutti i sezionali\' AS descrizione" ]}
 		</div>';
 		}
-		echo '
-		<div class="col-md-4">
-			{[ "type": "select", "label": "'.tr('Formato').'", "name": "format", "required": "1", "values": "list=\"A4\": \"'.tr('A4').'\", \"A3\": \"'.tr('A3').'\"", "value": "'.$_SESSION['stampe_contabili']['format'].'" ]}
-		</div>
 
-		<div class="col-md-4">
-			{[ "type": "select", "label": "'.tr('Orientamento').'", "name": "orientation", "required": "1", "values": "list=\"L\": \"'.tr('Orizzontale').'\", \"P\": \"'.tr('Verticale').'\"", "value": "'.$_SESSION['stampe_contabili']['orientation'].'" ]}
-		</div>';
+        echo '
+        <div class="col-md-4">
+            {[ "type": "select", "label": "'.tr('Formato').'", "name": "format", "required": "1", "values": "list=\"A4\": \"'.tr('A4').'\", \"A3\": \"'.tr('A3').'\"", "value": "'.$_SESSION['stampe_contabili']['format'].'" ]}
+        </div>
+
+        <div class="col-md-4">
+            {[ "type": "select", "label": "'.tr('Orientamento').'", "name": "orientation", "required": "1", "values": "list=\"L\": \"'.tr('Orizzontale').'\", \"P\": \"'.tr('Verticale').'\"", "value": "'.$_SESSION['stampe_contabili']['orientation'].'" ]}
+        </div>';
 
 	if ($nome_stampa != 'Liquidazione IVA') {
 		echo '
@@ -109,15 +123,18 @@ echo '
 			{[ "type": "checkbox", "label": "'.tr('Definitiva').'", "disabled": "1", "name": "definitiva", "help": "'.tr('Per abilitare il pulsante è necessario impostare nei campi Data inizio e Data fine uno dei 4 trimestri o un singolo mese e non deve essere già stata creata la stampa definitiva del periodo selezionato').'" ]}
 		</div>';
 	}
+    echo '
+    </div>';
 
 	echo '
-		<div class="col-md-4 pull-right">
-			<p style="line-height:14px;">&nbsp;</p>
-			<button type="button" class="btn btn-primary btn-block" onclick="if($(\'#form\').parsley().validate()) { return avvia_stampa(); }">
-				<i class="fa fa-print"></i> '.tr('Stampa').'
-			</button>
-		</div>
-	</div>
+    <div class="row">
+        <div class="col-md-4 pull-right">
+            <p style="line-height:14px;">&nbsp;</p>
+            <button type="button" class="btn btn-primary btn-block" onclick="if($(\'#form\').parsley().validate()) { return avvia_stampa(); }">
+                <i class="fa fa-print"></i> '.tr('Stampa').'
+            </button>
+        </div>
+    </div>
 </form>
 <br>';
 
@@ -258,7 +275,23 @@ echo '
 <script>
 	$(document).ready(init);
 
+    $("#credito_precedente").on("change", function(){
+        if(!$(this).is(":checked")){
+            $(".mostra-credito-periodo-manuale").removeClass("hide");
+        }else{
+            $(".mostra-credito-periodo-manuale").addClass("hide");
+        }
+    });
+
 	function avvia_stampa (){
+        if($("#credito_precedente").length){
+            var credito_precedente = $("#credito_precedente").is(":checked");
+            var valore_credito_precedente = $("#valore_credito_precedente").val();
+        } else {
+            var credito_precedente = false;
+            var valore_credito_precedente = 0;
+        }
+
 		if ($("#definitiva").is(":checked")) {
 			let date_start = $("#date_start").data("DateTimePicker").date().format("YYYY-MM-DD");
 			let date_end = $("#date_end").data("DateTimePicker").date().format("YYYY-MM-DD");
@@ -273,15 +306,17 @@ echo '
 					date_end: date_end,
 					id_print: '.$id_print.',
 					id_sezionale: $("#id_sezionale").val(),
+                    credito_precedente: credito_precedente,
+                    valore_credito_precedente: valore_credito_precedente,
 					dir: "'.$dir.'",
 				},
 				success: function(result) {
-					window.open("'.$link.'&dir='.$dir.'&id_sezionale="+$("#id_sezionale").val()+"&date_start="+$("#date_start").val()+"&date_end="+$("#date_end").val()+"");
+					window.open("'.$link.'&dir='.$dir.'&id_sezionale="+$("#id_sezionale").val()+"&credito_precedente="+credito_precedente+"&valore_credito_precedente="+valore_credito_precedente+"&date_start="+$("#date_start").val()+"&date_end="+$("#date_end").val()+"");
 					$("#modals > div").modal("hide");
 				}
 			});
 		} else {
-			window.open("'.$link.'&dir='.$dir.'&notdefinitiva=1&id_sezionale="+$("#id_sezionale").val()+"&date_start="+$("#date_start").val()+"&date_end="+$("#date_end").val()+"");
+			window.open("'.$link.'&dir='.$dir.'&notdefinitiva=1&id_sezionale="+$("#id_sezionale").val()+"&credito_precedente="+credito_precedente+"&valore_credito_precedente="+valore_credito_precedente+"&date_start="+$("#date_start").val()+"&date_end="+$("#date_end").val()+"");
 			$("#modals > div").modal("hide");
 		}
 

@@ -23,6 +23,9 @@ use Carbon\Carbon;
 $date_start = filter('date_start');
 $date_end = filter('date_end');
 
+$credito_precedente = filter('credito_precedente');
+$valore_credito_precedente = filter('valore_credito_precedente');
+
 $anno_precedente_start = (new Carbon($date_start))->subYears(1)->format('Y-m-d');
 $anno_precedente_end = (new Carbon($date_end))->subYears(1)->format('Y-m-d');
 
@@ -386,6 +389,7 @@ $iva_acquisti_detraibile = $dbo->fetchArray('
     aliquota,
     descrizione,
     SUM(iva) AS iva,
+    SUM(iva_indetraibile) AS iva_indetraibile,
     SUM(subtotale) AS subtotale
     FROM (
         SELECT
@@ -398,6 +402,12 @@ $iva_acquisti_detraibile = $dbo->fetchArray('
                 (SUM(co_righe_documenti.iva) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
                 (SUM(co_righe_documenti.iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile ) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile )) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+            ) AS iva_indetraibile,
+
             SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
         FROM
             co_iva
@@ -422,6 +432,7 @@ $iva_acquisti_nondetraibile = $dbo->fetchArray('
     aliquota,
     descrizione,
     SUM(iva) AS iva,
+    SUM(iva_indetraibile) AS iva_indetraibile,
     SUM(subtotale) AS subtotale
     FROM (
         SELECT
@@ -434,6 +445,11 @@ $iva_acquisti_nondetraibile = $dbo->fetchArray('
                 (SUM(co_righe_documenti.iva) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
                 (SUM(co_righe_documenti.iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile ) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile )) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+            ) AS iva_indetraibile,
             SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
         FROM
             co_iva
@@ -458,6 +474,7 @@ $iva_acquisti = $dbo->fetchArray('
     aliquota,
     descrizione,
     SUM(iva) AS iva,
+    SUM(iva_indetraibile) AS iva_indetraibile,
     SUM(subtotale) AS subtotale
     FROM (
         SELECT
@@ -470,6 +487,11 @@ $iva_acquisti = $dbo->fetchArray('
                 (SUM(co_righe_documenti.iva) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
                 (SUM(co_righe_documenti.iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva,
+            IF (
+                co_righe_documenti.idrivalsainps = 1,
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile ) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile )) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+            ) AS iva_indetraibile,
             SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
         FROM
             co_iva
