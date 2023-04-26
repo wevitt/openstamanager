@@ -26,6 +26,9 @@ if ($id_sezionale == 0) {
     </tr>';
 }
 
+usort($record, function ($a, $b) {
+    return $a['numero'] <=> $b['numero'];
+});
 foreach ($record as $r) {
     if ($numero != $r['numero']) {
         $different = 1;
@@ -54,10 +57,10 @@ foreach ($record as $r) {
 
         $iva[$r['descrizione']][] = $r['iva'];
         $totale[$r['descrizione']][] = $r['subtotale'];
-if ($record['split_payment'] != 0) {
-    $split_payment_iva[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['iva'];
-    $split_payment_totale[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['subtotale'];
-}
+    if ($record['split_payment'] != 0) {
+        $split_payment_iva[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['iva'];
+        $split_payment_totale[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['subtotale'];
+    }
 
         $numero = $r['numero'];
         $data_registrazione = $r['data_registrazione'];
