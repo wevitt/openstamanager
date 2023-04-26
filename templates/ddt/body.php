@@ -68,7 +68,6 @@ foreach ($righe as $riga) {
         $r = $riga->toArray();
 
         $autofill->count($r['descrizione']);
-        error_log('descrizione: ' . $r['descrizione']);
         if ($show_descrizione_riga) {
             $descrizione = $r['descrizione'];
         } else {
