@@ -320,7 +320,7 @@ switch (post('op')) {
 
         echo json_encode([
             'stored' => round($totale_documento,2),
-            'calculated' => round($fattura->totale,2),
+            'calculated' => round(abs($fattura->totale),2),
         ]);
 
         break;
