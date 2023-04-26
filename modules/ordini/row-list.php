@@ -439,6 +439,21 @@ if ($totale != $netto_a_pagare) {
         </tr>';
 }
 
+$margine = $ordine->margine;
+$margine_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
+$margine_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
+
+echo '
+    <tr>
+        <td colspan="7" class="text-right">
+            '.tr('Costi').':
+        </td>
+        <td class="text-right">
+            '.moneyFormat($fattura->spesa).'
+        </td>
+        <td></td>
+    </tr>';
+
 // Provvigione
 if(!empty($ordine->provvigione)) {
     echo '
@@ -452,6 +467,28 @@ if(!empty($ordine->provvigione)) {
             <td></td>
         </tr>';
 }
+
+
+echo '
+    <tr>
+        <td colspan="7" class="text-right">
+            '.tr('Margine (_PRC_%)', [
+                '_PRC_' => numberFormat($ordine->margine_percentuale),
+        ]).':
+        </td>
+        <td class="text-right '.$margine_class.'" rowspan="2" style="vertical-align:middle;">
+            <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i> '.moneyFormat($ordine->margine).'
+        </td>
+        <td rowspan="2"></td>
+    </tr>
+
+    <tr>
+        <td colspan="7" class="text-right">
+            '.tr('Ricarico (_PRC_%)', [
+                '_PRC_' => numberFormat($ordine->ricarico_percentuale),
+        ]).':
+        </td>
+    </tr>';
 
 echo '
     </table>';
