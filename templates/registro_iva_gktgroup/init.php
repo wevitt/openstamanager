@@ -71,7 +71,7 @@ if ((!empty($vendita_banco)) && ($tipo == 'vendite')) {
             AND is_descrizione = 0
             AND co_documenti.data_competenza >= '.prepare($date_start).'
             AND co_documenti.data_competenza <= '.prepare($date_end).'
-            AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
+            AND '.((!empty($id_sezionale) && $id_sezionale != '-1') ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             AND co_documenti.id_segment != "3"
             AND co_documenti.id_segment != "10"
             GROUP BY idiva, co_documenti.id
@@ -144,7 +144,7 @@ if ((!empty($vendita_banco)) && ($tipo == 'vendite')) {
             AND is_descrizione = 0
             AND co_documenti.data_competenza >= '.prepare($date_start).'
             AND co_documenti.data_competenza <= '.prepare($date_end).'
-            AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
+            AND '.((!empty($id_sezionale) && $id_sezionale != '-1') ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
             AND co_documenti.id_segment != "3"
             AND co_documenti.id_segment != "10"
             GROUP BY idiva, co_documenti.id
