@@ -33,144 +33,114 @@ $vendita_banco = $dbo->fetchNum("SELECT * FROM zz_modules WHERE name='Vendita al
 $v_iva = [];
 $v_totale = [];
 
-if ((!empty($vendita_banco)) && ($tipo == 'vendite')) {
+if ((!empty($vendita_banco)) && ($id_sezionale == -1) && ($tipo == 'vendite')){
     $query = '
-        SELECT
-            co_documenti.id_segment,
-            zz_segments.name as sezionale,
-            co_documenti.id,
-            co_documenti.data_registrazione,
-            co_documenti.data,
-            IF(numero = "", numero_esterno, numero) AS numero,
-            co_tipidocumento.codice_tipo_documento_fe,
-            co_iva.percentuale,
-            idiva,
-            desc_iva AS descrizione,
-            IF (
-                co_righe_documenti.idrivalsainps = 1,
-                (SUM(iva) + iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
-                (SUM(iva)) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
-            ) AS iva,
-            SUM(((subtotale-sconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 )))) AS subtotale,
-            SUM(((iva+iva_rivalsainps)*(IF(co_documenti.split_payment = 0, 0, 1 )))) AS split_payment,
-            SUM(((subtotale-sconto)*(IF(co_documenti.split_payment = 0, 0, 1 )))) AS subtotale_split_payment,
-            SUM(((subtotale-sconto+iva+co_righe_documenti.rivalsainps-co_righe_documenti.ritenutaacconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 )))) AS totale,
-            an_anagrafiche.ragione_sociale,
-            an_anagrafiche.codice AS codice_anagrafica,
-            co_documenti.idtipodocumento AS ord_tipodocumento,
-            co_documenti.numero AS ord_numero,
-            "" AS ord_venditabanco
-        FROM co_righe_documenti
-            INNER JOIN co_documenti ON co_documenti.id = co_righe_documenti.iddocumento
-            INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
-            INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
-            INNER JOIN co_iva ON co_righe_documenti.idiva = co_iva.id
-            INNER JOIN zz_segments ON co_documenti.id_segment = zz_segments.id
-        WHERE idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata")
-            and dir = '.prepare($dir).'
-            AND is_descrizione = 0
-            AND co_documenti.data_competenza >= '.prepare($date_start).'
-            AND co_documenti.data_competenza <= '.prepare($date_end).'
-            AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
-            AND co_documenti.id_segment != "3"
-            AND co_documenti.id_segment != "10"
-            GROUP BY idiva, co_documenti.id
-        UNION
-        SELECT
-            vb_venditabanco.id_segment,
-            zz_segments.name as sezionale,
-            vb_venditabanco.id,
-            vb_venditabanco.data as data_registrazione,
-            vb_venditabanco.data_emissione as data,
-            vb_venditabanco.numero_esterno as numero,
-            "Vendita al banco" as codice_tipo_documento_fe,
-            co_iva.percentuale,
-            idiva,
-            desc_iva AS descrizione,
-            SUM((vb_righe_venditabanco.iva)) as iva,
-            SUM((vb_righe_venditabanco.subtotale - sconto)) as subtotale,
-            0 AS split_payment,
-            0 AS subtotale_split_payment,
-            SUM((subtotale - sconto + iva)) as totale,
-            an_anagrafiche.ragione_sociale,
-            an_anagrafiche.codice AS codice_anagrafica,
-            "" AS ord_tipodocumento,
-            "" AS ord_numero,
-            vb_venditabanco.numero_esterno AS ord_venditabanco
-        FROM vb_venditabanco
-            INNER JOIN vb_righe_venditabanco ON vb_venditabanco.id = vb_righe_venditabanco.idvendita
-            INNER JOIN vb_stati_vendita ON vb_venditabanco.idstato = vb_stati_vendita.id
-            INNER JOIN co_iva ON vb_righe_venditabanco.idiva = co_iva.id
-            INNER JOIN zz_segments ON vb_venditabanco.id_segment = zz_segments.id
-            LEFT JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = vb_venditabanco.idanagrafica
-        WHERE
-            vb_venditabanco.data >= '.prepare($date_start . ' 00:00:00').'
-            AND vb_venditabanco.data <= '.prepare($date_end . ' 23:59:59').'
-            AND vb_stati_vendita.descrizione = "Pagato"
-            AND '.((!empty($id_sezionale)) ? 'vb_venditabanco.id_segment = '.prepare($id_sezionale).'' : '1=1').'
-            GROUP BY idiva, vb_venditabanco.id
-        ORDER BY sezionale, numero, data_registrazione';
-} else {
+    SELECT
+        data_registrazione,
+        numero_esterno,
+        data,
+        codice_tipo_documento_fe,
+        percentuale,
+        descrizione,
+        idmovimenti,
+        id,
+        numero,
+        SUM(subtotale) as subtotale,
+        SUM(totale) as totale,
+        SUM(iva) AS iva,
+        ragione_sociale,
+        codice_anagrafica
+    FROM
+        (
+    SELECT 
+        co_documenti.data_registrazione, 
+        co_documenti.numero_esterno,
+        co_movimenti.data,
+        co_tipidocumento.codice_tipo_documento_fe,
+        co_iva.percentuale,
+        co_iva.descrizione,
+        co_movimenti.id AS idmovimenti, 
+        co_documenti.id AS id,
+        IF(numero = "", numero_esterno, numero) AS numero,
+        ((subtotale-sconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS subtotale,
+        ((subtotale-sconto+iva+co_righe_documenti.rivalsainps-co_righe_documenti.ritenutaacconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS totale,
+        ((iva+iva_rivalsainps)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS iva,
+        an_anagrafiche.ragione_sociale,
+        an_anagrafiche.codice AS codice_anagrafica
+    FROM co_iva
+        INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
+        INNER JOIN co_documenti ON co_documenti.id = co_righe_documenti.iddocumento
+        INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
+        INNER JOIN co_movimenti ON co_movimenti.iddocumento = co_documenti.id
+        INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
+    WHERE 
+        dir = '.prepare($dir).' AND idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata") AND is_descrizione = 0 AND co_documenti.data_competenza >= '.prepare($date_start).' AND co_documenti.data_competenza <= '.prepare($date_end).' AND '.(($id_sezionale != -1) ? 'co_documenti.id_segment = '.prepare($id_sezionale) : '1=1').'
+    GROUP BY 
+        co_iva.id, id
+    UNION
+    SELECT 
+        vb_venditabanco.data as data_registrazione, 
+        vb_venditabanco.numero as numero_esterno,
+        vb_venditabanco.data as data,
+        "Vendita al banco" as codice_tipo_documento_fe,
+        co_iva.percentuale,
+        co_iva.descrizione,
+        vb_venditabanco.id AS id,
+        vb_venditabanco.id AS idmovimenti,
+        vb_venditabanco.numero AS numero,
+        (vb_righe_venditabanco.subtotale) as subtotale,
+        (subtotale - sconto + iva) as totale,
+        (iva) as iva,
+        an_anagrafiche.ragione_sociale,
+        an_anagrafiche.codice AS codice_anagrafica
+    FROM co_iva
+        INNER JOIN vb_righe_venditabanco ON vb_righe_venditabanco.idiva = co_iva.id
+        INNER JOIN vb_venditabanco ON vb_venditabanco.id = vb_righe_venditabanco.idvendita
+        INNER JOIN vb_stati_vendita ON vb_venditabanco.idstato = vb_stati_vendita.id
+        LEFT JOIN in_interventi ON vb_righe_venditabanco.idintervento = in_interventi.id
+        LEFT JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = in_interventi.idanagrafica
+    WHERE
+        vb_venditabanco.data >= '.prepare($date_start).' AND vb_venditabanco.data <= '.prepare($date_end).' AND vb_stati_vendita.descrizione = "Pagato"
+    GROUP BY
+        co_iva.id, id
+    ) AS tabella
+    GROUP BY
+    iva, id
+    ORDER BY CAST(numero_esterno AS UNSIGNED)';
+} 
+
+else {
     $query = '
-        SELECT
-            co_documenti.id_segment,
-            zz_segments.name AS sezionale,
-            co_documenti.id,
-            co_documenti.data_registrazione,
-            co_documenti.data,
-            IF(numero = "", numero_esterno, numero) AS numero,
-            co_tipidocumento.codice_tipo_documento_fe,
-            co_iva.percentuale,
-            idiva,
-            desc_iva AS descrizione,
-            IF (co_righe_documenti.idrivalsainps = 1,
-                        (((SUM(iva)+iva_rivalsainps)*(IF(co_tipidocumento.reversed = 0, 1,-1 )))),
-            (((SUM(iva))*(IF(co_tipidocumento.reversed = 0, 1,-1 )))))
-            AS iva,
-            SUM(((subtotale-sconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 )))) AS subtotale,
-            SUM(((iva+iva_rivalsainps)*(IF(co_documenti.split_payment = 0, 0, 1 )))) AS split_payment,
-            SUM(((subtotale-sconto)*(IF(co_documenti.split_payment = 0, 0, 1 )))) AS subtotale_split_payment,
-            SUM(((subtotale-sconto+iva+co_righe_documenti.rivalsainps-co_righe_documenti.ritenutaacconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 )))) AS totale,
-            an_anagrafiche.ragione_sociale,
-            an_anagrafiche.codice AS codice_anagrafica
-        FROM co_righe_documenti
-            INNER JOIN co_documenti ON co_documenti.id = co_righe_documenti.iddocumento
-            INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
-            INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
-            INNER JOIN co_iva ON co_righe_documenti.idiva = co_iva.id
-            INNER JOIN zz_segments ON co_documenti.id_segment = zz_segments.id
-        WHERE idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata")
-            and dir = '.prepare($dir).'
-            AND is_descrizione = 0
-            AND co_documenti.data_competenza >= '.prepare($date_start).'
-            AND co_documenti.data_competenza <= '.prepare($date_end).'
-            AND '.((!empty($id_sezionale)) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
-            AND co_documenti.id_segment != "3"
-            AND co_documenti.id_segment != "10"
-            GROUP BY idiva, co_documenti.id
-        ORDER BY sezionale, numero, data_registrazione';
+SELECT 
+    co_documenti.data_registrazione, 
+    co_documenti.numero_esterno,
+    co_movimenti.data,
+    co_tipidocumento.codice_tipo_documento_fe,
+    co_iva.percentuale,
+    co_iva.descrizione,
+    co_movimenti.id AS idmovimenti, 
+    co_documenti.id AS id,
+    IF(numero = "", numero_esterno, numero) AS numero,
+    ((subtotale-sconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS subtotale,
+    ((subtotale-sconto+iva+co_righe_documenti.rivalsainps-co_righe_documenti.ritenutaacconto)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS totale,
+    ((iva+iva_rivalsainps)*(IF(co_tipidocumento.reversed = 0, 1,-1 ))) AS iva,
+    an_anagrafiche.ragione_sociale,
+    an_anagrafiche.codice AS codice_anagrafica
+FROM
+    co_iva
+    INNER JOIN co_righe_documenti ON co_righe_documenti.idiva = co_iva.id
+    INNER JOIN co_documenti ON co_documenti.id = co_righe_documenti.iddocumento
+    INNER JOIN co_tipidocumento ON co_tipidocumento.id = co_documenti.idtipodocumento
+    INNER JOIN co_movimenti ON co_movimenti.iddocumento = co_documenti.id
+    INNER JOIN an_anagrafiche ON an_anagrafiche.idanagrafica = co_documenti.idanagrafica
+WHERE 
+    dir = '.prepare($dir).' AND idstatodocumento NOT IN (SELECT id FROM co_statidocumento WHERE descrizione="Bozza" OR descrizione="Annullata") AND is_descrizione = 0 AND co_documenti.data_competenza >= '.prepare($date_start).' AND co_documenti.data_competenza <= '.prepare($date_end).' AND '.(($id_sezionale != -1) ? 'co_documenti.id_segment = '.prepare($id_sezionale).'' : '1=1').'
+GROUP BY 
+    co_documenti.id, co_righe_documenti.idiva
+ORDER BY 
+    CAST( IF(dir="entrata", co_documenti.numero_esterno, co_documenti.numero) AS UNSIGNED)';
 }
-
-$result = $dbo->fetchArray($query);
-
-$records = [];
-foreach ($result as $r) {
-    $records[$r['sezionale']][] = [
-        'sezionale' => $r['sezionale'],
-        'data_registrazione' => $r['data_registrazione'],
-        'data' => $r['data'],
-        'numero' => $r['numero'],
-        'codice_tipo_documento_fe' => $r['codice_tipo_documento_fe'],
-        'percentuale' => $r['percentuale'],
-        'idiva' => $r['idiva'],
-        'descrizione' => $r['descrizione'],
-        'iva' => $r['iva'],
-        'subtotale' => $r['subtotale'],
-        'totale' => $r['totale'],
-        'ragione_sociale' => $r['ragione_sociale'],
-        'codice_anagrafica' => $r['codice_anagrafica'],
-    ];
-}
+$records = $dbo->fetchArray($query);
 
 if (empty(get('notdefinitiva'))) {
     $page = $dbo->fetchOne('SELECT first_page FROM co_stampecontabili WHERE dir='.prepare(filter('dir')).' AND  date_start='.prepare(filter('date_start')).' AND date_end='.prepare(filter('date_end')))['first_page'];

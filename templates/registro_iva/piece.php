@@ -19,55 +19,37 @@
 
 include_once __DIR__.'/../../core.php';
 
-if ($id_sezionale == 0) {
-    echo '
-    <tr>
-        <td colspan="10"><b>'.$record[0]['sezionale'].'</b></td>
+if ($numero != $record['numero']) {
+    $different = 1;
+}
+
+echo '
+<tr>';
+
+echo '
+    <td>'.($different ? $record['numero'] : '').'</td>
+    <td>'.($different ? Translator::datetoLocale($record['data_registrazione']) : '').'</td>
+    <td>'.($different ? $record['numero_esterno'] : '').'</td>
+    <td>'.($different ? Translator::datetoLocale($record['data']) : '').'</td>
+    <td>'.($different ? $record['codice_tipo_documento_fe'] : '').'</td>
+    <td>'.($different ? $record['codice_anagrafica'].' '.safe_truncate(mb_strtoupper(html_entity_decode($record['ragione_sociale']), 'UTF-8'), 50) : '').'</td>
+    <td class="text-right">'.moneyFormat($record['totale'], 2).'</td>';
+
+echo '
+    <td class="text-right">'.moneyFormat($record['subtotale'], 2).'</td>
+    <td class="text-left">'.Translator::numberToLocale($record['percentuale'], 0).'</td>
+    <td class="text-left">'.$record['descrizione'].'</td>
+    <td class="text-right">'.moneyFormat($record['iva'], 2).'</td>
     </tr>';
-}
 
-usort($record, function ($a, $b) {
-    return $a['numero'] <=> $b['numero'];
-});
-foreach ($record as $r) {
-    if ($numero != $r['numero']) {
-        $different = 1;
-    }
+$iva[$record['descrizione']][] = $record['iva'];
+$totale[$record['descrizione']][] = $record['subtotale'];
 
-    echo '
-        <tr>';
+$numero = $record['numero'];
+$data_registrazione = $record['data_registrazione'];
+$numero_esterno = $record['numero'];
+$data = $record['data'];
+$codice_fe = $record['numero'];
+$codice_anagrafica = $record['numero'];
 
-        echo '
-            <td>'.($different ? $r['numero'] : '').'</td>
-            <td>'.($different ? Translator::datetoLocale($r['data_registrazione']) : '').'</td>
-            <td>'.($different ? Translator::datetoLocale($r['data']) : '').'</td>
-            <td>'.($different ? $r['codice_tipo_documento_fe'] : '').'</td>
-            <td>'.($different ? $r['codice_anagrafica'].' '.safe_truncate(mb_strtoupper(html_entity_decode($r['ragione_sociale']), 'UTF-8'), 50) : '').'</td>
-            <td class="text-right">'.moneyFormat($r['totale']).'</td>';
-
-        echo '
-            <td class="text-right">'.moneyFormat($r['subtotale']).'</td>
-            <td class="text-left">'.Translator::numberToLocale($r['percentuale'], 0).'</td>
-            <td class="text-left">';
-    echo $r['descrizione'];
-    echo ($record['split_payment'] != 0) ? '<br>' . tr('Split payment') : '';
-    echo '</td>
-            <td class="text-right">'.moneyFormat($r['iva']).'</td>
-            </tr>';
-
-        $iva[$r['descrizione']][] = $r['iva'];
-        $totale[$r['descrizione']][] = $r['subtotale'];
-    if ($record['split_payment'] != 0) {
-        $split_payment_iva[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['iva'];
-        $split_payment_totale[$record['descrizione'] . ' ' . tr('Split payment')][] = $record['subtotale'];
-    }
-
-        $numero = $r['numero'];
-        $data_registrazione = $r['data_registrazione'];
-        $numero_esterno = $r['numero'];
-        $data = $r['data'];
-        $codice_fe = $r['numero'];
-        $codice_anagrafica = $r['numero'];
-
-        $different = 0;
-}
+$different = 0;
