@@ -120,16 +120,16 @@ if (!$fornitori_disponibili->isEmpty()) {
             <td class="text-right">-</td>';
         }
 
-        echo '
+        if (empty($dettaglio)) {
+            echo '
             <td class="text-center">
                 <button type="button" class="btn btn-xs btn-warning" onclick="modificaPrezzi(this)">
                     <i class="fa fa-money"></i>
                 </button>';
-
-        if (!empty($dettaglio)) {
+        } else {
             echo '
-
-                <a class="btn btn-secondary btn-xs btn-warning" onclick="modificaFornitore('.$dettaglio['id'].', '.$anagrafica->id.')">
+            <td class="text-center">
+                <a class="btn btn-secondary btn-xs btn-warning" onclick="modificaFornitorePrezziPre($(this))">
                     <i class="fa fa-edit"></i>
                 </a>
 
@@ -223,8 +223,18 @@ function aggiungiFornitore() {
     }
 }
 
+function modificaFornitorePrezziPre($this) {
+    let tr = $this.closest("tr");
+    let id_anagrafica = tr.data("id_anagrafica");
+    let direzione = tr.data("direzione");
+
+    modificaFornitorePrezzi(id_anagrafica, direzione);
+}
+
 function modificaFornitorePrezzi(id_anagrafica, direzione) {
-    openModal("'.tr('Gestisci prezzi specifici fornitore').'", "'.$structure->fileurl('dettaglio_prezzi_fornitore.php').'?id_plugin='.$id_plugin.'&id_module='.$id_module.'&id_parent='.$id_record.'&id_articolo='.$id_record.'&id_anagrafica=" + id_anagrafica + "&direzione=" + direzione);
+    openModal(
+        "'.tr('Gestisci prezzi specifici fornitore').'",
+        "'.$structure->fileurl('dettaglio_prezzi_fornitore.php').'?id_plugin='.$id_plugin.'&id_module='.$id_module.'&id_parent='.$id_record.'&id_articolo='.$id_record.'&id_anagrafica=" + id_anagrafica + "&direzione=" + direzione);
 }
 
 function aggiungiFornitorePrezzi(button) {

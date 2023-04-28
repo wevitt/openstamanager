@@ -115,14 +115,20 @@ echo '
 
     // informazioni fornitore
 
+    $is_fornitore_preferenziale = isset($articolo['id_fornitore']) && $fornitore['id_fornitore'] == $articolo['id_fornitore'];
+
     echo '
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             {[ "type": "text", "label": "'.tr('Codice fornitore').'", "name": "codice_fornitore", "required": 1, "value": "'.$codice.'" ]}
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-4">
             {[ "type": "text", "label": "'.tr('Barcode').'", "name": "barcode_fornitore", "value": "'.$fornitore['barcode_fornitore'].'" ]}
+        </div>
+
+        <div class="col-md-4">
+            {[ "type": "checkbox", "label": "'.tr('Fornitore preferenziale').'", "name": "fornitore_preferenziale", "value": "'.$is_fornitore_preferenziale.'" ]}
         </div>
     </div>
 

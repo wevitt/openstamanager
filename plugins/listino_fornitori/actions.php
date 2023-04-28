@@ -88,6 +88,19 @@ switch (filter('op')) {
 
         $fornitore->save();
 
+        $is_fornitore = post('fornitore_preferenziale');
+        if ($articolo->id_fornitore == $id_anagrafica) {
+            if (!$is_fornitore) {
+                $articolo->id_fornitore = null;
+                $articolo->save();
+            }
+        } else {
+            if ($is_fornitore) {
+                $articolo->id_fornitore = $id_anagrafica;
+                $articolo->save();
+            }
+        }
+
         flash()->info(tr('Informazioni salvate correttamente!'));
         break;
 }
