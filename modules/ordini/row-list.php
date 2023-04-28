@@ -55,7 +55,19 @@ $today = $today->startOfDay();
 $num = 0;
 $riga_spesa_trasporto = null;
 $riga_spesa_incasso = null;
+
+$ive = [];
+$imponibile = [];
 foreach ($righe as $riga) {
+    $row_iva = $dbo->fetchOne('SELECT * FROM co_iva WHERE id = ?', [$riga->idiva]);
+
+    if (!isset($ive[$row_iva['percentuale']])) {
+        $ive[$row_iva['percentuale']] = 0;
+        $imponibile[$row_iva['percentuale']] = 0;
+    }
+    $ive[$row_iva['percentuale']] += $riga->iva_unitaria_scontata * $riga->qta;
+    $imponibile[$row_iva['percentuale']] += $riga->importo;
+
     if ($riga->is_spesa_trasporto == 1) {
         $riga_spesa_trasporto = $riga;
     } else if ($riga->is_spesa_incasso) {
@@ -277,6 +289,19 @@ foreach ($righe as $riga) {
     }
 }
 
+$tot = [];
+foreach ($ive as $key => $iva) {
+    if (!isset($tot[$key])) {
+        $tot[$key] = 0;
+    }
+    $tot[$key] = [
+        'imponibile' => $imponibile[$key],
+        'iva' => $iva,
+    ];
+}
+
+echo '<div class="json-tot hide">'.htmlspecialchars(json_encode($tot)).'</div>';
+
 echo '
         </tbody>';
 
@@ -291,6 +316,8 @@ $netto_a_pagare = $ordine->netto;
 
 // SPESA TRASPORTO
 if (!empty($riga_spesa_trasporto)) {
+    echo '<div class="spesa-trasporto hide">'.$riga_spesa_trasporto->subtotale.'</div>';
+
     echo '
     <tr data-id="'.$riga_spesa_trasporto->id.'" data-type="'.get_class($riga_spesa_trasporto).'">
         <td colspan="7" class="text-right">
@@ -321,6 +348,8 @@ if (!empty($riga_spesa_trasporto)) {
 
 // SPESA INCASSO
 if (!empty($riga_spesa_incasso)) {
+    echo '<div class="spesa-incasso hide">'.$riga_spesa_incasso->subtotale.'</div>';
+
     echo '
     <tr data-id="'.$riga_spesa_incasso->id.'" data-type="'.get_class($riga_spesa_incasso).'">
         <td colspan="7" class="text-right">
@@ -391,7 +420,13 @@ if (!empty($sconto)) {
 echo '
         <tr>
             <td colspan="7" class="text-right">
-                <b>'.tr('Iva', [], ['upper' => true]).':</b>
+                <b>'.tr('Iva', [], ['upper' => true]).'</b>
+                <small>
+                    <span class="tooltip-iva" title="">
+                        <i class="fa fa-question-circle-o"></i>
+                    </span>
+                </small>
+                :
             </td>
             <td class="text-right">
                 '.moneyFormat($iva, 2).'
@@ -403,7 +438,13 @@ echo '
 echo '
         <tr>
             <td colspan="7" class="text-right">
-                <b>'.tr('Totale', [], ['upper' => true]).':</b>
+                <b>'.tr('Totale', [], ['upper' => true]).'</b>
+                <small>
+                    <span class="tooltip-totale" title="">
+                        <i class="fa fa-question-circle-o"></i>
+                    </span>
+                </small>
+                :
             </td>
             <td class="text-right">
                 '.moneyFormat($totale, 2).'
@@ -636,7 +677,65 @@ $(document).ready(function() {
             order: order.join(","),
         });
     });
+
+    tooltipIva();
+    tooltipImponibile();
+
 });
+
+function tooltipIva() {
+    var tot = JSON.parse($(".json-tot").html());
+
+    var content = "";
+    $.each(tot, function(key, value) {
+        console.log(value);
+        content +=
+            "iva " + key + "%: " + value["iva"].toFixed(2) + "€<br>";
+    });
+
+    var $icon = $(".tooltip-iva");
+
+    $icon.tooltipster({
+        content: content,
+        contentAsHTML: true,
+        trigger: "click",
+        interactive: true,
+        touchDevices: true,
+    });
+}
+
+function tooltipImponibile() {
+    var tot = JSON.parse($(".json-tot").html());
+    var speseTrasporto = ($(".spesa-trasporto").length) ? parseFloat($(".spesa-trasporto").html()) : -1;
+    var speseIncasso = ($(".spesa-incasso").length) ? parseFloat($(".spesa-incasso").html()) : -1;
+
+
+    var content = "";
+    $.each(tot, function(key, value) {
+        content +=
+            value["imponibile"].toFixed(2) + "€ imponibile + " + value["iva"].toFixed(2) + "€ iva al " + key + "%<br>";
+    });
+
+    if (speseTrasporto != -1) {
+        content += "<br>";
+        content += "Spese di trasporto<br>";
+        content += speseTrasporto.toFixed(2) + "€ imponibile + " + (speseTrasporto * 0.22).toFixed(2) + "€ iva al 22%<br>";
+    }
+    if (speseIncasso != -1) {
+        content += "Spese di incasso<br>";
+        content += speseIncasso.toFixed(2) + "€ imponibile + " + (speseIncasso * 0.22).toFixed(2) + "€ iva al 22%<br>";
+    }
+
+    var $icon = $(".tooltip-totale");
+
+    $icon.tooltipster({
+        content: content,
+        contentAsHTML: true,
+        trigger: "click",
+        interactive: true,
+        touchDevices: true,
+    });
+}
 
 $(".check").on("change", function() {
     let checked = 0;
