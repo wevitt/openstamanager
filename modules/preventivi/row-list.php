@@ -614,7 +614,6 @@ function tooltipIva() {
 
     var content = "";
     $.each(tot, function(key, value) {
-        console.log(value);
         content +=
             "iva " + key + "%: " + value["iva"].toFixed(2) + "€<br>";
     });

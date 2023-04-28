@@ -336,7 +336,6 @@ $json_fornitori = json_encode($fornitori);
         //nome articolo
         $('#search-article').keyup(function(){
             var value = $(this).val().toLowerCase();
-            console.log(value);
             $("#table tbody tr").filter(function() {
                 //search only in the coloumn with class description
                 $(this).toggle($(this).find(".descrizione").text().toLowerCase().indexOf(value) > -1)
@@ -354,7 +353,6 @@ $json_fornitori = json_encode($fornitori);
         //magazzino
         $('#search-magazzino').change(function(){
             var value = $(this).val().toLowerCase();
-            console.log(value);
 
             if (value == '') {
                 $("#table tbody tr").show();
@@ -474,13 +472,11 @@ $json_fornitori = json_encode($fornitori);
                 //find select2-container--bootstrap
                 var $container = $(this).closest('div').find('.select2-container--bootstrap');
                 //show in console log container class
-                console.log($container.attr('class'));
 
 
                 //change select2-container--focus in select2-container--open
                 $container.removeClass('select2-container--focus');
                 $container.addClass('select2-container--open');
-                console.log($container.attr('class'));
 
 
                 //find select2-selection
