@@ -424,14 +424,21 @@ $json_fornitori = json_encode($fornitori);
                     var content = 'Nessuna giacenza disponibile';
 
                     if (data.length > 0) {
-                        content = 'Giacenze \n \n';
+                        content = 'Giacenze per sede: <br><br>';
                         $.each(data, function(key, value) {
-                            content += value.descrizione + ':  ' + value.giacenza + ' ' + value.um + '\n';
+                            content += value.descrizione + ':  ' + value.giacenza + ' ' + value.um + '<br>';
                         });
                     }
 
-                    $row.find(".tooltip-disp").attr("title", content);
+                    var $icon = $row.find(".tooltip-disp");
 
+                    $icon.tooltipster({
+                        content: content,
+                        contentAsHTML: true,
+                        trigger: "click",
+                        interactive: true,
+                        touchDevices: true,
+                    });
                 }
             });
         });
