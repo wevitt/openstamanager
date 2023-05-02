@@ -48,9 +48,15 @@ echo '
 
 	<div class="row">
 		<div class="col-md-12">
-		    {[ "type": "select", "label": "'.tr('Sede').'", "name": "idsede[]", "ajax-source": "sedi_azienda", "multiple": "1", "value":"'.($sedi ?: '').'", "help": "'.tr('Sede Azienda abilitata per la movimentazione degli articoli.').'" ]}
+		    {[ "type": "select", "label": "'.tr('Sede').'", "name": "idsede[]", "ajax-source": "sedi_azienda", "multiple": "1", "value":"'.(count($sedi) > 0 ? $sedi : '').'", "help": "'.tr('Sede Azienda abilitata per la movimentazione degli articoli.').'" ]}
 		</div>
-	</div>';
+	</div>
+
+    <div class="row">
+        <div class="col-md-12">
+            {[ "type": "select", "label": "'.tr('Sede predefinita').'", "name": "id_sede_predefinita", "value":"'.$utente['id_sede_predefinita'].'", "ajax-source": "sedi_utente", "select-options": '.json_encode(['id_utente' => $utente['id']]).', "help": "'.tr('Sede Azienda predefinita per la movimentazione degli articoli.').'" ]}
+        </div>
+    </div>';
 
 echo '
     <script type="text/javascript">

@@ -56,7 +56,7 @@ include_once __DIR__.'/../../core.php';
 
 			<div class="row">
 
-				<div class="col-md-8">
+				<div class="col-md-4">
 					{[ "type": "textarea", "label": "<?php echo tr('Filtro'); ?>", "name": "clause", "required": 1, "value": "$clause$", "extra": "<?php echo ($record['is_sezionale']) ? 'readonly' : ''; ?>" ]}
 				</div>
 
@@ -64,6 +64,9 @@ include_once __DIR__.'/../../core.php';
                     {[ "type": "select", "label": "<?php echo tr('Posizione'); ?>", "name": "position", "required": 1, "values":"list=\"WHR\": \"WHERE\", \"HVN\": \"HAVING\"", "value": "$position$", "extra": "<?php echo ($record['is_sezionale']) ? 'readonly' : ''; ?>" ]}
 				</div>
 
+                <div class="col-md-4">
+                    {[ "type": "select", "label": "<?php echo tr('Sede predefinita') ?>", "name": "id_sede_predefinita", "value":"<?php echo ($record['id_sede_predefinita']) ?>", "ajax-source": "sedi_azienda", "help": "'.tr('Sede segmento predefinita.').'" ]}
+                </div>
 			</div>
 <?php
 

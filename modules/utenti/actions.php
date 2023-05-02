@@ -92,10 +92,16 @@ switch (filter('op')) {
             $sedi = post('idsede');
             if (empty($sedi)) {
                 $sedi = [0];
+                $sede_predefinita = -1;
+            } else {
+                $sede_predefinita = post('id_sede_predefinita');
             }
+
             foreach ($sedi as $id_sede) {
                 $dbo->query('INSERT INTO `zz_user_sedi` (`id_user`,`idsede`) VALUES ('.prepare($id_utente).', '.prepare($id_sede).')');
             }
+
+            $dbo->query('UPDATE zz_users SET id_sede_predefinita = '.prepare($sede_predefinita).' WHERE id = '.prepare($id_utente));
         } else {
             flash()->error(tr('Utente già esistente!'));
         }

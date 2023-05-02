@@ -35,6 +35,21 @@ if ($module['name'] == 'Ordini cliente') {
 
 $id_anagrafica = !empty(get('idanagrafica')) ? get('idanagrafica') : $user['idanagrafica'];
 
+$id_segment = $_SESSION['module_'.$id_module]['id_segment'];
+$id_sede_partenza = 0;
+$sede_predefinita_segment = $database->fetchOne('SELECT * FROM zz_segments WHERE id = '.$id_segment)['id_sede_predefinita'];
+if ($sede_predefinita_segment) {
+    $id_sede_partenza = $sede_predefinita_segment;
+} else {
+    $idutente = Auth::user()->id;
+    $sede_predefinita_utente = $database->fetchOne('SELECT * FROM zz_users WHERE id = '.$idutente)['id_sede_predefinita'];
+    if ($sede_predefinita_utente) {
+        $id_sede_partenza = $sede_predefinita_utente;
+    }
+}
+
+error_log("ciao: " . $id_sede_partenza);
+
 ?><form action="" method="post" id="add-form">
 	<input type="hidden" name="op" value="add">
 	<input type="hidden" name="backto" value="record-edit">
@@ -57,7 +72,7 @@ $id_anagrafica = !empty(get('idanagrafica')) ? get('idanagrafica') : $user['idan
 		</div>
 
         <div class="col-md-6">
-			{[ "type": "select", "label": "<?php echo tr('Sede di partenza'); ?>", "name": "id_sede_partenza", "required": 1, "ajax-source": "sedi-partenza", "select-options": <?php echo json_encode(['id_module' => $id_module, 'is_sezionale' => 1]); ?>, "value": "0" ]}
+			{[ "type": "select", "label": "<?php echo tr('Sede di partenza'); ?>", "name": "id_sede_partenza", "required": 1, "ajax-source": "sedi-partenza", "select-options": <?php echo json_encode(['id_module' => $id_module, 'is_sezionale' => 1]); ?>, "value": "<?php echo $id_sede_partenza ?>" ]}
 		</div>
 	</div>
 

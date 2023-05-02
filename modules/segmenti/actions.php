@@ -45,6 +45,7 @@ switch (post('op')) {
 
         $dbo->update('zz_segments', [
             'id_module' => $module,
+            'id_sede_predefinita' => post('id_sede_predefinita'),
             'name' => post('name'),
             'clause' => $_POST['clause'],
             'pattern' => $pattern,

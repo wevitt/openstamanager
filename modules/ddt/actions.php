@@ -52,6 +52,18 @@ switch (filter('op')) {
         $id_record = $ddt->id;
 
         $ddt->idcausalet = post('idcausalet');
+        //sede di partenza
+        $sede_predefinita_segment = $database->fetchOne('SELECT * FROM zz_segments WHERE id = '.$id_segment)['id_sede_predefinita'];
+        if ($sede_predefinita_segment) {
+            $ddt->idsede_partenza = $sede_predefinita_segment;
+        } else {
+            $idutente = Auth::user()->id;
+            $sede_predefinita_utente = $database->fetchOne('SELECT * FROM zz_users WHERE id = '.$idutente)['id_sede_predefinita'];
+            if ($sede_predefinita_utente) {
+                $ddt->idsede_partenza = $sede_predefinita_utente;
+            }
+        }
+
         $ddt->save();
 
         $iva_predefinita = setting('Iva predefinita');

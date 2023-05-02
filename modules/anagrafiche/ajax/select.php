@@ -307,9 +307,9 @@ switch ($resource) {
                 *
             FROM
                 (SELECT '0' AS id, (SELECT lat FROM an_anagrafiche |where|) AS lat, (SELECT lng FROM an_anagrafiche |where|) AS lng, (SELECT idzona FROM an_anagrafiche |where|) AS idzona, CONCAT_WS(' - ', \"".tr('Sede legale')."\" , (SELECT CONCAT (citta, IF(indirizzo!='',CONCAT(' (', indirizzo, ')'), ''), ' (',ragione_sociale,')') FROM an_anagrafiche |where|)) AS descrizione
-            
+
             UNION
-                
+
             SELECT
                 id,
                 lat,
@@ -357,6 +357,23 @@ switch ($resource) {
         }
 
         break;
+
+    case 'sedi_utente':
+        $id_utente = $superselect['id_utente'];
+
+        $query = 'SELECT id, nomesede as descrizione
+            FROM zz_user_sedi
+            INNER JOIN an_sedi ON zz_user_sedi.idsede=an_sedi.id
+            WHERE id_user='.$id_utente.' GROUP BY id_user
+            UNION
+            SELECT "0" as id , CONCAT("Sede legale - ", ana.citta) as descrizione
+            FROM zz_user_sedi
+            INNER JOIN an_anagrafiche ana ON ana.idanagrafica = 1
+            WHERE id_user='.$id_utente.' and idsede = 0
+            ORDER BY id';
+
+        break;
+
 
     /*
      * Opzioni utilizzate:
@@ -418,7 +435,7 @@ switch ($resource) {
             }
         }
         break;
-    
+
 
     case 'relazioni':
         $query = 'SELECT id, descrizione, colore AS bgcolor FROM an_relazioni |where| ORDER BY descrizione';
@@ -432,7 +449,7 @@ switch ($resource) {
         }
 
         break;
-    
+
     case 'provenienze':
         $query = 'SELECT id, descrizione, colore AS bgcolor FROM an_provenienze |where| ORDER BY descrizione';
 
@@ -464,7 +481,7 @@ switch ($resource) {
      * Opzioni utilizzate:
      * - idanagrafica
      */
-    
+
     case 'dichiarazioni_intento':
 
         if (isset($superselect['idanagrafica']) && isset($superselect['data'])) {
@@ -477,7 +494,7 @@ switch ($resource) {
             foreach ($elements as $element) {
                 $filter[] = 'id='.prepare($element);
             }
-            
+
 
             //$where[] = '( '.prepare($superselect['data']).' BETWEEN data_inizio AND data_fine)';
 
@@ -498,9 +515,9 @@ switch ($resource) {
             $data = AJAX::selectResults($query, $where, $filter, $search_fields, $limit, $custom);
             $rs = $data['results'];
 
-            foreach ($rs as $k => $r) {   
-                               
-                $currentDate = date('Y-m-d', strtotime($superselect['data']));   
+            foreach ($rs as $k => $r) {
+
+                $currentDate = date('Y-m-d', strtotime($superselect['data']));
                 $startDate = date('Y-m-d', strtotime($r['data_inizio']));
                 $endDate = date('Y-m-d', strtotime($r['data_fine']));
 

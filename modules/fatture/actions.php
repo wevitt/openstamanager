@@ -86,6 +86,20 @@ switch (post('op')) {
         $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
         $riga->save();
 
+        //sede di partenza
+        $sede_predefinita_segment = $database->fetchOne('SELECT * FROM zz_segments WHERE id = '.$id_segment)['id_sede_predefinita'];
+        if ($sede_predefinita_segment) {
+            $fattura->idsede_partenza = $sede_predefinita_segment;
+            $fattura->save();
+        } else {
+            $idutente = Auth::user()->id;
+            $sede_predefinita_utente = $database->fetchOne('SELECT * FROM zz_users WHERE id = '.$idutente)['id_sede_predefinita'];
+            if ($sede_predefinita_utente) {
+                $fattura->idsede_partenza = $sede_predefinita_utente;
+                $fattura->save();
+            }
+        }
+
         flash()->info(tr('Fattura aggiunta correttamente!'));
 
         break;
