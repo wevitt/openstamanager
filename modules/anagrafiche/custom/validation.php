@@ -116,11 +116,11 @@ switch ($name) {
         } else {
 
             /* VATLookUp */
-            $vatLookupUrl = 'https://vatlookup.gktgroup.it/api/';
+            $vatLookupUrl = App::getConfig()['gktvat_host'];
 
             $options = [
                 'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode('vittorio.iovinella@gmail.com:vittorio.iovinella')
+                    'Authorization' => 'Basic ' . base64_encode(App::getConfig()['gktvat_username'].':'.App::getConfig()['gktvat_password'])
                 ],
                 'multipart' => [
                     [
@@ -139,7 +139,7 @@ switch ($name) {
                 'verify' => false,
             ]);
 
-            $vatLookupResponse = $client->request('POST', 'request.json', $options);
+            $vatLookupResponse = $client->request('POST', 'api/request.json', $options);
 
             $vatLookupResponseBody = $vatLookupResponse->getBody();
             $vatLookupResponseContent = json_decode($vatLookupResponseBody, true) ?: [];

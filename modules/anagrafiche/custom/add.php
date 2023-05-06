@@ -156,16 +156,16 @@ echo '
 		var cap = input("cap");
 		var provincia = input("provincia");
 
-    var piva = $("#piva");
+    var $piva = $("#piva");
 
-		piva.off("blur");
-		piva.on("blur", function(e){
-			var input = $(this);
-      var value = input.val();
-			var container = $('#piva_validation');
-			var parent = container.closest(".input-group");
-			var message = container.find("span");
-			var icon = container.find("i");
+		$piva.off("blur");
+		$piva.on("blur", function(e){
+			var $input = $(this);
+      var value = $input.val();
+			var $container = $('#piva_validation');
+			var parent = $container.closest(".input-group");
+			var message = $container.find("span");
+			var icon = $container.find("i");
 			icon.attr("class", "fa fa-spinner fa-spin");
 
 			$.ajax({
@@ -195,7 +195,7 @@ echo '
 						}
 
 						//message.tooltipster("content", data.message);
-						input.attr("valid", +(data.result));
+						$input.attr("valid", +(data.result));
 
 						if (data.fields) {
 								var fields = data.fields;
