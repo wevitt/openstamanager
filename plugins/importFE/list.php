@@ -20,6 +20,7 @@
 include_once __DIR__.'/../../core.php';
 
 use Plugins\ImportFE\Interaction;
+use Carbon\Carbon;
 
 $list = Interaction::getInvoiceList();
 
@@ -32,7 +33,7 @@ if (!empty($list)) {
         <tr>
             <th>'.tr('Descrizione').'</th>
             <th class="text-center">'.tr('Fornitore').'</th>
-            <th class="text-center">'.tr('Data di registrazione').'</th>
+            <th class="text-center">'.tr('Data di ricezione').'</th>
             <th class="text-center">'.tr('Totale imponibile').'</th>
             <th width="20%" class="text-center">#</th>
         </tr>
@@ -93,7 +94,7 @@ if (!empty($list)) {
             </td>
 
             <td>'.$element['sender'].'</td>
-            <td>'.dateFormat($element['date_sent']).'</td>
+            <td class="text-center">'.dateFormat(new Carbon($element['date_sent'])).'</td>
             <td class="text-right">'.moneyFormat($element['amount']).'</td>
 
             <td class="text-center">
