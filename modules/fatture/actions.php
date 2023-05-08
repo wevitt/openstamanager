@@ -74,7 +74,18 @@ switch (post('op')) {
         $riga->setPrezzoUnitario($riga->prezzo_unitario, $riga->idiva);
         $riga->save();
 
-        $importo_spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->importo_spese_di_incasso : 0;
+        if ($anagrafica->spese_di_incasso) {
+            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+        } else {
+            $id_pagamento = $anagrafica->idpagamento_vendite;
+            if (!$id_pagamento) {
+                $id_pagamento = setting('Tipo di pagamento predefinito');
+            }
+            $importo_spese_di_incasso = $database->fetchOne(
+                'SELECT importo_spese_di_incasso FROM co_pagamenti WHERE id = '.$id_pagamento
+            )['importo_spese_di_incasso'];
+        }
+
         $riga = Riga::build($fattura);
         $riga->descrizione = 'Spesa di incasso';
         $riga->note = 'Spesa di incasso';
@@ -194,9 +205,16 @@ switch (post('op')) {
 
         $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$fattura->idpagamento)['prc'];
 
+        if ($anagrafica->spese_di_incasso) {
+            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+        } else {
+            $importo_spese_di_incasso = $database->fetchOne(
+                'SELECT importo_spese_di_incasso FROM co_pagamenti WHERE id = '.$fattura->idpagamento
+            )['importo_spese_di_incasso'];
+        }
+
         $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
         if (empty($riga_spese_incasso)) {
-            $importo_spese_di_incasso = ($anagrafica->spese_di_incasso) ? $anagrafica->importo_spese_di_incasso : 0;
             $riga = Riga::build($fattura);
             $riga->descrizione = 'Spesa di incasso';
             $riga->note = 'Spesa di incasso';
@@ -209,7 +227,7 @@ switch (post('op')) {
             $riga->save();
         } else {
             $riga_spese_incasso->qta = intval(100 / $prc);
-            $riga_spese_incasso->setPrezzoUnitario($riga_spese_incasso->prezzo_unitario, $riga_spese_incasso->idiva);
+            $riga_spese_incasso->setPrezzoUnitario($importo_spese_di_incasso, $riga_spese_incasso->idiva);
             $riga_spese_incasso->save();
         }
 
@@ -1204,6 +1222,34 @@ switch (post('op')) {
         }
 
         flash()->info(tr('Prezzi aggiornati!'));
+
+        break;
+
+    case 'get_spesa_incasso':
+        $idpagamento = post('idpagamento');
+        $idanagrafica = post('idanagrafica');
+
+        $anagrafica = Anagrafica::find($idanagrafica);
+
+        $ret = null;
+        if (!$anagrafica->spese_di_incasso) {
+            $importo = $database->fetchOne(
+                'SELECT importo_spese_di_incasso FROM co_pagamenti WHERE id = '.$idpagamento
+            )['importo_spese_di_incasso'];
+
+            $iva = $database->fetchOne(
+                'SELECT percentuale FROM co_iva WHERE id = '.setting('Iva predefinita')
+            )['percentuale'];
+
+            $ret = [
+                'importo_spese_di_incasso' => $importo,
+                'iva' => $iva/100,
+            ];
+        }
+
+        echo json_encode($ret);
+
+        break;
 }
 
 // Nota di debito

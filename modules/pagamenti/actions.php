@@ -51,6 +51,7 @@ switch (filter('op')) {
                     'idconto_vendite' => post('idconto_vendite') ?: null,
                     'idconto_acquisti' => post('idconto_acquisti') ?: null,
                     'codice_modalita_pagamento_fe' => post('codice_modalita_pagamento_fe'),
+                    'importo_spese_di_incasso' => post('importo_spese_di_incasso'),
                 ];
 
                 if (!empty($id)) {

@@ -305,7 +305,7 @@ if (!empty($riga_spesa_incasso)) {
             </b>
         </td>
 
-        <td class="text-right">
+        <td class="text-right riga-spesa-incasso">
             '.moneyFormat($riga_spesa_incasso->subtotale, 2).'
         </td>
 
@@ -330,7 +330,7 @@ echo '
                 <b>'.tr('Imponibile', [], ['upper' => true]).':</b>
             </td>
 
-            <td class="text-right">
+            <td class="text-right riga-imponibile">
                 '.moneyFormat($imponibile, 2).'
             </td>
 
@@ -381,7 +381,7 @@ echo '
                 :
             </td>
 
-            <td class="text-right">
+            <td class="text-right riga-iva">
                 '.moneyFormat($iva, 2).'
             </td>
 
@@ -401,7 +401,7 @@ echo '
                 :
             </td>
 
-            <td class="text-right">
+            <td class="text-right riga-totale">
                 '.moneyFormat($totale, 2).'
             </td>
 
@@ -474,7 +474,8 @@ echo '
         ]).':
         </td>
         <td class="text-right '.$margine_class.'" rowspan="2" style="vertical-align:middle;">
-            <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i> '.moneyFormat($ddt->margine).'
+            <i class="fa fa-'.$margine_icon.' text-'.$margine_class.'"></i>
+            <span class="riga-margine">'.moneyFormat($ddt->margine).'</span>
         </td>
         <td rowspan="2"></td>
     </tr>
@@ -635,7 +636,72 @@ $(document).ready(function() {
     tooltipIva();
     tooltipImponibile();
 
+    changeSpesaIncasso();
 });
+
+function changeSpesaIncasso() {
+    //on change by name=idpagamento
+    $("select[name=idpagamento]").on("change", function() {
+        let id_pagamento = $(this).val();
+        let id_anagrafica = "'.$fattura->idanagrafica.'";
+
+        $.ajax({
+            url: globals.rootdir + "/actions.php",
+            type: "POST",
+            dataType: "json",
+            data: {
+                id_module: globals.id_module,
+                id_record: globals.id_record,
+                op: "get_spesa_incasso",
+                idpagamento: id_pagamento,
+                idanagrafica: id_anagrafica,
+            },
+            success: function (response) {
+                if (response != null) {
+                    var old_spesa_incasso = parseFloat($(".spesa-incasso").html());
+                    var old_iva = ($(".riga-iva").length > 0) ? castFloat($(".riga-iva").html()) : 0;
+                    var spesa_incasso = parseFloat(response.importo_spese_di_incasso);
+                    var iva = parseFloat(response.iva);
+
+                    var newImponibile = castFloat($(".riga-imponibile").html()) - old_spesa_incasso + spesa_incasso;
+                    var newIva = castFloat($(".riga-iva").html()) - (old_spesa_incasso * iva) + (spesa_incasso * iva);
+                    var newTotale = castFloat($(".riga-totale").html()) - old_spesa_incasso - old_iva + spesa_incasso + (spesa_incasso * iva);
+                    var newMargine = newImponibile;
+
+                    $(".spesa-incasso").html(spesa_incasso);
+                    $(".riga-spesa-incasso").html(recastFloat(spesa_incasso.toFixed(2)) + " €");
+                    $(".riga-imponibile").html(recastFloat(newImponibile.toFixed(2)) + " €");
+                    $(".riga-iva").html(recastFloat(newIva.toFixed(2)) + " €");
+                    $(".riga-totale").html(recastFloat(newTotale.toFixed(2)) + " €");
+                    $(".riga-margine").html(recastFloat(newMargine.toFixed(2)) + " €");
+                }
+            },
+        });
+    });
+
+    function castFloat(number) {
+        number = number.replace(".", "");
+        number = number.replace(",", ".");
+        return parseFloat(number);
+    }
+
+    function recastFloat(number) {
+        number = number.toString();
+        number = number.replace(".", ",");
+        number = number.split(",");
+        if (number[1] != undefined) {
+            number[1] = number[1].substring(0, 2);
+            if (number[1].length == 1) {
+                number[1] += "0";
+            }
+        } else {
+            number[1] = "00";
+        }
+        number = number.join(",");
+
+        return number;
+    }
+}
 
 function tooltipIva() {
     var tot = JSON.parse($(".json-tot").html());

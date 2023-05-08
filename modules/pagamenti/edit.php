@@ -19,7 +19,9 @@
 
 include_once __DIR__.'/../../core.php';
 
-?><form action="" method="post" id="edit-form">
+?>
+
+<form action="" method="post" id="edit-form">
 	<input type="hidden" name="backto" value="record-edit">
 	<input type="hidden" name="op" value="update">
 
@@ -49,6 +51,12 @@ include_once __DIR__.'/../../core.php';
 					{[ "type": "select", "label": "<?php echo tr('Conto predefinito per gli acquisti'); ?>", "name": "idconto_acquisti", "value": "$idconto_acquisti$", "ajax-source": "conti" ]}
 				</div>
 			</div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    {[ "type":"number", "label": "<?php echo tr('Spese di incasso') ?>", "name": "importo_spese_di_incasso", "value": "$importo_spese_di_incasso$", "icon-after": "<?php echo currency() ?>" ]}
+                </div>
+            </div>
 		</div>
 	</div>
 

@@ -509,7 +509,7 @@ if ($is_cliente or $is_fornitore or $is_tecnico) {
 
                         <div class="row">
                             <div class="col-md-6">
-                                    {[ "type": "checkbox", "label": "'.tr('Spese di incasso').'", "id": "spese-di-incasso", "name": "spese_di_incasso", "value": "'.$anagrafica['spese_di_incasso'].'" ]}
+                                    {[ "type": "checkbox", "label": "'.tr('Gestisci spese di incasso su anagrafica').'", "id": "spese-di-incasso", "name": "spese_di_incasso", "value": "'.$anagrafica['spese_di_incasso'].'" ]}
                             </div>
                             <div class="col-md-6">
                                     {[ "type": "number", "label": "'.tr('Importo spese di incasso').'", "id": "importo-spese-di-incasso", "name": "importo_spese_di_incasso", "value": "'.$anagrafica['importo_spese_di_incasso'].'", "icon-after": "'.currency().'" ]}
