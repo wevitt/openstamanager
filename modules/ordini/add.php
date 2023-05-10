@@ -48,8 +48,6 @@ if ($sede_predefinita_segment) {
     }
 }
 
-error_log("ciao: " . $id_sede_partenza);
-
 ?><form action="" method="post" id="add-form">
 	<input type="hidden" name="op" value="add">
 	<input type="hidden" name="backto" value="record-edit">
