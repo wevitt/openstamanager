@@ -21,6 +21,7 @@ use Modules\Interventi\Intervento;
 
 include_once __DIR__.'/init.php';
 
+$direzione = $fattura->direzione;
 $block_edit = !empty($note_accredito) || in_array($record['stato'], ['Emessa', 'Pagato', 'Parzialmente pagato']) || !$abilita_genera;
 $righe = $fattura->getRighe();
 
@@ -37,11 +38,12 @@ echo '
                 echo '
                 </th>
                 <th width="35" class="text-center" >'.tr('#').'</th>
-                <th>'.tr('Descrizione').'</th>
-                <th class="text-center" width="150">'.tr('Q.tà').'</th>
-                <th class="text-center" width="150">'.tr('Prezzo unitario').'</th>
-                <th class="text-center" width="150">'.tr('Iva unitaria').'</th>
-                <th class="text-center" width="150">'.tr('Importo').'</th>
+                <th class="text-left">'.tr('Descrizione').'</th>
+                <th class="text-center" width="120">'.tr('Q.tà').'</th>
+                <th class="text-center" width="140">'.tr('Prezzo unitario').'</th>
+                <th class="text-center" width="140">'.tr('Iva unitaria').'</th>
+                <th class="text-center" width="140">'.tr('Iva totale').'</th>
+                <th class="text-center" width="140">'.tr('Importo totale').'</th>
                 <th width="120"></th>
             </tr>
         </thead>
@@ -54,15 +56,18 @@ $riga_spesa_incasso = null;
 
 $ive = [];
 $imponibile = [];
+$totale_iva = 0;
 foreach ($righe as $riga) {
+    $current_iva = floatval($database->fetchOne('SELECT * FROM co_righe_documenti WHERE id = '.$riga->id)['iva']);
     $row_iva = $dbo->fetchOne('SELECT * FROM co_iva WHERE id = ?', [$riga->idiva]);
+    $totale_iva += $current_iva;
 
     if (!isset($ive[$row_iva['percentuale']])) {
         $ive[$row_iva['percentuale']] = 0;
         $imponibile[$row_iva['percentuale']] = 0;
     }
-    $ive[$row_iva['percentuale']] += $riga->iva_unitaria_scontata * $riga->qta;
-    $imponibile[$row_iva['percentuale']] += $riga->importo;
+    $ive[$row_iva['percentuale']] += $current_iva;
+    $imponibile[$row_iva['percentuale']] += $riga->imponibile;
 
     if ($riga->is_spesa_trasporto == 1) {
         $riga_spesa_trasporto = $riga;
@@ -200,11 +205,11 @@ foreach ($righe as $riga) {
                 <td></td>
                 <td></td>
                 <td></td>';
-        } else {
+	    } else {
             // Quantità e unità di misura
             echo '
                 <td class="text-center">
-                    '.numberFormat($riga->qta, 'qta').' '.$riga->um.'
+                '.numberFormat($riga->qta, 'qta').' '.$riga->um.'
                 </td>';
 
             // Prezzi unitari
@@ -215,20 +220,20 @@ foreach ($righe as $riga) {
             }
             echo '
                 <td class="text-right">
-                    <span class="'.$price_danger.'">'.moneyFormat($riga->prezzo_unitario_corrente).'</span>';
+                <span class="'.$price_danger.'">'.moneyFormat($riga->prezzo_unitario_corrente).'</span>';
 
             if ($dir == 'entrata' && $riga->costo_unitario != 0) {
                 echo '
-                    <br><small class="text-muted">
-                        '.tr('Acquisto').': '.moneyFormat($riga->costo_unitario).'
-                    </small>';
+                <br><small class="text-muted">
+                    '.tr('Acquisto').': '.moneyFormat($riga->costo_unitario).'
+                </small>';
             }
 
             if (abs($riga->sconto_unitario) > 0) {
                 $text = discountInfo($riga);
 
                 echo '
-                    <br><small class="label label-danger">'.$text.'</small>';
+                <br><small class="label label-danger">'.$text.'</small>';
             }
 
             echo '
@@ -237,58 +242,119 @@ foreach ($righe as $riga) {
             // Iva
             echo '
                 <td class="text-right">
-                    '.moneyFormat($riga->iva_unitaria_scontata).'
-                    <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.' ('.$riga->aliquota->esigibilita.') '.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
+                '.moneyFormat($riga->iva_unitaria_scontata).'
+                <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.' ('.$riga->aliquota->esigibilita.') '.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
                 </td>';
+
+            // Iva totale
+            echo '
+            <td class="text-right">
+                '.moneyFormat($current_iva);
+                if (!$block_edit) {
+                    echo '
+                    <div class="btn-group">
+                        <a class="btn btn-xs btn-default" onclick="incrementa_riduci($(this), 0.01, \'iva\')">
+                            <i class="fa fa-arrow-up"></i>
+                        </a>
+                        <a class="btn btn-xs btn-default" onclick="incrementa_riduci($(this), -0.01, \'iva\')">
+                            <i class="fa fa-arrow-down"></i>
+                        </a>
+                    </div>
+                    <span style="padding-right:50px">
+                        <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
+                    </span>';
+                } else {
+                    echo '
+                    <span>
+                        <br><small class="'.(($riga->aliquota->deleted_at) ? 'text-red' : '').' text-muted">'.$riga->aliquota->descrizione.(($riga->aliquota->esente) ? ' ('.$riga->aliquota->codice_natura_fe.')' : null).'</small>
+                    </span>';
+                }
+                echo '
+            </td>';
 
             // Importo
             echo '
                 <td class="text-right">
-                    '.moneyFormat($riga->importo).'
-                </td>';
-        }
+                '.moneyFormat($riga->importo);
+                if (!$block_edit) {
+                    echo '
+                    <div class="btn-group">
+                        <a class="btn btn-xs btn-default" onclick="incrementa_riduci($(this), 0.01, \'importo\')">
+                            <i class="fa fa-arrow-up"></i>
+                        </a>
+                        <a class="btn btn-xs btn-default" onclick="incrementa_riduci($(this), -0.01, \'importo\')">
+                            <i class="fa fa-arrow-down"></i>
+                        </a>';
+                }
+                echo '
+                </div>';
 
-        // Possibilità di rimuovere una riga solo se la fattura non è pagata
-        echo '
+                //provvigione riga
+                if (abs($riga->provvigione_unitaria) > 0) {
+                    $text = provvigioneInfo($riga);
+
+                    echo '
+                    <br><small class="label label-info">'.$text.'</small>';
+                }
+
+                echo '</td>';
+            }
+
+            // Possibilità di rimuovere una riga solo se la fattura non è pagata
+            echo '
                 <td class="text-center">';
 
-        if ($record['stato'] != 'Pagato' && $record['stato'] != 'Emessa') {
+            if ($dir == 'uscita'){
             echo '
-                    <div class="input-group-btn">';
+            <div class="input-group-btn">';
 
-            if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
+                if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
                 echo '
                         <a class="btn btn-primary btn-xs" title="'.tr('Modifica seriali della riga').'" onclick="modificaSeriali(this)">
                             <i class="fa fa-barcode"></i>
                         </a>';
+                }
+            } else if ($record['stato'] != 'Pagato' && $record['stato'] != 'Emessa') {
+
+            echo '
+            <div class="input-group-btn">';
+
+            if ($riga->isArticolo() && !empty($riga->abilita_serial)) {
+                echo '
+                    <a class="btn btn-primary btn-xs" title="'.tr('Modifica seriali della riga').'" onclick="modificaSeriali(this)">
+                        <i class="fa fa-barcode"></i>
+                    </a>';
             }
+            }
+
+            if ($record['stato'] != 'Pagato' && $record['stato'] != 'Emessa') {
 
             if ($riga->id != $fattura->rigaBollo->id) {
             echo '
-                        <a class="btn btn-xs btn-info" title="'.tr('Aggiungi informazioni FE per questa riga').'" onclick="apriInformazioniFE(this)">
-                            <i class="fa fa-file-code-o"></i>
-                        </a>
+                    <a class="btn btn-xs btn-info" title="'.tr('Aggiungi informazioni FE per questa riga').'" onclick="apriInformazioniFE(this)">
+                        <i class="fa fa-file-code-o"></i>
+                    </a>
 
-                        <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
-                            <i class="fa fa-edit"></i>
-                        </a>
+                    <a class="btn btn-xs btn-warning" title="'.tr('Modifica riga').'" onclick="modificaRiga(this)">
+                        <i class="fa fa-edit"></i>
+                    </a>
 
-                        <a class="btn btn-xs btn-danger" title="'.tr('Rimuovi riga').'" onclick="rimuoviRiga([$(this).closest(\'tr\').data(\'id\')])">
-                            <i class="fa fa-trash"></i>
-                        </a>';
+                    <a class="btn btn-xs btn-danger" title="'.tr('Rimuovi riga').'" onclick="rimuoviRiga([$(this).closest(\'tr\').data(\'id\')])">
+                        <i class="fa fa-trash"></i>
+                    </a>';
             }
 
             echo '
-                        <a class="btn btn-xs btn-default handle" title="'.tr('Modifica ordine delle righe').'">
-                            <i class="fa fa-sort"></i>
-                        </a>
-                    </div>';
-        }
+                    <a class="btn btn-xs btn-default handle" title="'.tr('Modifica ordine delle righe').'">
+                        <i class="fa fa-sort"></i>
+                    </a>
+                </div>';
+            }
 
-        echo '
+            echo '
                 </td>
             </tr>';
-    }
+	}
 }
 
 echo '
@@ -312,7 +378,7 @@ echo '<div class="json-tot hide">'.htmlspecialchars(json_encode($tot)).'</div>';
 $imponibile = $fattura->imponibile;
 $sconto = -$fattura->sconto;
 $totale_imponibile = $fattura->totale_imponibile;
-$iva = $fattura->iva;
+//$iva = $fattura->iva;
 $totale = $fattura->totale;
 $sconto_finale = $fattura->getScontoFinale();
 $netto_a_pagare = $fattura->netto;
@@ -326,7 +392,7 @@ if (!empty($riga_spesa_trasporto)) {
 
     echo '
     <tr data-id="'.$riga_spesa_trasporto->id.'" data-type="'.get_class($riga_spesa_trasporto).'">
-        <td colspan="6" class="text-right">
+        <td colspan="7" class="text-right">
             <b>
                 <span class="tip" title="'.tr('Spesa di trasporto').'">
                     '.tr('Spesa di trasporto', [], ['upper' => true]).':
@@ -358,7 +424,7 @@ if (!empty($riga_spesa_incasso)) {
 
     echo '
     <tr data-id="'.$riga_spesa_incasso->id.'" data-type="'.get_class($riga_spesa_incasso).'">
-        <td colspan="6" class="text-right">
+        <td colspan="7" class="text-right">
             <b>
                 <span class="tip" title="'.tr('Spesa di incasso').'">
                     '.tr('Spesa di incasso', [], ['upper' => true]).':
@@ -387,10 +453,10 @@ if (!empty($riga_spesa_incasso)) {
 // IMPONIBILE
 echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr('Imponibile', [], ['upper' => true]).':</b>
             </td>
-            <td class="text-right riga-imponibile">
+            <td class="text-right">
                 '.moneyFormat($imponibile, 2).'
             </td>
             <td></td>
@@ -400,8 +466,8 @@ echo '
 if (!empty($sconto)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
-                <b><span class="tip" title="'.tr('Un importo positivo indica uno sconto, mentre uno negativo indica una maggiorazione').'"><i class="fa fa-question-circle-o"></i> '.tr('Sconto/maggiorazione', [], ['upper' => true]).':</span></b>
+            <td colspan="7" class="text-right">
+                <b><span class="tip" title="'.tr('Un importo negativo indica uno sconto, mentre uno positivo indica una maggiorazione').'"><i class="fa fa-question-circle-o"></i> '.tr('Sconto/maggiorazione', [], ['upper' => true]).':</span></b>
             </td>
             <td class="text-right">
                 '.moneyFormat($sconto, 2).'
@@ -412,7 +478,7 @@ if (!empty($sconto)) {
     // TOTALE IMPONIBILE
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr('Totale imponibile', [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">
@@ -426,7 +492,7 @@ if (!empty($sconto)) {
 if (!empty($rivalsa_inps)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">';
+            <td colspan="7" class="text-right">';
 
     if ($dir == 'entrata') {
         $descrizione_rivalsa = $database->fetchOne('SELECT CONCAT_WS(\' - \', codice, descrizione) AS descrizione FROM fe_tipo_cassa WHERE codice = '.prepare(setting('Tipo Cassa Previdenziale')));
@@ -443,17 +509,26 @@ if (!empty($rivalsa_inps)) {
                 '.moneyFormat($rivalsa_inps, 2).'
             </td>
             <td></td>
+        </tr>
+        <tr>
+            <td colspan="7" class="text-right">
+                <b>'.tr('Totale imponibile', [], ['upper' => true]).' :</b>
+            </td>
+            <td class="text-right">
+                '.moneyFormat($totale_imponibile + $rivalsa_inps, 2).'
+            </td>
+            <td></td>
         </tr>';
 }
 
 // IVA
-if (!empty($iva)) {
+if (!empty($totale_iva)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">';
+            <td colspan="7" class="text-right">';
 
     if ($records[0]['split_payment']) {
-        echo '<b>'.tr('Iva a carico del destinatario', [], ['upper' => true]).'</b>';
+        echo '<b>'.tr('Iva a carico del destinatario', [], ['upper' => true]).':</b>';
     } else {
         echo '<b>'.tr('Iva', [], ['upper' => true]).'</b>';
     }
@@ -465,8 +540,8 @@ if (!empty($iva)) {
             </small>
             :
             </td>
-            <td class="text-right riga-iva">
-                '.moneyFormat($iva, 2).'
+            <td class="text-right">
+                '.moneyFormat(abs($totale_iva), 2).'
             </td>
             <td></td>
         </tr>';
@@ -475,8 +550,8 @@ if (!empty($iva)) {
 // TOTALE
 echo '
         <tr>
-            <td colspan="6" class="text-right">
-                <b>'.tr('Totale', [], ['upper' => true]).'</b>
+            <td colspan="7" class="text-right">
+                <b>'.tr('Totale documento', [], ['upper' => true]).'</b>
                 <small>
                     <span class="tooltip-totale" title="">
                         <i class="fa fa-question-circle-o"></i>
@@ -484,7 +559,7 @@ echo '
                 </small>
                 :
             </td>
-            <td class="text-right riga-totale">
+            <td class="text-right">
                 '.moneyFormat($totale, 2).'
             </td>
             <td></td>
@@ -494,7 +569,7 @@ echo '
 if (!empty($ritenuta_acconto)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr("Ritenuta d'acconto", [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">
@@ -508,7 +583,7 @@ if (!empty($ritenuta_acconto)) {
 if (!empty($ritenuta_contributi)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr('Ritenuta previdenziale', [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">
@@ -522,7 +597,7 @@ if (!empty($ritenuta_contributi)) {
 if (!empty($sconto_finale)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr('Sconto in fattura', [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">
@@ -533,12 +608,12 @@ if (!empty($sconto_finale)) {
 }
 
 $margine = $fattura->margine;
-$margine_class = ($margine <= 0 && $preventivo->totale > 0) ? 'danger' : 'success';
-$margine_icon = ($margine <= 0 && $preventivo->totale > 0) ? 'warning' : 'check';
+$margine_class = ($margine <= 0 && $fattura->totale > 0) ? 'danger' : 'success';
+$margine_icon = ($margine <= 0 && $fattura->totale > 0) ? 'warning' : 'check';
 
 echo '
     <tr>
-        <td colspan="6" class="text-right">
+        <td colspan="7" class="text-right">
             '.tr('Costi').':
         </td>
         <td class="text-right">
@@ -551,7 +626,7 @@ echo '
 if ($totale != $netto_a_pagare) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 <b>'.tr('Netto a pagare', [], ['upper' => true]).':</b>
             </td>
             <td class="text-right">
@@ -563,7 +638,7 @@ if ($totale != $netto_a_pagare) {
 
 echo '
     <tr>
-        <td colspan="6" class="text-right">
+        <td colspan="7" class="text-right">
             '.tr('Margine (_PRC_%)', [
                 '_PRC_' => numberFormat($fattura->margine_percentuale),
         ]).':
@@ -576,7 +651,7 @@ echo '
     </tr>
 
     <tr>
-        <td colspan="6" class="text-right">
+        <td colspan="7" class="text-right">
             '.tr('Ricarico (_PRC_%)', [
                 '_PRC_' => numberFormat($fattura->ricarico_percentuale),
         ]).':
@@ -587,7 +662,7 @@ echo '
 if(!empty($fattura->provvigione)) {
     echo '
         <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
                 '.tr('Provvigioni').':
             </td>
             <td class="text-right">
@@ -636,6 +711,7 @@ async function modificaRiga(button) {
         $(button).tooltipster("close");
 
     // Apertura modal
+    content_was_modified = false;
     openModal("'.tr('Modifica riga').'", "'.$module->fileurl('row-edit.php').'?id_module=" + globals.id_module + "&id_record=" + globals.id_record + "&riga_id=" + id + "&riga_type=" + type);
 }
 
@@ -672,6 +748,7 @@ function rimuoviRiga(id) {
                 righe: id,
             },
             success: function (response) {
+                content_was_modified = false;
                 location.reload();
             },
             error: function() {
@@ -767,25 +844,13 @@ function changeSpesaIncasso() {
                 idanagrafica: id_anagrafica,
             },
             success: function (response) {
-                if (response != null) {
-                    var old_spesa_incasso = parseFloat($(".spesa-incasso").html());
-                    var old_iva = ($(".riga-iva").length > 0) ? castFloat($(".riga-iva").html()) : 0;
-                    var spesa_incasso = parseFloat(response.importo_spese_di_incasso);
-                    var iva = parseFloat(response.iva);
-
-                    var newImponibile = castFloat($(".riga-imponibile").html()) - old_spesa_incasso + spesa_incasso;
-                    var newIva = castFloat($(".riga-iva").html()) - (old_spesa_incasso * iva) + (spesa_incasso * iva);
-                    var newTotale = castFloat($(".riga-totale").html()) - old_spesa_incasso - old_iva + spesa_incasso + (spesa_incasso * iva);
-                    var newMargine = newImponibile;
-
-                    $(".spesa-incasso").html(spesa_incasso);
-                    $(".riga-spesa-incasso").html(recastFloat(spesa_incasso.toFixed(2)) + " €");
-                    $(".riga-imponibile").html(recastFloat(newImponibile.toFixed(2)) + " €");
-                    $(".riga-iva").html(recastFloat(newIva.toFixed(2)) + " €");
-                    $(".riga-totale").html(recastFloat(newTotale.toFixed(2)) + " €");
-                    $(".riga-margine").html(recastFloat(newMargine.toFixed(2)) + " €");
-                }
+                console.log("ziopera?");
+                caricaRighe();
+                renderMessages();
             },
+            error: function() {
+                caricaRighe(null);
+            }
         });
     });
 
@@ -902,4 +967,29 @@ $("#check_all").click(function(){
         });
     }
 });
+
+function incrementa_riduci($this, value, type) {
+    var id_riga = $this.closest("tr").data("id");
+
+    $.ajax({
+        url: globals.rootdir + "/actions.php",
+        type: "POST",
+        dataType: "json",
+        data: {
+            id_module: globals.id_module,
+            id_record: globals.id_record,
+            op: "incrementa_riduci",
+            id_riga: id_riga,
+            value: value,
+            type: type,
+        },
+        success: function (response) {
+            caricaRighe();
+            renderMessages();
+        },
+        error: function() {
+            caricaRighe(null);
+        }
+    });
+}
 </script>';

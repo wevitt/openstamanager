@@ -344,16 +344,18 @@ async function gestioneRiga(button, options) {
 /**
  * Funzione dedicata al caricamento dinamico via AJAX delle righe del documento.
  */
-function caricaRighe() {
+function caricaRighe(id_riga) {
     let container = $("#righe");
 
     localLoading(container, true);
     return $.get("'.$structure->fileurl('row-list.php').'?id_module='.$id_module.'&id_record='.$id_record.'", function(data) {
         container.html(data);
         localLoading(container, false);
+        if (id_riga != null) {
+            $("tr[data-id="+ id_riga +"]").effect("highlight",1000);
+        }
     });
 }
-
 $(document).ready(function() {
     caricaRighe();
 });

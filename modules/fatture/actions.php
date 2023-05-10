@@ -869,6 +869,21 @@ switch (post('op')) {
 
         break;
 
+    case 'update_inline':
+        $id_riga = post('riga_id');
+        $riga = $riga ?: Riga::find($id_riga);
+        $riga = $riga ?: Articolo::find($id_riga);
+
+        if (!empty($riga)) {
+            $riga->qta = post('qta');
+            $riga->setSconto(post('sconto'), post('tipo_sconto'));
+            $riga->save();
+
+            flash()->info(tr('Quantità aggiornata!'));
+        }
+
+        break;
+
     // Aggiunta di un documento esterno
     case 'add_documento':
         $class = post('class');
@@ -1230,24 +1245,57 @@ switch (post('op')) {
         $idanagrafica = post('idanagrafica');
 
         $anagrafica = Anagrafica::find($idanagrafica);
+        $iva_predefinita = setting('Iva predefinita');
+        $righe = $fattura->getRighe();
 
-        $ret = null;
-        if (!$anagrafica->spese_di_incasso) {
-            $importo = $database->fetchOne(
+        if ($anagrafica->spese_di_incasso) {
+            $importo_spese_di_incasso = $anagrafica->importo_spese_di_incasso;
+        } else {
+            $importo_spese_di_incasso = $database->fetchOne(
                 'SELECT importo_spese_di_incasso FROM co_pagamenti WHERE id = '.$idpagamento
             )['importo_spese_di_incasso'];
-
-            $iva = $database->fetchOne(
-                'SELECT percentuale FROM co_iva WHERE id = '.setting('Iva predefinita')
-            )['percentuale'];
-
-            $ret = [
-                'importo_spese_di_incasso' => $importo,
-                'iva' => $iva/100,
-            ];
         }
 
-        echo json_encode($ret);
+        $fattura->idpagamento = $idpagamento;
+        $fattura->save();
+
+        $prc = $database->fetchOne('SELECT * FROM co_pagamenti WHERE id = '.$idpagamento)['prc'];
+
+        $riga_spese_incasso = $righe->where('is_spesa_incasso', 1)->first();
+        if (!empty($riga_spese_incasso)) {
+            $riga_spese_incasso->qta = intval(100 / $prc);
+            $riga_spese_incasso->setPrezzoUnitario($importo_spese_di_incasso, $riga_spese_incasso->idiva);
+            $riga_spese_incasso->save();
+        }
+
+        break;
+
+    case 'incrementa_riduci':
+        $id_riga = post('id_riga');
+        $value = post('value');
+        $type = post('type');
+
+        $righe = $fattura->getRighe();
+        $riga = $righe->where('id', $id_riga)->first();
+
+        if ($type == 'iva') {
+            $old_iva = floatval($database->fetchOne('SELECT * FROM co_righe_documenti WHERE id = '.$id_riga)['iva']);
+            //$old_prezzo_unitario = floatval($database->fetchOne('SELECT * FROM co_righe_documenti WHERE id = '.$id_riga)['prezzo_unitario']);
+            $old_iva_unitaria = floatval($database->fetchOne('SELECT * FROM co_righe_documenti WHERE id = '.$id_riga)['iva_unitaria']);
+
+            $iva = $old_iva + floatval(number_format($value, 3));
+            //$prezzo_unitario = $old_prezzo_unitario + (floatval(number_format($value, 3)) / $riga->qta);
+            $iva_unitaria = $old_iva_unitaria + (floatval(number_format($value, 3)) / $riga->qta);
+
+            $database->query('UPDATE co_righe_documenti SET iva = '.prepare(number_format($iva, 3)).' WHERE id = '.prepare($id_riga));
+            //$database->query('UPDATE co_righe_documenti SET prezzo_unitario = '.prepare(number_format($prezzo_unitario, 3)).' WHERE id = '.prepare($id_riga));
+            $database->query('UPDATE co_righe_documenti SET iva_unitaria = '.prepare(number_format($iva_unitaria, 3)).' WHERE id = '.prepare($id_riga));
+        } else {
+            $value = floatval($value) / $riga->qta;
+            $prezzo_unitario = $riga->prezzo_unitario + $value;
+            $riga->setPrezzoUnitario($prezzo_unitario, $riga->idiva);
+            $riga->save();
+        }
 
         break;
 }
