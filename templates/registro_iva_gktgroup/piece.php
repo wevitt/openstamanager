@@ -52,7 +52,7 @@ foreach ($record as $r) {
     echo $r['descrizione'];
     echo ($record['split_payment'] != 0) ? '<br>' . tr('Split payment') : '';
     echo '</td>
-            <td class="text-right">'.moneyFormat($r['iva']).'</td>
+            <td class="text-right">'.moneyFormat($r['iva'], 3).'</td>
             </tr>';
 
         $iva[$r['descrizione']][] = $r['iva'];
