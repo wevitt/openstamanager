@@ -19,7 +19,7 @@
 
 include_once __DIR__.'/../../core.php';
 
-if ($id_sezionale == 0) {
+if ($id_sezionale == -1) {
     echo '
     <tr>
         <td colspan="10"><b>'.$record[0]['sezionale'].'</b></td>

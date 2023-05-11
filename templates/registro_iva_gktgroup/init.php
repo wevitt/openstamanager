@@ -21,7 +21,9 @@ include_once __DIR__.'/../../core.php';
 
 $dir = $_GET['dir'];
 
+// Correggo id_sezionale. Se è diventa -1 per compatibilità con installazioni più vecchie
 $id_sezionale = filter('id_sezionale');
+$id_sezionale = $id_sezionale == 0 ? -1 : $id_sezionale;
 $sezionale = $dbo->fetchOne('SELECT name FROM zz_segments WHERE id = '.$id_sezionale)['name'];
 
 $date_start = filter('date_start');
