@@ -243,8 +243,8 @@ function controllaConti() {
         continuare &= bilancio === 0;
     });
 
-    $(".avere_complessivo").text(avere_complessivo);
-    $(".dare_complessivo").text(dare_complessivo);
+    $(".avere_complessivo").text(avere_complessivo.toFixed(2));
+    $(".dare_complessivo").text(dare_complessivo.toFixed(2));
 
     // Blocco degli input con valore non impostato
     $("input[id*=dare], input[id*=avere]").each(function() {
@@ -388,8 +388,8 @@ $(document).on("keyup change", "input[id*=avere]", function() {
         avere_complessivo += parseFloat(ret["avere_complessivo"]);
     });
 
-    $(".avere_complessivo").text(avere_complessivo);
-    $(".dare_complessivo").text(dare_complessivo);
+    $(".avere_complessivo").text(avere_complessivo.toFixed(2));
+    $(".dare_complessivo").text(dare_complessivo.toFixed(2));
 
     let row = $(this).parent().parent().parent();
 
