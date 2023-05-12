@@ -31,7 +31,7 @@ $subtotale_iva_nonesigibile = sum(array_column($iva_vendite_nonesigibile, 'subto
 
 $totale_iva_detraibile = sum(array_column($iva_acquisti_detraibile, 'iva'));
 $totale_iva_nondetraibile = sum(array_column($iva_acquisti_nondetraibile, 'iva'));
-$totale_iva_parzialmente_detraibile = sum(array_column($iva_acquisti_nondetraibile, 'iva_indetraibile'));
+$totale_iva_parzialmente_detraibile = sum(array_column($iva_acquisti_nondetraibile, 'iva')) - sum(array_column($iva_acquisti_nondetraibile, 'iva_indetraibile'));
 $subtotale_iva_detraibile = sum(array_column($iva_acquisti_detraibile, 'subtotale'));
 $subtotale_iva_nondetraibile = sum(array_column($iva_acquisti_nondetraibile, 'subtotale'));
 

@@ -447,8 +447,8 @@ $iva_acquisti_nondetraibile = $dbo->fetchArray('
             ) AS iva,
             IF (
                 co_righe_documenti.idrivalsainps = 1,
-                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile ) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
-                (SUM(co_righe_documenti.iva - co_righe_documenti.iva_indetraibile )) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
+                (SUM(co_righe_documenti.iva_indetraibile ) + co_documenti.iva_rivalsainps) * (IF (co_tipidocumento.reversed = 0, 1,-1 )),
+                (SUM(co_righe_documenti.iva_indetraibile )) * (IF (co_tipidocumento.reversed = 0, 1,-1 ))
             ) AS iva_indetraibile,
             SUM((co_righe_documenti.subtotale - co_righe_documenti.sconto) *(IF(co_tipidocumento.reversed = 0,1,-1))) AS subtotale
         FROM
