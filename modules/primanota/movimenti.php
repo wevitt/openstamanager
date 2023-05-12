@@ -173,6 +173,34 @@ echo '
 </table>';
 
 echo '
+    <table class="table table-striped table-condensed table-hover table-bordered scadenze">
+        <thead>
+            <tr>
+                <th></th>
+                <th width="20%">'.tr('Dare').'</th>
+                <th width="20%">'.tr('Avere').'</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="text-right"><b>'.tr('Complessivo').':</b></td>';
+
+                // dare complessivo
+                echo '
+                    <td class="text-right">
+                        <span class="dare_complessivo"></span> '.currency().'
+                    </td>';
+
+                // avere complessivo
+                echo '
+                    <td class="text-right">
+                        <span class="avere_complessivo"></span> '.currency().'
+                    </td>
+                </tr>
+        </tbody>
+    </table>';
+
+echo '
 <script>
 var formatted_zero = "'.numberFormat(0).'";
 var n = '.$counter.';
@@ -201,12 +229,22 @@ function addRiga(btn) {
 function controllaConti() {
     let continuare = true;
 
+    let dare_complessivo = 0;
+    let avere_complessivo = 0;
+
     // Controlli sullo stato dei raggruppamenti
     $(".raggruppamento_primanota").each(function() {
-        let bilancio = calcolaBilancio(this);
+        let ret = calcolaBilancio(this);
+
+        let bilancio = ret["bilancio"];
+        dare_complessivo += parseFloat(ret["dare_complessivo"]);
+        avere_complessivo += parseFloat(ret["avere_complessivo"]);
 
         continuare &= bilancio === 0;
     });
+
+    $(".avere_complessivo").text(avere_complessivo);
+    $(".dare_complessivo").text(dare_complessivo);
 
     // Blocco degli input con valore non impostato
     $("input[id*=dare], input[id*=avere]").each(function() {
@@ -265,6 +303,8 @@ function calcolaBilancio(gruppo) {
     raggruppamento.find(".totale_avere").text(totale_avere.toLocale());
 
     // Calcolo il bilancio
+    let dare_complessivo = totale_dare.toFixed(2);
+    let avere_complessivo = totale_avere.toFixed(2);
     let bilancio = totale_dare.toFixed(2) - totale_avere.toFixed(2);
 
     // Visualizzazione dello sbilancio eventuale
@@ -278,7 +318,11 @@ function calcolaBilancio(gruppo) {
         sbilancio.removeClass("hide");
     }
 
-    return bilancio;
+    return {
+        "bilancio": bilancio,
+        "dare_complessivo": dare_complessivo,
+        "avere_complessivo": avere_complessivo,
+    };
 }
 
 $(document).ready(function() {
@@ -332,6 +376,21 @@ $(document).on("keyup change", "input[id*=dare]", function() {
 });
 
 $(document).on("keyup change", "input[id*=avere]", function() {
+    //ricalcolo complessivo dare e avere
+    let dare_complessivo = 0;
+    let avere_complessivo = 0;
+
+    // Controlli sullo stato dei raggruppamenti
+    $(".raggruppamento_primanota").each(function() {
+        let ret = calcolaBilancio(this);
+
+        dare_complessivo += parseFloat(ret["dare_complessivo"]);
+        avere_complessivo += parseFloat(ret["avere_complessivo"]);
+    });
+
+    $(".avere_complessivo").text(avere_complessivo);
+    $(".dare_complessivo").text(dare_complessivo);
+
     let row = $(this).parent().parent().parent();
 
     if (!$(this).prop("disabled")) {
