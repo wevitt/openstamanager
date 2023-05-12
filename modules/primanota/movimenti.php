@@ -116,6 +116,35 @@ function renderTabella($nome, $righe)
 </div>';
 }
 
+
+echo
+'<table class="table table-striped table-condensed table-hover table-bordered scadenze">
+    <thead>
+        <tr>
+            <th></th>
+            <th width="20%">'.tr('Dare').'</th>
+            <th width="20%">'.tr('Avere').'</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="text-right"><b>'.tr('Complessivo').':</b></td>';
+
+            // dare complessivo
+            echo '
+                <td class="text-right">
+                    <span class="dare_complessivo"></span> '.currency().'
+                </td>';
+
+            // avere complessivo
+            echo '
+                <td class="text-right">
+                    <span class="avere_complessivo"></span> '.currency().'
+                </td>
+            </tr>
+    </tbody>
+</table>';
+
 $counter = 0;
 $movimenti = collect($movimenti);
 
@@ -171,34 +200,6 @@ renderRiga('-id-', [
 echo '
     </tbody>
 </table>';
-
-echo '
-    <table class="table table-striped table-condensed table-hover table-bordered scadenze">
-        <thead>
-            <tr>
-                <th></th>
-                <th width="20%">'.tr('Dare').'</th>
-                <th width="20%">'.tr('Avere').'</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-right"><b>'.tr('Complessivo').':</b></td>';
-
-                // dare complessivo
-                echo '
-                    <td class="text-right">
-                        <span class="dare_complessivo"></span> '.currency().'
-                    </td>';
-
-                // avere complessivo
-                echo '
-                    <td class="text-right">
-                        <span class="avere_complessivo"></span> '.currency().'
-                    </td>
-                </tr>
-        </tbody>
-    </table>';
 
 echo '
 <script>
