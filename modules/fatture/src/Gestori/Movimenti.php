@@ -132,6 +132,20 @@ class Movimenti
                     'id_conto' => $id_conto,
                     'avere' => $imponibile,
                 ];
+
+                /*
+                * INIZIO Fix Contabilità || Vittorio Iovinella -07/08/2023
+                * Aggiungo controparte iva indetraibile sul conto merce
+                */
+                if($riga->iva_indetraibile != 0)
+                $movimenti[] = [
+                    'id_conto' => $id_conto,
+                    'avere' => $riga->iva_indetraibile,
+                ];
+                /*
+                * FINE Fix Contabilità || Vittorio Iovinella -07/08/2023
+                */
+
             }
         }
 
@@ -151,6 +165,11 @@ class Movimenti
         * 4) IVA indetraibile sul relativo conto (Split Payment disabilitato)
         * IVA indetraibile -> AVERE per Vendita, DARE per Acquisto
         */
+        /*
+        * INIZIO Fix Contabilità || Vittorio Iovinella -07/08/2023
+        * Commento inserimento separato iva indetraibile sul conto merce
+        */
+        /*
         if (!empty($iva_indetraibile) && empty($split_payment)) {
             $id_conto = setting('Conto per Iva indetraibile');
             $movimenti[] = [
@@ -158,6 +177,10 @@ class Movimenti
                 'avere' => $iva_indetraibile,
             ];
         }
+        */
+        /*
+        * FINE Fix Contabilità || Vittorio Iovinella -07/08/2023
+        */
 
         /*
         * 5) Rivalsa INPS sul relativo conto

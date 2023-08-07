@@ -26,8 +26,11 @@ $modulo = Modules::get($id_module)['name'];
 if ($modulo == 'Anagrafiche') {
     $movimenti = $dbo->fetchArray('SELECT co_movimenti.*, SUM(totale) AS totale, co_pianodeiconti3.descrizione, co_pianodeiconti3.numero AS conto3, co_pianodeiconti2.numero AS conto2 FROM co_movimenti LEFT JOIN co_pianodeiconti3 ON co_movimenti.idconto=co_pianodeiconti3.id LEFT JOIN co_pianodeiconti2 ON co_pianodeiconti3.idpianodeiconti2=co_pianodeiconti2.id WHERE id_anagrafica='.prepare($id_record).' GROUP BY idmastrino, idconto ORDER BY data, idmastrino');
 } else {
-    $movimenti = $dbo->fetchArray('SELECT co_movimenti.*, SUM(totale) AS totale, co_pianodeiconti3.descrizione, co_pianodeiconti3.numero AS conto3, co_pianodeiconti2.numero AS conto2 FROM co_movimenti LEFT JOIN co_pianodeiconti3 ON co_movimenti.idconto=co_pianodeiconti3.id LEFT JOIN co_pianodeiconti2 ON co_pianodeiconti3.idpianodeiconti2=co_pianodeiconti2.id WHERE iddocumento='.prepare($id_record).' GROUP BY idmastrino, idconto ORDER BY data, idmastrino');
+    $queryRigheIvaIndetraibili = 'SELECT idconto as idconto, SUM(iva_indetraibile) AS totale_iva_indetraibile FROM co_righe_documenti WHERE iddocumento='.prepare($id_record).' AND iva_indetraibile <> 0 GROUP BY idconto';
+    $movimenti = $dbo->fetchArray('SELECT co_movimenti.*, SUM(totale) AS totale, indetraibile.totale_iva_indetraibile, co_pianodeiconti3.descrizione, co_pianodeiconti3.numero AS conto3, co_pianodeiconti2.numero AS conto2 FROM co_movimenti LEFT JOIN co_pianodeiconti3 ON co_movimenti.idconto=co_pianodeiconti3.id LEFT JOIN co_pianodeiconti2 ON co_pianodeiconti3.idpianodeiconti2=co_pianodeiconti2.id LEFT JOIN ('.$queryRigheIvaIndetraibili.') as indetraibile on indetraibile.idconto=co_movimenti.idconto WHERE iddocumento='.prepare($id_record).' GROUP BY idmastrino, idconto ORDER BY data, idmastrino');
+
 }
+
 
 $idmastrini_processati = [-1];
 
@@ -58,7 +61,7 @@ if (!empty($movimenti)) {
             echo '
                 <tr>
                     <td class="text-center">'.Translator::dateToLocale($movimento['data']).'</td>
-                    <td>'.$descrizione.'<small class="pull-right text-right text-muted" style="font-size:8pt;">'.($documento ? $documento->getReference() : '').'</small></td>
+                    <td>'.$descrizione.' '.($movimento['totale_iva_indetraibile'] ? ' <small>(di cui ' . moneyFormat(abs($movimento['totale_iva_indetraibile'])) . ' iva indetraibile)</small>' : '').'<small class="pull-right text-right text-muted" style="font-size:8pt;">'.($documento ? $documento->getReference() : '').'</small></td>
                     <td class="text-right">'.($movimento['totale']>0 ? moneyFormat(abs($movimento['totale'])) : "").'</td>
                     <td class="text-right">'.($movimento['totale']<0 ? moneyFormat(abs($movimento['totale'])) : "").'</td>
                     <td class="text-right">'.moneyFormat($scalare).'</td>
